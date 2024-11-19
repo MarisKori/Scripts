@@ -1,0 +1,18 @@
+<html>
+  <head>
+  </head>
+  <body>
+    Введите возраст: <br>
+    <input id="age"><br>
+    Введите ЧСС покоя:<br>
+    <input id="calm"><br>
+    <input type=button value="Посчитать ЧСС тренировки"><br>
+    <div id="result"></div>
+    <script>
+      let age = document.querySelector('#age');
+      let calm = document.querySelector('#calm');
+      let result = document.querySelector('#result');
+      result.innerHTML = age.value + calm.value;
+    </script>
+  </body>
+</html>
