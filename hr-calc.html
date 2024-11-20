@@ -3,15 +3,22 @@
   </head>
   <body>
     Введите возраст: <br>
-    <input id="age"><br>
+    <input id="age"><br><br>
     Введите ЧСС покоя:<br>
-    <input id="calm"><br>
+    <input id="calm"><br><br>
+    Выберите пол: 
+    <select id="gender" name="gender">
+      <option value="male" selected>Мужской</option>
+      <option value="female">Женский</option>
+    </select><br><br>
     <input type=button value="Посчитать ЧСС тренировки" onclick="CalcResult()"><br>
     <div id="result"></div>
     <script>
-      let age = document.querySelector('#age');
-      let calm = document.querySelector('#calm');
-      let result = document.querySelector('#result');
+      const age = document.getElementById('age');
+      const calm = document.getElementById('calm');
+      const result = document.getElementById('result');
+      const genderSelect = document.getElementById('gender');
+      let isFemale;
       function CalcTHR(perc, clm, reserv) {
         return Math.round(perc * 0.01 * reserv + clm);
       }
@@ -19,22 +26,26 @@
         result.innerHTML = str;
       }
       function CalcResult() {
-        const clm = calm.value - 0;
+        let clm = calm.value - 0;
         if (isNaN(clm)) return ShowResult('ЧСС покоя должно быть числом');
         if (clm <= 0) return ShowResult('ЧСС покоя должно быть выше нуля');
         clm = Math.round(clm);
+
         const years = age.value - 0;
         if (isNaN(years)) return ShowResult('Возраст должен быть числом');
         if (years <= 0) return ShowResult('Возраст должен быть выше нуля');
-        const hr_max = Math.round(208 — (0.7 * years));
+
+        isFemale = (genderSelect.value === 'female');
+        const hr_max = Math.round(isFemale ? 206 - (0.88 * years) : 208 - (0.7 * years) );
         const reserv = hr_max - clm;
-        let s = '';
+        
+        let s = `Макс. ЧСС = ${hr_max}<br>`;
         for (let i = 4; i<=10; i++) {
           const perc = i * 10;
           const thr = CalcTHR(perc, clm, reserv);
-          s += `Нагрузка ${perc}% = ${thr} ЧСС`;
+          s += `Нагрузка ${perc}% = ${thr}<br>`;
         }
-        result.innerHTML = s;
+        result.innerHTML = '<br>' + s;
       }
     </script>
   </body>
