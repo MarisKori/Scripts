@@ -12,8 +12,29 @@
       let age = document.querySelector('#age');
       let calm = document.querySelector('#calm');
       let result = document.querySelector('#result');
+      function CalcTHR(perc, clm, reserv) {
+        return Math.round(perc * 0.01 * reserv + clm);
+      }
+      function ShowResult(str) {
+        result.innerHTML = str;
+      }
       function CalcResult() {
-        result.innerHTML = age.value + calm.value;
+        const clm = calm.value - 0;
+        if (isNaN(clm)) return ShowResult('ЧСС покоя должно быть числом');
+        if (clm <= 0) return ShowResult('ЧСС покоя должно быть выше нуля');
+        clm = Math.round(clm);
+        const years = age.value - 0;
+        if (isNaN(years)) return ShowResult('Возраст должен быть числом');
+        if (years <= 0) return ShowResult('Возраст должен быть выше нуля');
+        const hr_max = Math.round(208 — (0.7 * years));
+        const reserv = hr_max - clm;
+        let s = '';
+        for (let i = 4; i<=10; i++) {
+          const perc = i * 10;
+          const thr = CalcTHR(perc, clm, reserv);
+          s += `Нагрузка ${perc}% = ${thr} ЧСС`;
+        }
+        result.innerHTML = s;
       }
     </script>
   </body>
