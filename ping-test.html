@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ping Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --text: #e4e4e7;
+      --text-dim: #71717a;
+      --accent: #22d3ee;
+      --accent-glow: rgba(34, 211, 238, 0.3);
+      --success: #4ade80;
+      --error: #f87171;
+      --warning: #fbbf24;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.5;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--accent-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .subtitle {
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      margin-bottom: 28px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .ip-info {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+    }
+
+    .ip-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .ip-row:not(:last-child) {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ip-label {
+      color: var(--text-dim);
+    }
+
+    .ip-value {
+      color: var(--text);
+      text-align: right;
+    }
+
+    .ip-value.loading {
+      color: var(--text-dim);
+    }
+
+    .ip-value.warning {
+      color: var(--warning);
+    }
+
+    .ip-list {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .result-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 24px;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ping-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      text-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .ping-unit {
+      font-size: 1rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      color: var(--text-dim);
+    }
+
+    .status.testing {
+      color: var(--accent);
+    }
+
+    .status.error {
+      color: var(--error);
+    }
+
+    .progress-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .progress-dot {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .progress-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .progress-dot.done {
+      background: var(--success);
+    }
+
+    .progress-dot.fail {
+      background: var(--error);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px 24px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--bg);
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px var(--accent-glow);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .history {
+      margin-top: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-ping {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Ping Test</h1>
+      <p class="subtitle">google.com/favicon.ico</p>
+
+      <div class="ip-info">
+        <div class="ip-row">
+          <span class="ip-label" id="ipLabel">IP-адрес</span>
+          <span class="ip-value loading" id="ipValue">—</span>
+        </div>
+        <div class="ip-row">
+          <span class="ip-label">Страна</span>
+          <span class="ip-value loading" id="countryValue">—</span>
+        </div>
+      </div>
+
+      <div class="result-box">
+        <div id="result">
+          <span class="status">Нажмите кнопку для теста</span>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-dot" id="dot-0"></div>
+        <div class="progress-dot" id="dot-1"></div>
+        <div class="progress-dot" id="dot-2"></div>
+        <div class="progress-dot" id="dot-3"></div>
+        <div class="progress-dot" id="dot-4"></div>
+      </div>
+
+      <button id="startBtn" onclick="runTest()">Измерить пинг</button>
+
+      <div class="history" id="history"></div>
+    </div>
+  </div>
+
+  <script>
+    const PING_COUNT = 5;
+    const PING_INTERVAL = 1000;
+
+    let isRunning = false;
+    const collectedIPs = new Set();
+
+    // === IP Detection ===
+    
+    function updateIPDisplay() {
+      const ipValue = document.getElementById('ipValue');
+      const ipLabel = document.getElementById('ipLabel');
+      const ips = Array.from(collectedIPs);
+      
+      if (ips.length === 0) return;
+      
+      ipValue.classList.remove('loading');
+      
+      if (ips.length === 1) {
+        ipLabel.textContent = 'IP-адрес';
+        ipValue.textContent = ips[0];
+        ipValue.classList.remove('warning');
+      } else {
+        ipLabel.textContent = 'IP-адреса';
+        ipValue.classList.add('warning');
+        ipValue.innerHTML = `<div class="ip-list">${ips.map(ip => `<span>${ip}</span>`).join('')}</div>`;
+      }
+    }
+
+    function addIP(ip) {
+      if (!ip) return;
+      const trimmed = ip.trim();
+      if (trimmed && !collectedIPs.has(trimmed)) {
+        collectedIPs.add(trimmed);
+        updateIPDisplay();
+      }
+    }
+
+    function updateCountry(country) {
+      if (!country) return;
+      const el = document.getElementById('countryValue');
+      el.textContent = country.trim();
+      el.classList.remove('loading');
+    }
+
+    async function fetchIPify() {
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        addIP(data.ip);
+      } catch (e) {
+        console.warn('ipify failed:', e);
+      }
+    }
+
+    async function fetchCloudflare() {
+      try {
+        const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
+        const text = await res.text();
+        
+        const ipMatch = text.match(/ip=(.+)/);
+        const locMatch = text.match(/loc=(.+)/);
+        
+        if (ipMatch) addIP(ipMatch[1]);
+        if (locMatch) updateCountry(locMatch[1]);
+      } catch (e) {
+        console.warn('Cloudflare failed:', e);
+      }
+    }
+
+    async function fetchIcanhazip() {
+      try {
+        const res = await fetch('https://icanhazip.com');
+        const text = await res.text();
+        addIP(text);
+      } catch (e) {
+        console.warn('icanhazip failed:', e);
+      }
+    }
+
+    function loadIPInfo() {
+      // Запускаем все три параллельно
+      fetchIPify();
+      fetchCloudflare();
+      fetchIcanhazip();
+    }
+
+    // === Ping Test ===
+
+    function measurePing() {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const start = performance.now();
+        const timeout = setTimeout(() => {
+          img.src = '';
+          resolve(null);
+        }, 5000);
+
+        img.onload = img.onerror = () => {
+          clearTimeout(timeout);
+          resolve(Math.round(performance.now() - start));
+        };
+
+        img.src = `https://www.google.com/favicon.ico?_=${Date.now()}-${Math.random()}`;
+      });
+    }
+
+    function resetDots() {
+      for (let i = 0; i < PING_COUNT; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.className = 'progress-dot';
+      }
+    }
+
+    function updateDot(index, success) {
+      const dot = document.getElementById(`dot-${index}`);
+      dot.className = 'progress-dot ' + (success ? 'done' : 'fail');
+    }
+
+    function setActiveDot(index) {
+      const dot = document.getElementById(`dot-${index}`);
+      dot.className = 'progress-dot active';
+    }
+
+    function showStatus(text, className = '') {
+      document.getElementById('result').innerHTML = 
+        `<span class="status ${className}">${text}</span>`;
+    }
+
+    function showResult(ping) {
+      document.getElementById('result').innerHTML = `
+        <div class="ping-value">${ping}</div>
+        <div class="ping-unit">ms (min)</div>
+      `;
+    }
+
+    function addToHistory(ping) {
+      const history = document.getElementById('history');
+      const time = new Date().toLocaleTimeString('ru-RU');
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `<span>${time}</span><span class="history-ping">${ping} ms</span>`;
+      
+      if (history.children.length >= 5) {
+        history.removeChild(history.lastChild);
+      }
+      history.insertBefore(item, history.firstChild);
+    }
+
+    async function runTest() {
+      if (isRunning) return;
+      isRunning = true;
+
+      const btn = document.getElementById('startBtn');
+      btn.disabled = true;
+      resetDots();
+
+      const pings = [];
+
+      for (let i = 0; i < PING_COUNT; i++) {
+        setActiveDot(i);
+        showStatus(`Запрос ${i + 1}/${PING_COUNT}...`, 'testing');
+
+        const ping = await measurePing();
+
+        if (ping !== null) {
+          pings.push(ping);
+          updateDot(i, true);
+        } else {
+          updateDot(i, false);
+        }
+
+        if (i < PING_COUNT - 1) {
+          await new Promise(r => setTimeout(r, PING_INTERVAL));
+        }
+      }
+
+      if (pings.length > 0) {
+        const minPing = Math.min(...pings);
+        showResult(minPing);
+        addToHistory(minPing);
+      } else {
+        showStatus('Ошибка соединения', 'error');
+      }
+
+      btn.disabled = false;
+      isRunning = false;
+    }
+
+    // Загружаем IP-информацию при старте
+    loadIPInfo();
+  </script>
+</body>
+</html>
