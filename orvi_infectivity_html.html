@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>График заразности при ОРВИ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+        
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid;
+        }
+        
+        .card-incubation {
+            background: #fef3c7;
+            border-color: #fbbf24;
+        }
+        
+        .card-peak {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+        
+        .card-decline {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+        
+        .card h3 {
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .card-incubation h3 {
+            color: #92400e;
+        }
+        
+        .card-peak h3 {
+            color: #991b1b;
+        }
+        
+        .card-decline h3 {
+            color: #065f46;
+        }
+        
+        .card p {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.5;
+        }
+        
+        .note {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        
+        .note strong {
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Динамика заразности при ОРВИ</h1>
+        <p class="subtitle">Относительная интенсивность вирусовыделения по дням</p>
+        
+        <div class="chart-container">
+            <canvas id="infectivityChart"></canvas>
+        </div>
+        
+        <div class="info-cards">
+            <div class="card card-incubation">
+                <h3>Инкубация</h3>
+                <p>Дни -2 до 0: начало вирусовыделения до симптомов</p>
+            </div>
+            <div class="card card-peak">
+                <h3>Пик заразности</h3>
+                <p>Дни 1-3: максимальная вирусная нагрузка</p>
+            </div>
+            <div class="card card-decline">
+                <h3>Спад</h3>
+                <p>Дни 4-10: быстрое снижение заразности</p>
+            </div>
+        </div>
+        
+        <div class="note">
+            <p><strong>Примечание:</strong> График показывает усредненные данные для типичных респираторных вирусов 
+            (риновирусы, коронавирусы сезонные). Индивидуальная динамика может варьироваться в зависимости 
+            от типа вируса, иммунного статуса и возраста.</p>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('infectivityChart').getContext('2d');
+        
+        const data = {
+            labels: [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            datasets: [{
+                label: 'Интенсивность заразности (%)',
+                data: [0, 15, 40, 85, 100, 95, 70, 47, 30, 18, 10, 5, 2.5, 1, 0],
+                backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        };
+        
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14,
+                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#3b82f6',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                const day = context[0].label;
+                                if (day == 0) return 'День ' + day + ' (начало симптомов)';
+                                if (day == 2) return 'День ' + day + ' (пик заразности)';
+                                return 'День ' + day;
+                            },
+                            label: function(context) {
+                                return 'Интенсивность: ' + context.parsed.y + '%';
+                            }
+                        }
+                    },
+                    annotation: {
+                        annotations: {
+                            line1: {
+                                type: 'line',
+                                xMin: 0,
+                                xMax: 0,
+                                borderColor: '#f59e0b',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                    content: 'Начало симптомов',
+                                    enabled: true,
+                                    position: 'top'
+                                }
+                            },
+                            line2: {
+                                type: 'line',
+                                xMin: 2,
+                                xMax: 2,
+                                borderColor: '#ef4444',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                    content: 'Пик',
+                                    enabled: true,
+                                    position: 'top'
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Дни от начала симптомов',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#374151'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Интенсивность заразности (%)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#374151'
+                        },
+                        beginAtZero: true,
+                        max: 110,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    }
+                }
+            }
+        };
+        
+        new Chart(ctx, config);
+    </script>
+</body>
+</html>
