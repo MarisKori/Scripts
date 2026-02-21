@@ -909,6 +909,7 @@ function resetFakeProgress() {
   bar.style.width = '0%';
 }
 
+let GLOBAL_TEXT = '';
 function processFile(file) {
   const key = localStorage.getItem('keyNSFW');
   if (!key) {
@@ -949,6 +950,7 @@ function processFile(file) {
       analyzeStatus.textContent = `✗ Ошибка: ${err.message}`;
       $('analyzeModel').textContent = '';
       analyzeStatus.style.color = '#cc4444';
+      console.log('Answer:', GLOBAL_TEXT);
     }
   };
   reader.readAsDataURL(file);
@@ -959,7 +961,8 @@ async function analyzeImage(key, base64, mediaType) {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-Title': 'NSFW Score Calculator',                         // ← название
     },
     body: JSON.stringify({
       model: MODEL,
@@ -982,17 +985,16 @@ async function analyzeImage(key, base64, mediaType) {
   });
 
   if (!resp.ok) {
-    console.log('resp.text()', await resp.text());
     throw new Error(`HTTP ${resp.status}`);
   }
   const data = await resp.json();
   const text = data.choices[0].message.content.trim();
+  GLOBAL_TEXT = text;
   const json = JSON.parse(text.replace(/```json|```/g, '').trim());
   console.log(json);
 
   for (const k of ['N', 'pfg', 'D', 'A']) {
     if (typeof json[k] !== 'number') {
-      console.log('resp.text()', await resp.text());
       throw new Error(`Нет поля ${k} в ответе`);
     }
   }
