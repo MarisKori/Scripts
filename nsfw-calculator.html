@@ -957,17 +957,36 @@ function processFile(file) {
 }
 
 async function analyzeImage(key, base64, mediaType) {
+  let referer = "localhost";
+  let title = "unknown host";
+  if (window.location.href) {
+    if (window.location.href.startsWith('http')) {
+      referer = window.location.href
+      if (window.location.origin === 'https://mariskori.github.io') {
+        title = 'NSFW calculator'
+      } else {
+        title = 'NSFL calculator'
+      }
+    } else {
+      title = 'Local-host';
+    }
+  }
   const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${key}`,
       'Content-Type': 'application/json',
-      'X-Title': 'NSFW Score Calculator',                         // ← название
+      'HTTP-Referer': referer,
+      'X-Title': title,
     },
     body: JSON.stringify({
       model: MODEL,
       temperature: 0,
       seed: 42,
+      provider: {
+        order: ['google-vertex'],
+        allow_fallbacks: false  // запретить fallback на других провайдеров
+      },
       messages: [
         {
           role: 'system',
@@ -991,12 +1010,13 @@ async function analyzeImage(key, base64, mediaType) {
   const text = data.choices[0].message.content.trim();
   GLOBAL_TEXT = text;
   if (typeof(text) === 'string' && (text.match(/I'm sorry, but/) || text.match(/I'm not able to provide/) )) {
+    console.log('HOT ANSWER:', text);
     return {
       N:0, pfg:0, D:0, A:10, name:'Слишком горячая!',
     }
   }
   const json = JSON.parse(text.replace(/```json|```/g, '').trim());
-  console.log(json);
+  console.log(json, referer, title);
 
   for (const k of ['N', 'pfg', 'D', 'A']) {
     if (typeof json[k] !== 'number') {
