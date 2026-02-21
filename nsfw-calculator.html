@@ -54,36 +54,6 @@
     border-bottom: 1px solid var(--border);
   }
 
-  .legend {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 4px 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin-bottom: 16px;
-    font-size: 12px;
-    line-height: 1.8;
-  }
-
-  .legend-key {
-    font-weight: 600;
-    color: var(--accent);
-    text-align: right;
-    white-space: nowrap;
-  }
-
-  .legend-val {
-    color: var(--text-dim);
-  }
-
-  .legend-divider {
-    grid-column: 1 / -1;
-    border-top: 1px dashed var(--border);
-    margin: 4px 0;
-  }
-
   .section {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -111,16 +81,10 @@
     line-height: 40px;
   }
 
-  .op {
-    color: var(--text-dim);
-    padding: 0 2px;
-  }
-
-  .eq {
-    color: var(--accent-dim);
-    padding: 0 8px 0 4px;
-    font-weight: 600;
-  }
+  .op { color: var(--text-dim); padding: 0 2px; }
+  .eq { color: var(--accent-dim); padding: 0 8px 0 4px; font-weight: 600; }
+  .dot { color: var(--accent-dim); font-weight: 700; padding: 0 1px; }
+  .paren { color: var(--text-dim); font-size: 18px; font-weight: 300; }
 
   input[type="text"] {
     font-family: var(--mono);
@@ -190,7 +154,7 @@
     border: 1px solid var(--result-border);
     border-radius: 8px;
     padding: 20px 28px;
-    margin-top: 16px;
+    margin-bottom: 16px;
   }
 
   .final-score .label-side {
@@ -276,18 +240,6 @@
     font-weight: 700;
   }
 
-  .dot {
-    color: var(--accent-dim);
-    font-weight: 700;
-    padding: 0 1px;
-  }
-
-  .paren {
-    color: var(--text-dim);
-    font-size: 18px;
-    font-weight: 300;
-  }
-
   .intermediate-row {
     display: flex;
     align-items: center;
@@ -319,34 +271,109 @@
     font-style: italic;
   }
 
-  [title] {
-    cursor: help;
+  [title] { cursor: help; }
+
+  /* --- Legend --- */
+
+  .legend {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  .legend-key {
+    font-weight: 600;
+    color: var(--accent);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .legend-val { color: var(--text-dim); }
+
+  .legend-divider {
+    grid-column: 1 / -1;
+    border-top: 1px dashed var(--border);
+    margin: 4px 0;
+  }
+
+  /* --- Scale reference --- */
+
+  .ref-heading {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 32px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scale-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .scale-block-title {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scale-block-sub {
+    font-weight: 400;
+    color: var(--text-dim);
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 8px;
+    font-size: 11px;
+  }
+
+  .scale-row {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 0;
+    font-size: 12px;
+    line-height: 1.6;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scale-row:last-child { border-bottom: none; }
+
+  .scale-num {
+    font-weight: 600;
+    color: var(--accent);
+    text-align: center;
+    padding: 8px 0;
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scale-desc {
+    color: var(--text-dim);
+    padding: 8px 16px;
   }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>NSFW Score Calculator</h1>
-
-  <div class="legend">
-    <span class="legend-key">N</span>
-    <span class="legend-val">Nudity — степень наготы (0–10)</span>
-    <span class="legend-key">F</span>
-    <span class="legend-val">Framing — сексуальность позы, ракурса, фокуса камеры (0–10)</span>
-    <span class="legend-key">D</span>
-    <span class="legend-val">Design — сексуализированность костюма, пропорций, атрибутики (0–10)</span>
-    <div class="legend-divider"></div>
-    <span class="legend-key">A</span>
-    <span class="legend-val">Actions — степень явности сексуальных действий (0–10)</span>
-    <div class="legend-divider"></div>
-    <span class="legend-key">P</span>
-    <span class="legend-val">Presentation — сексуальная подача тела, noisy-OR от N, F, D (вычисляется)</span>
-    <span class="legend-key">S</span>
-    <span class="legend-val">Score — итоговый балл NSFW, noisy-OR от A и P (вычисляется)</span>
-    <div class="legend-divider"></div>
-    <span class="legend-key">wn wf wd</span>
-    <span class="legend-val">Весовые коэффициенты макс. вклада N, F, D (0–1)</span>
-  </div>
 
   <div class="lock-row">
     <input type="checkbox" id="lockCoeffs" checked>
@@ -368,7 +395,7 @@
         title="wn — вес наготы (0–1). Ограничивает макс. вклад Nudity">
       <span class="dot">·</span>
       <input type="text" id="nudity" placeholder="Nud"
-        title="Nudity (0–10): степень наготы. 0 = полностью одет, 10 = полная нагота с генитальным фокусом">
+        title="Nudity (0–10): степень наготы">
       <span class="paren">)</span>
       <span class="op">×</span>
       <span class="paren">(</span>
@@ -378,7 +405,7 @@
         title="wf — вес фрейминга (0–1). Ограничивает макс. вклад Framing">
       <span class="dot">·</span>
       <input type="text" id="framing" placeholder="Frm"
-        title="Framing (0–10): сексуальность подачи. 0 = нейтральная поза/ракурс, 10 = максимально провокативно">
+        title="Framing (0–10): сексуальность позы, ракурса, фокуса камеры">
       <span class="paren">)</span>
       <span class="op">×</span>
       <span class="paren">(</span>
@@ -388,7 +415,7 @@
         title="wd — вес дизайна (0–1). Ограничивает макс. вклад Design">
       <span class="dot">·</span>
       <input type="text" id="design" placeholder="Dsn"
-        title="Design (0–10): сексуализированность дизайна. 0 = нейтральный, 10 = максимально сексуализирован">
+        title="Design (0–10): сексуализированность костюма, пропорций, атрибутики">
       <span class="paren">)</span>
     </div>
     <div class="intermediate-row">
@@ -411,7 +438,7 @@
       <span>1</span>
       <span class="op">−</span>
       <input type="text" id="actions" placeholder="Act"
-        title="Actions (0–10): степень явности сексуальных действий. 0 = отсутствуют, 10 = изображены явно">
+        title="Actions (0–10): степень явности сексуальных действий">
       <span class="paren">)</span>
       <span class="op">×</span>
       <span class="paren">(</span>
@@ -433,6 +460,97 @@
       <div class="score-big" id="scoreOut">0.00</div>
     </div>
   </div>
+
+  <!-- ========== LEGEND ========== -->
+
+  <div class="legend">
+    <span class="legend-key">N</span>
+    <span class="legend-val">Nudity — степень наготы (0–10)</span>
+    <span class="legend-key">F</span>
+    <span class="legend-val">Framing — сексуальность позы, ракурса, фокуса камеры (0–10)</span>
+    <span class="legend-key">D</span>
+    <span class="legend-val">Design — сексуализированность костюма, пропорций, атрибутики (0–10)</span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">A</span>
+    <span class="legend-val">Actions — степень явности сексуальных действий (0–10)</span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">P</span>
+    <span class="legend-val">Presentation — сексуальная подача тела, noisy-OR от N, F, D (вычисляется)</span>
+    <span class="legend-key">S</span>
+    <span class="legend-val">Score — итоговый балл NSFW, noisy-OR от A и P (вычисляется)</span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">wn wf wd</span>
+    <span class="legend-val">Весовые коэффициенты макс. вклада N, F, D (0–1)</span>
+  </div>
+
+  <!-- ========== SCALE REFERENCE ========== -->
+
+  <div class="ref-heading">Подробные шкалы параметров</div>
+
+  <!-- N -->
+  <div class="scale-block">
+    <div class="scale-block-title">N — Nudity <span class="scale-block-sub">степень наготы</span></div>
+    <div class="scale-row"><div class="scale-num">0</div><div class="scale-desc">Полностью закрытая одежда. Деловой костюм, длинные рукава, ничего не обнажено</div></div>
+    <div class="scale-row"><div class="scale-num">1</div><div class="scale-desc">Минимально открыто. Футболка, шорты до колен, открытые руки и шея</div></div>
+    <div class="scale-row"><div class="scale-num">2</div><div class="scale-desc">Умеренно открыто. Майка, V-образный вырез, шорты выше колен</div></div>
+    <div class="scale-row"><div class="scale-num">3</div><div class="scale-desc">Заметно открыто. Кроп-топ, открытые плечи, короткие шорты</div></div>
+    <div class="scale-row"><div class="scale-num">4</div><div class="scale-desc">Существенно открыто. Глубокое декольте, мини-юбка, высокие вырезы на бёдрах</div></div>
+    <div class="scale-row"><div class="scale-num">5</div><div class="scale-desc">Пограничная нагота. Бикини, нижнее бельё — много тела открыто, но интимные зоны прикрыты</div></div>
+    <div class="scale-row"><div class="scale-num">6</div><div class="scale-desc">Частичная нагота. Прозрачная ткань, обнажённые спина и бока, мужской топлес</div></div>
+    <div class="scale-row"><div class="scale-num">7</div><div class="scale-desc">Выраженная нагота. Женский топлес, обнажённые ягодицы; гениталии всё ещё скрыты</div></div>
+    <div class="scale-row"><div class="scale-num">8</div><div class="scale-desc">Значительная нагота. Полная нагота, гениталии прикрыты минимально — рукой, предметом, ракурсом</div></div>
+    <div class="scale-row"><div class="scale-num">9</div><div class="scale-desc">Полная нагота. Всё тело обнажено, гениталии видны, но без акцента на них</div></div>
+    <div class="scale-row"><div class="scale-num">10</div><div class="scale-desc">Генитальный фокус. Крупный план гениталий, максимальная экспозиция</div></div>
+  </div>
+
+  <!-- F -->
+  <div class="scale-block">
+    <div class="scale-block-title">F — Framing <span class="scale-block-sub">сексуальность позы, ракурса, фокуса камеры</span></div>
+    <div class="scale-row"><div class="scale-num">0</div><div class="scale-desc">Нейтральная подача. Паспортное фото, прямая стойка, документальный ракурс</div></div>
+    <div class="scale-row"><div class="scale-num">1</div><div class="scale-desc">Естественная поза. Стоит, сидит, идёт — бытовые позы без подтекста</div></div>
+    <div class="scale-row"><div class="scale-num">2</div><div class="scale-desc">Привлекательная поза. Наклон головы, уверенная стойка — уровень модельного каталога</div></div>
+    <div class="scale-row"><div class="scale-num">3</div><div class="scale-desc">Лёгкий акцент на фигуру. Рука на бедре, слегка выгнутая спина</div></div>
+    <div class="scale-row"><div class="scale-num">4</div><div class="scale-desc">Умеренно провокативно. Заметный прогиб, камера чуть акцентирует грудь или бёдра</div></div>
+    <div class="scale-row"><div class="scale-num">5</div><div class="scale-desc">Явно провокативно. S-образный изгиб тела, камера намеренно фокусируется на частях тела</div></div>
+    <div class="scale-row"><div class="scale-num">6</div><div class="scale-desc">Сильно провокативно. Наклон с акцентом на ягодицы, поза «на четвереньках», взгляд-приглашение</div></div>
+    <div class="scale-row"><div class="scale-num">7</div><div class="scale-desc">Откровенно сексуально. Раздвинутые ноги, руки на интимных зонах, камера снизу</div></div>
+    <div class="scale-row"><div class="scale-num">8</div><div class="scale-desc">Максимально сексуальный фрейминг. Поза демонстрирует доступность, POV-ракурс</div></div>
+    <div class="scale-row"><div class="scale-num">9</div><div class="scale-desc">Имитация сексуального контекста. Поза «перед/во время акта», ракурс от лица партнёра</div></div>
+    <div class="scale-row"><div class="scale-num">10</div><div class="scale-desc">Порнографический фрейминг. Камера на гениталиях/проникновении, «мясной» ракурс</div></div>
+  </div>
+
+  <!-- D -->
+  <div class="scale-block">
+    <div class="scale-block-title">D — Design <span class="scale-block-sub">сексуализированность костюма, пропорций, атрибутики</span></div>
+    <div class="scale-row"><div class="scale-num">0</div><div class="scale-desc">Нейтральный дизайн. Реалистичные пропорции, обычная одежда без подтекста</div></div>
+    <div class="scale-row"><div class="scale-num">1</div><div class="scale-desc">Минимальный акцент. Приталенная одежда, лёгкое подчёркивание фигуры</div></div>
+    <div class="scale-row"><div class="scale-num">2</div><div class="scale-desc">Лёгкая стилизация. Облегающая одежда, слегка утрированные пропорции</div></div>
+    <div class="scale-row"><div class="scale-num">3</div><div class="scale-desc">Заметная стилизация. Обтягивающий костюм, высокие каблуки, пропорции чуть нереалистичны</div></div>
+    <div class="scale-row"><div class="scale-num">4</div><div class="scale-desc">Умеренная сексуализация. Вырезы и разрезы в одежде, пропорции явно утрированы</div></div>
+    <div class="scale-row"><div class="scale-num">5</div><div class="scale-desc">Явная сексуализация. Bunny-suit, French maid, мини-школьная форма; большая грудь, тонкая талия</div></div>
+    <div class="scale-row"><div class="scale-num">6</div><div class="scale-desc">Сильная сексуализация. Латекс, кожа, BDSM-элементы (ошейник, поводок); нереалистичные пропорции</div></div>
+    <div class="scale-row"><div class="scale-num">7</div><div class="scale-desc">Откровенный дизайн. Костюм из ремней, микробикини, «боевой купальник»; гипертрофированные пропорции</div></div>
+    <div class="scale-row"><div class="scale-num">8</div><div class="scale-desc">Экстремальная сексуализация. Одежда как декорация — почти ничего не закрывает; пропорции за гранью</div></div>
+    <div class="scale-row"><div class="scale-num">9</div><div class="scale-desc">Почти порнографический. «Одежда» = ленточки / наклейки / жидкость; максимально утрированные пропорции</div></div>
+    <div class="scale-row"><div class="scale-num">10</div><div class="scale-desc">Порнографический дизайн. Секс-игрушки как элемент костюма, body writing, экстремальный фетиш</div></div>
+  </div>
+
+  <!-- A -->
+  <div class="scale-block">
+    <div class="scale-block-title">A — Actions <span class="scale-block-sub">степень явности сексуальных действий</span></div>
+    <div class="scale-row"><div class="scale-num">0</div><div class="scale-desc">Никаких сексуальных действий. Стоит, идёт, сражается, разговаривает</div></div>
+    <div class="scale-row"><div class="scale-num">1</div><div class="scale-desc">Минимальный намёк. Флирт, многозначительный взгляд, случайное касание</div></div>
+    <div class="scale-row"><div class="scale-num">2</div><div class="scale-desc">Лёгкий подтекст. Облизывание губ, кусание пальца, поправление одежды с намёком</div></div>
+    <div class="scale-row"><div class="scale-num">3</div><div class="scale-desc">Лёгкий физический контакт. Поцелуй, объятие с прижатием, рука на бедре</div></div>
+    <div class="scale-row"><div class="scale-num">4</div><div class="scale-desc">Умеренный контакт. Страстный поцелуй, руки под одеждой, тела прижаты</div></div>
+    <div class="scale-row"><div class="scale-num">5</div><div class="scale-desc">Явный сексуальный контакт. Раздевание, ощупывание груди / ягодиц, dry humping</div></div>
+    <div class="scale-row"><div class="scale-num">6</div><div class="scale-desc">Имитация полового акта. Характерные движения, но гениталии не видны</div></div>
+    <div class="scale-row"><div class="scale-num">7</div><div class="scale-desc">Подразумеваемый акт. Позиция и движения однозначны, но скрыты одеялом / ракурсом</div></div>
+    <div class="scale-row"><div class="scale-num">8</div><div class="scale-desc">Видимый акт без детализации. Секс показан, но без крупных планов проникновения</div></div>
+    <div class="scale-row"><div class="scale-num">9</div><div class="scale-desc">Явный половой акт. Проникновение видно без экстремальной детализации</div></div>
+    <div class="scale-row"><div class="scale-num">10</div><div class="scale-desc">Максимально явный акт. Крупные планы проникновения, камшоты, экстремальные практики</div></div>
+  </div>
+
 </div>
 
 <script>
