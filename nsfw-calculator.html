@@ -676,6 +676,12 @@ button:hover {
 <script>
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => e.preventDefault());
+document.addEventListener('paste', e => {
+  const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
+  if (!item) return;
+  const file = item.getAsFile();
+  if (file) processFile(file);
+});
 
 const $ = id => document.getElementById(id);
 
@@ -1033,6 +1039,9 @@ document.addEventListener('DOMContentLoaded', () => {
   dataFields.forEach(id => {
     if ($(id).value.trim() !== '') $(id).value = '0';
   });
+  $('wn').value = '0.9';
+  $('wf').value = '0.6';
+  $('wd').value = '0.6';
   calc();
 });
 
