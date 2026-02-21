@@ -5,375 +5,519 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NSFW Score Calculator</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-  :root {
-    --bg: #1a1a1e;
-    --surface: #242429;
-    --surface-2: #2e2e35;
-    --border: #3a3a42;
-    --text: #e0e0e4;
-    --text-dim: #8888a0;
-    --accent: #f0a050;
-    --accent-dim: #a07030;
-    --input-bg: #2c2c33;
-    --input-locked: #1e1e23;
-    --result-bg: #302a20;
-    --result-border: #504030;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'IBM Plex Sans', sans-serif;
-  }
+:root {
+  --bg: #1a1a1e;
+  --surface: #242429;
+  --surface-2: #2e2e35;
+  --border: #3a3a42;
+  --text: #e0e0e4;
+  --text-dim: #8888a0;
+  --accent: #f0a050;
+  --accent-dim: #a07030;
+  --input-bg: #2c2c33;
+  --input-locked: #1e1e23;
+  --result-bg: #302a20;
+  --result-border: #504030;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
 
-  body {
-    font-family: var(--mono);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 40px 20px;
-    line-height: 1.6;
-  }
+body {
+  font-family: var(--mono);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+  line-height: 1.6;
+}
 
-  .container {
-    max-width: 780px;
-    width: 100%;
-  }
+.container {
+  max-width: 780px;
+  width: 100%;
+}
 
-  h1 {
-    font-family: var(--sans);
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    margin-bottom: 32px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
+h1 {
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 32px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
 
-  .section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 28px 28px 24px;
-    margin-bottom: 16px;
-  }
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 28px 28px 24px;
+  margin-bottom: 16px;
+}
 
-  .section-label {
-    font-family: var(--sans);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    margin-bottom: 20px;
-  }
+.section-label {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
 
-  .formula-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0;
-    font-size: 15px;
-    line-height: 40px;
-  }
+.formula-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  font-size: 15px;
+  line-height: 40px;
+}
 
-  .op { color: var(--text-dim); padding: 0 2px; }
-  .eq { color: var(--accent-dim); padding: 0 8px 0 4px; font-weight: 600; }
-  .dot { color: var(--accent-dim); font-weight: 700; padding: 0 1px; }
-  .paren { color: var(--text-dim); font-size: 18px; font-weight: 300; }
+.op { color: var(--text-dim); padding: 0 2px; }
+.eq { color: var(--accent-dim); padding: 0 8px 0 4px; font-weight: 600; }
+.dot { color: var(--accent-dim); font-weight: 700; padding: 0 1px; }
+.paren { color: var(--text-dim); font-size: 18px; font-weight: 300; }
 
-  input[type="text"] {
-    font-family: var(--mono);
-    font-size: 14px;
-    font-weight: 500;
-    width: 52px;
-    height: 34px;
-    text-align: center;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--input-bg);
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-    margin: 0 1px;
-  }
+input[type="text"] {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  width: 52px;
+  height: 34px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  margin: 0 1px;
+}
 
-  input[type="text"]::placeholder {
-    color: #555566;
-    font-size: 10px;
-    font-weight: 400;
-  }
+input[type="text"]::placeholder {
+  color: #555566;
+  font-size: 10px;
+  font-weight: 400;
+}
 
-  input[type="text"]:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(240, 160, 80, 0.15);
-  }
+input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(240, 160, 80, 0.15);
+}
 
-  input[type="text"].coeff {
-    background: var(--input-locked);
-    color: var(--accent);
-    width: 46px;
-    font-size: 13px;
-    border-color: var(--border);
-  }
+input[type="text"].coeff {
+  background: var(--input-locked);
+  color: var(--accent);
+  width: 46px;
+  font-size: 13px;
+  border-color: var(--border);
+}
 
-  input[type="text"].coeff:not(:disabled):focus {
-    border-color: var(--accent);
-  }
+input[type="text"].coeff:not(:disabled):focus {
+  border-color: var(--accent);
+}
 
-  input[type="text"]:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
+input[type="text"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
-  .result-inline {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 62px;
-    height: 34px;
-    padding: 0 10px;
-    background: var(--result-bg);
-    border: 1px solid var(--result-border);
-    border-radius: 4px;
-    font-weight: 600;
-    color: var(--accent);
-    margin: 0 1px;
-    font-size: 15px;
-  }
+.result-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--result-bg);
+  border: 1px solid var(--result-border);
+  border-radius: 4px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 1px;
+  font-size: 15px;
+}
 
-  .final-score {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface);
-    border: 1px solid var(--result-border);
-    border-radius: 8px;
-    padding: 20px 28px;
-    margin-bottom: 16px;
-  }
+.final-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--result-border);
+  border-radius: 8px;
+  padding: 20px 28px;
+  margin-bottom: 16px;
+}
 
-  .final-score .label-side {
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-  }
+.final-score .label-side {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+}
 
-  .final-score .value-side {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+.final-score .value-side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 
-  .score-big {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: -1px;
-    min-width: 90px;
-    text-align: right;
-  }
+.score-big {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -1px;
+  min-width: 90px;
+  text-align: right;
+}
 
-  .score-bar-wrap {
-    width: 120px;
-    height: 8px;
-    background: var(--surface-2);
-    border-radius: 4px;
-    overflow: hidden;
-  }
+.score-bar-wrap {
+  width: 120px;
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
 
-  .score-bar {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 4px;
-    transition: width 0.2s ease;
-    width: 0%;
-  }
+.score-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.2s ease;
+  width: 0%;
+}
 
-  .lock-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
+.lock-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
 
-  .lock-row label {
-    font-family: var(--sans);
-    font-size: 12px;
-    color: var(--text-dim);
-    cursor: pointer;
-    user-select: none;
-  }
+.lock-row label {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
 
-  input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    background: var(--input-bg);
-    cursor: pointer;
-    position: relative;
-    flex-shrink: 0;
-  }
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--input-bg);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
 
-  input[type="checkbox"]:checked {
-    background: var(--accent-dim);
-    border-color: var(--accent);
-  }
+input[type="checkbox"]:checked {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
 
-  input[type="checkbox"]:checked::after {
-    content: '✓';
-    position: absolute;
-    top: -1px;
-    left: 2px;
-    font-size: 12px;
-    color: var(--text);
-    font-weight: 700;
-  }
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: -1px;
+  left: 2px;
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 700;
+}
 
-  .intermediate-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--border);
-    font-size: 13px;
-    color: var(--text-dim);
-  }
+.intermediate-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  font-size: 13px;
+  color: var(--text-dim);
+}
 
-  .intermediate-row .result-inline {
-    font-size: 13px;
-    height: 28px;
-    min-width: 50px;
-  }
+.intermediate-row .result-inline {
+  font-size: 13px;
+  height: 28px;
+  min-width: 50px;
+}
 
-  .scale-hint {
-    font-size: 11px;
-    color: var(--text-dim);
-    opacity: 0.5;
-  }
+.scale-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
 
-  .norm-note {
-    font-size: 11px;
-    color: var(--text-dim);
-    opacity: 0.4;
-    margin-top: 8px;
-    font-style: italic;
-  }
+.norm-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.4;
+  margin-top: 8px;
+  font-style: italic;
+}
 
-  [title] { cursor: help; }
+[title] { cursor: help; }
 
-  /* --- Legend --- */
+/* --- Legend --- */
 
-  .legend {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 4px 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin-bottom: 16px;
-    font-size: 12px;
-    line-height: 1.8;
-  }
+.legend {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.8;
+}
 
-  .legend-key {
-    font-weight: 600;
-    color: var(--accent);
-    text-align: right;
-    white-space: nowrap;
-  }
+.legend-key {
+  font-weight: 600;
+  color: var(--accent);
+  text-align: right;
+  white-space: nowrap;
+}
 
-  .legend-val { color: var(--text-dim); }
+.legend-val { color: var(--text-dim); }
 
-  .legend-divider {
-    grid-column: 1 / -1;
-    border-top: 1px dashed var(--border);
-    margin: 4px 0;
-  }
+.legend-divider {
+  grid-column: 1 / -1;
+  border-top: 1px dashed var(--border);
+  margin: 4px 0;
+}
 
-  /* --- Scale reference --- */
+.legend-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  margin-top: 3px;
+  line-height: 1.7;
+}
 
-  .ref-heading {
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    margin: 32px 0 16px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
+.legend-sub-grid {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 2px 8px;
+  margin-top: 5px;
+}
 
-  .scale-block {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    overflow: hidden;
-  }
+.legend-sub-key {
+  font-weight: 700;
+  color: var(--accent-dim);
+  font-size: 11px;
+  line-height: 1.7;
+  text-align: right;
+}
 
-  .scale-block-title {
-    font-family: var(--sans);
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--accent);
-    padding: 16px 20px 12px;
-    border-bottom: 1px solid var(--border);
-  }
+code.legend-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent-dim);
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
 
-  .scale-block-sub {
-    font-weight: 400;
-    color: var(--text-dim);
-    text-transform: none;
-    letter-spacing: 0;
-    margin-left: 8px;
-    font-size: 11px;
-  }
+/* --- Scale reference --- */
 
-  .scale-row {
-    display: grid;
-    grid-template-columns: 32px 1fr;
-    gap: 0;
-    font-size: 12px;
-    line-height: 1.6;
-    border-bottom: 1px solid var(--border);
-  }
+.ref-heading {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 32px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
 
-  .scale-row:last-child { border-bottom: none; }
+.scale-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
 
-  .scale-num {
-    font-weight: 600;
-    color: var(--accent);
-    text-align: center;
-    padding: 8px 0;
-    background: var(--surface-2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.scale-block-title {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
 
-  .scale-desc {
-    color: var(--text-dim);
-    padding: 8px 16px;
-  }
+.scale-block-sub {
+  font-weight: 400;
+  color: var(--text-dim);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 8px;
+  font-size: 11px;
+}
+
+.scale-row {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  border-bottom: 1px solid var(--border);
+}
+
+.scale-row:last-child { border-bottom: none; }
+
+.scale-num {
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+  padding: 8px 0;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scale-desc {
+  color: var(--text-dim);
+  padding: 8px 16px;
+}
+
+button {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  height: 34px;
+  padding: 0 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+button:hover {
+  border-color: var(--accent);
+  background: var(--result-bg);
+  color: var(--accent);
+}
+
+.drop-zone * {
+  pointer-events: none;
+}
+
+.drop-zone {
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.drop-zone .drop-icon {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--accent-dim);
+}
+
+.drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--result-bg);
+  color: var(--accent);
+}
+
+.drop-zone.drag-over .drop-icon {
+  color: var(--accent);
+}
+
+.drop-zone img.preview {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 4px;
+  object-fit: contain;
+  display: none;
+}
+
+.drop-zone.has-preview img.preview {
+  display: block;
+}
+
+.drop-zone.has-preview .drop-icon,
+.drop-zone.has-preview .drop-hint {
+  display: none;
+}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>NSFW Score Calculator</h1>
+
+  <div class="ref-heading" style="margin-top: 40px;">Анализ изображения</div>
+  <div class="section" id="dropSection">
+    <div class="section-label">Загрузить изображение</div>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">+</div>
+      <div class="drop-hint">Перетащите изображение или нажмите</div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
+    </div>
+    <div id="analyzeStatus" style="margin-top: 12px; font-size: 13px; color: var(--text-dim);"></div>
+  </div>
+  
+  <div id="fakeProgressWrap" style="display:none; margin-top: 10px;">
+    <div style="
+      width: 100%;
+      height: 4px;
+      background: var(--surface-2);
+      border-radius: 2px;
+      overflow: hidden;
+    ">
+      <div id="fakeProgressBar" style="
+        height: 100%;
+        width: 0%;
+        background: var(--accent);
+        border-radius: 2px;
+        transition: none;
+      "></div>
+    </div>
+  </div>
+
+  <!-- Final -->
+  <div class="final-score">
+    <div class="label-side">Score <span class="scale-hint">/ 10</span></div>
+    <div class="value-side">
+      <div class="score-bar-wrap">
+        <div class="score-bar" id="scoreBar"></div>
+      </div>
+      <div class="score-big" id="scoreOut">0.00</div>
+    </div>
+  </div>
 
   <div class="lock-row">
     <input type="checkbox" id="lockCoeffs" checked>
@@ -450,163 +594,448 @@
     <div class="norm-note">Значение A нормализуется ÷10 перед подстановкой; результат ×10</div>
   </div>
 
-  <!-- Final -->
-  <div class="final-score">
-    <div class="label-side">Score <span class="scale-hint">/ 10</span></div>
-    <div class="value-side">
-      <div class="score-bar-wrap">
-        <div class="score-bar" id="scoreBar"></div>
-      </div>
-      <div class="score-big" id="scoreOut">0.00</div>
+  <!-- ========== LEGEND ========== -->
+
+<div class="legend">
+  <!-- N -->
+  <span class="legend-key">N</span>
+  <span class="legend-val">
+    Nudity — взвешенная сумма открытых частей тела (0–10)<br>
+    <span class="legend-sub">∑ коэффициент × (0 / 0.5 / 1) по 12 зонам: руки 0.2, плечи 0.2, голени 0.2, живот 0.4, бёдра 0.5, верх. спина 0.3, поясница 0.5, грудь нейтр. 0.5, женская грудь 1.5, ягодицы 1.5, лобок 1.0, гениталии 3.4</span>
+  </span>
+
+  <div class="legend-divider"></div>
+
+  <!-- pfg -->
+  <span class="legend-key">pfg</span>
+  <span class="legend-val">
+    Framing — <code class="legend-code">max(p, f, g)</code> (0–10)
+    <div class="legend-sub-grid">
+      <span class="legend-sub-key">p</span>
+      <span class="legend-sub">Поза: функц. 0 · презентац. 2 · акцент. 5 · имплицитно секс. 7 · порно 10</span>
+      <span class="legend-sub-key">f</span>
+      <span class="legend-sub">Фрейминг камеры: нейтр. 0 · эстетиз. 3 · анатомиз. 5 · POV 8 · порно 10</span>
+      <span class="legend-sub-key">g</span>
+      <span class="legend-sub">Взгляд/мимика: нейтр. 0 · контакт. 1 · приглаш. 4 · секс. эксплиц. 7 · порно 10</span>
+    </div>
+  </span>
+
+  <div class="legend-divider"></div>
+
+  <!-- D -->
+  <span class="legend-key">D</span>
+  <span class="legend-val">
+    Design — сумма маркеров сексуализации, макс. 10<br>
+    <span class="legend-sub">Архетипы: школьница 1, горничная 1, bunny-suit 2, боевой купальник 2, микробикини/ремни 3 · Материалы: прозрачная ткань 1, кожа 2, латекс 3 · Маркеры: BDSM-атрибутика 3, body writing 3, секс-игрушка в костюме 5</span>
+  </span>
+
+  <div class="legend-divider"></div>
+
+  <!-- A -->
+  <span class="legend-key">A</span>
+  <span class="legend-val">
+    Actions — дискретная шкала явности действий (0–10)<br>
+    <span class="legend-sub">Нет 0 · сигнал без контакта 2 · первый контакт 4 · прямой контакт с эрогенными зонами 5 · фрикции 7 · проникновение 9 · экстремальные практики 10</span>
+  </span>
+
+  <div class="legend-divider"></div>
+
+  <!-- вычисляемые -->
+  <span class="legend-key">P</span>
+  <span class="legend-val">Presentation — noisy-OR от N, pfg, D: <code class="legend-code">1 − (1−wn·N)(1−wf·F)(1−wd·D)</code></span>
+
+  <span class="legend-key">S</span>
+  <span class="legend-val">Score — noisy-OR от A и P: <code class="legend-code">1 − (1−A)(1−P)</code></span>
+
+  <div class="legend-divider"></div>
+
+  <!-- веса -->
+  <span class="legend-key">wn wf wd</span>
+  <span class="legend-val">Весовые коэффициенты максимального вклада N, pfg, D (0–1) — по умолчанию 0.9 / 0.6 / 0.6</span>
+</div>
+
+  <!-- Блок добавления ключа для API к OpenRouter -->
+  <div class="ref-heading" style="margin-top: 40px;">API Key</div>
+  <div class="section" id="keySection">
+    <div class="section-label">OpenRouter API Key</div>
+    <div class="formula-row" style="gap: 8px;">
+      <input
+        type="text"
+        id="apiKey"
+        placeholder="sk-or-..."
+        style="width: 100%; max-width: 420px; text-align: left; padding: 0 10px;"
+      >
+      <button id="saveKey">Save</button>
+      <span id="keyStatus" style="font-size: 12px; color: var(--text-dim);"></span>
     </div>
   </div>
 
-  <!-- ========== LEGEND ========== -->
-
-  <div class="legend">
-    <span class="legend-key">N</span>
-    <span class="legend-val">Nudity — степень наготы (0–10)</span>
-    <span class="legend-key">F</span>
-    <span class="legend-val">Framing — сексуальность позы, ракурса, фокуса камеры (0–10)</span>
-    <span class="legend-key">D</span>
-    <span class="legend-val">Design — сексуализированность костюма, пропорций, атрибутики (0–10)</span>
-    <div class="legend-divider"></div>
-    <span class="legend-key">A</span>
-    <span class="legend-val">Actions — степень явности сексуальных действий (0–10)</span>
-    <div class="legend-divider"></div>
-    <span class="legend-key">P</span>
-    <span class="legend-val">Presentation — сексуальная подача тела, noisy-OR от N, F, D (вычисляется)</span>
-    <span class="legend-key">S</span>
-    <span class="legend-val">Score — итоговый балл NSFW, noisy-OR от A и P (вычисляется)</span>
-    <div class="legend-divider"></div>
-    <span class="legend-key">wn wf wd</span>
-    <span class="legend-val">Весовые коэффициенты макс. вклада N, F, D (0–1)</span>
-  </div>
-
-  <!-- ========== SCALE REFERENCE ========== -->
-
-  <div class="ref-heading">Подробные шкалы параметров</div>
-
-  <!-- N -->
-  <div class="scale-block">
-    <div class="scale-block-title">N — Nudity <span class="scale-block-sub">степень наготы</span></div>
-    <div class="scale-row"><div class="scale-num">0</div><div class="scale-desc">Полностью закрытая одежда. Деловой костюм, длинные рукава, ничего не обнажено</div></div>
-    <div class="scale-row"><div class="scale-num">1</div><div class="scale-desc">Минимально открыто. Футболка, шорты до колен, открытые руки и шея</div></div>
-    <div class="scale-row"><div class="scale-num">2</div><div class="scale-desc">Умеренно открыто. Майка, V-образный вырез, шорты выше колен</div></div>
-    <div class="scale-row"><div class="scale-num">3</div><div class="scale-desc">Заметно открыто. Кроп-топ, открытые плечи, короткие шорты</div></div>
-    <div class="scale-row"><div class="scale-num">4</div><div class="scale-desc">Существенно открыто. Глубокое декольте, мини-юбка, высокие вырезы на бёдрах</div></div>
-    <div class="scale-row"><div class="scale-num">5</div><div class="scale-desc">Пограничная нагота. Бикини, нижнее бельё — много тела открыто, но интимные зоны прикрыты</div></div>
-    <div class="scale-row"><div class="scale-num">6</div><div class="scale-desc">Частичная нагота. Прозрачная ткань, обнажённые спина и бока, мужской топлес</div></div>
-    <div class="scale-row"><div class="scale-num">7</div><div class="scale-desc">Выраженная нагота. Женский топлес, обнажённые ягодицы; гениталии всё ещё скрыты</div></div>
-    <div class="scale-row"><div class="scale-num">8</div><div class="scale-desc">Значительная нагота. Полная нагота, гениталии прикрыты минимально — рукой, предметом, ракурсом</div></div>
-    <div class="scale-row"><div class="scale-num">9</div><div class="scale-desc">Полная нагота. Всё тело обнажено, гениталии видны, но без акцента на них</div></div>
-    <div class="scale-row"><div class="scale-num">10</div><div class="scale-desc">Генитальный фокус. Крупный план гениталий, максимальная экспозиция</div></div>
-  </div>
-
-  <!-- F -->
-  <div class="scale-block">
-    <div class="scale-block-title">F — Framing <span class="scale-block-sub">сексуальность позы, ракурса, фокуса камеры</span></div>
-    <div class="scale-row"><div class="scale-num">0</div><div class="scale-desc">Нейтральная подача. Паспортное фото, прямая стойка, документальный ракурс</div></div>
-    <div class="scale-row"><div class="scale-num">1</div><div class="scale-desc">Естественная поза. Стоит, сидит, идёт — бытовые позы без подтекста</div></div>
-    <div class="scale-row"><div class="scale-num">2</div><div class="scale-desc">Привлекательная поза. Наклон головы, уверенная стойка — уровень модельного каталога</div></div>
-    <div class="scale-row"><div class="scale-num">3</div><div class="scale-desc">Лёгкий акцент на фигуру. Рука на бедре, слегка выгнутая спина</div></div>
-    <div class="scale-row"><div class="scale-num">4</div><div class="scale-desc">Умеренно провокативно. Заметный прогиб, камера чуть акцентирует грудь или бёдра</div></div>
-    <div class="scale-row"><div class="scale-num">5</div><div class="scale-desc">Явно провокативно. S-образный изгиб тела, камера намеренно фокусируется на частях тела</div></div>
-    <div class="scale-row"><div class="scale-num">6</div><div class="scale-desc">Сильно провокативно. Наклон с акцентом на ягодицы, поза «на четвереньках», взгляд-приглашение</div></div>
-    <div class="scale-row"><div class="scale-num">7</div><div class="scale-desc">Откровенно сексуально. Раздвинутые ноги, руки на интимных зонах, камера снизу</div></div>
-    <div class="scale-row"><div class="scale-num">8</div><div class="scale-desc">Максимально сексуальный фрейминг. Поза демонстрирует доступность, POV-ракурс</div></div>
-    <div class="scale-row"><div class="scale-num">9</div><div class="scale-desc">Имитация сексуального контекста. Поза «перед/во время акта», ракурс от лица партнёра</div></div>
-    <div class="scale-row"><div class="scale-num">10</div><div class="scale-desc">Порнографический фрейминг. Камера на гениталиях/проникновении, «мясной» ракурс</div></div>
-  </div>
-
-  <!-- D -->
-  <div class="scale-block">
-    <div class="scale-block-title">D — Design <span class="scale-block-sub">сексуализированность костюма, пропорций, атрибутики</span></div>
-    <div class="scale-row"><div class="scale-num">0</div><div class="scale-desc">Нейтральный дизайн. Реалистичные пропорции, обычная одежда без подтекста</div></div>
-    <div class="scale-row"><div class="scale-num">1</div><div class="scale-desc">Минимальный акцент. Приталенная одежда, лёгкое подчёркивание фигуры</div></div>
-    <div class="scale-row"><div class="scale-num">2</div><div class="scale-desc">Лёгкая стилизация. Облегающая одежда, слегка утрированные пропорции</div></div>
-    <div class="scale-row"><div class="scale-num">3</div><div class="scale-desc">Заметная стилизация. Обтягивающий костюм, высокие каблуки, пропорции чуть нереалистичны</div></div>
-    <div class="scale-row"><div class="scale-num">4</div><div class="scale-desc">Умеренная сексуализация. Вырезы и разрезы в одежде, пропорции явно утрированы</div></div>
-    <div class="scale-row"><div class="scale-num">5</div><div class="scale-desc">Явная сексуализация. Bunny-suit, French maid, мини-школьная форма; большая грудь, тонкая талия</div></div>
-    <div class="scale-row"><div class="scale-num">6</div><div class="scale-desc">Сильная сексуализация. Латекс, кожа, BDSM-элементы (ошейник, поводок); нереалистичные пропорции</div></div>
-    <div class="scale-row"><div class="scale-num">7</div><div class="scale-desc">Откровенный дизайн. Костюм из ремней, микробикини, «боевой купальник»; гипертрофированные пропорции</div></div>
-    <div class="scale-row"><div class="scale-num">8</div><div class="scale-desc">Экстремальная сексуализация. Одежда как декорация — почти ничего не закрывает; пропорции за гранью</div></div>
-    <div class="scale-row"><div class="scale-num">9</div><div class="scale-desc">Почти порнографический. «Одежда» = ленточки / наклейки / жидкость; максимально утрированные пропорции</div></div>
-    <div class="scale-row"><div class="scale-num">10</div><div class="scale-desc">Порнографический дизайн. Секс-игрушки как элемент костюма, body writing, экстремальный фетиш</div></div>
-  </div>
-
-  <!-- A -->
-  <div class="scale-block">
-    <div class="scale-block-title">A — Actions <span class="scale-block-sub">степень явности сексуальных действий</span></div>
-    <div class="scale-row"><div class="scale-num">0</div><div class="scale-desc">Никаких сексуальных действий. Стоит, идёт, сражается, разговаривает</div></div>
-    <div class="scale-row"><div class="scale-num">1</div><div class="scale-desc">Минимальный намёк. Флирт, многозначительный взгляд, случайное касание</div></div>
-    <div class="scale-row"><div class="scale-num">2</div><div class="scale-desc">Лёгкий подтекст. Облизывание губ, кусание пальца, поправление одежды с намёком</div></div>
-    <div class="scale-row"><div class="scale-num">3</div><div class="scale-desc">Лёгкий физический контакт. Поцелуй, объятие с прижатием, рука на бедре</div></div>
-    <div class="scale-row"><div class="scale-num">4</div><div class="scale-desc">Умеренный контакт. Страстный поцелуй, руки под одеждой, тела прижаты</div></div>
-    <div class="scale-row"><div class="scale-num">5</div><div class="scale-desc">Явный сексуальный контакт. Раздевание, ощупывание груди / ягодиц, dry humping</div></div>
-    <div class="scale-row"><div class="scale-num">6</div><div class="scale-desc">Имитация полового акта. Характерные движения, но гениталии не видны</div></div>
-    <div class="scale-row"><div class="scale-num">7</div><div class="scale-desc">Подразумеваемый акт. Позиция и движения однозначны, но скрыты одеялом / ракурсом</div></div>
-    <div class="scale-row"><div class="scale-num">8</div><div class="scale-desc">Видимый акт без детализации. Секс показан, но без крупных планов проникновения</div></div>
-    <div class="scale-row"><div class="scale-num">9</div><div class="scale-desc">Явный половой акт. Проникновение видно без экстремальной детализации</div></div>
-    <div class="scale-row"><div class="scale-num">10</div><div class="scale-desc">Максимально явный акт. Крупные планы проникновения, камшоты, экстремальные практики</div></div>
-  </div>
 
 </div>
 
 <script>
-  const $ = id => document.getElementById(id);
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => e.preventDefault());
 
-  const dataFields = ['nudity', 'framing', 'design', 'actions'];
-  const coeffFields = ['wn', 'wf', 'wd'];
-  const allFields = [...dataFields, ...coeffFields];
+const $ = id => document.getElementById(id);
 
-  function sanitize(e) {
-    const el = e.target;
-    el.value = el.value.replace(/[^0-9.]/g, '');
-    const dots = el.value.split('.');
-    if (dots.length > 2) {
-      el.value = dots[0] + '.' + dots.slice(1).join('');
+const dataFields = ['nudity', 'framing', 'design', 'actions'];
+const coeffFields = ['wn', 'wf', 'wd'];
+const allFields = [...dataFields, ...coeffFields];
+
+function sanitize(e) {
+  const el = e.target;
+  el.value = el.value.replace(/[^0-9.]/g, '');
+  const dots = el.value.split('.');
+  if (dots.length > 2) {
+    el.value = dots[0] + '.' + dots.slice(1).join('');
+  }
+}
+
+function val(id, max) {
+  const v = parseFloat($(id).value);
+  if (isNaN(v)) return 0;
+  return Math.max(0, Math.min(max, v));
+}
+
+// --- API Key ---
+const keyInput = $('apiKey');
+const keyStatus = $('keyStatus');
+
+function loadKey() {
+  const stored = localStorage.getItem('keyNSFW');
+  if (stored) {
+    keyInput.value = stored;
+    keyStatus.textContent = '✓ key loaded';
+    keyStatus.style.color = 'var(--accent)';
+  }
+}
+
+$('saveKey').addEventListener('click', () => {
+  const k = keyInput.value.trim();
+  if (!k) {
+    localStorage.removeItem('keyNSFW');
+    keyStatus.textContent = 'key cleared';
+    keyStatus.style.color = 'var(--text-dim)';
+    return;
+  }
+  localStorage.setItem('keyNSFW', k);
+  keyStatus.textContent = '✓ saved';
+  keyStatus.style.color = 'var(--accent)';
+});
+
+loadKey();
+
+// --- Image analyze ---
+const dropZone = $('dropZone');
+const fileInput = $('fileInput');
+const analyzeStatus = $('analyzeStatus');
+
+const ANALYZE_PROMPT = `<role>Ты эксперт по разметке NSFW-контента. Оцени изображение по четырём параметрам.</role>
+<goal>
+Верни ТОЛЬКО валидный JSON без пояснений:
+{
+  "name": "<краткое описание>",
+  "N_arr": [<значения обнажённости>],
+  "N": <0–10>,
+  "pfg_arr": [три составляющие],
+  "pfg": <0–10>,
+  "D": <0–10>,
+  "A": <0–10>
+}
+</goal>
+<brief>
+N — степень наготы (0 = полностью одет, 10 = генитальный крупный план)
+pfg — сексуальность позы/ракурса (0 = нейтрально, 10 = порнографический фрейминг)
+D — сексуализированность дизайна/костюма (0 = нейтрально, 10 = порнографический дизайн)
+A — явность сексуальных действий (0 = нет действий, 10 = экстремальная явность)
+</brief>
+<scale_guide>
+Перед началом необходимо выбрать самого сексуализированного персонажа на изображении и дать ему краткое описание (либо null) в поле "name". Далее все вычисления будут касаться только этого персонажа. Далее нужно заполнить массив N_arr значениями 12 частей тела с учётом обнажённости.
+
+Более подробно про каждый параметр:
+
+### N - степень экспозиции тела
+
+N считается как сумма коэффициентов для открытых частей тела. Каждая часть тела считается:
+- либо полностью закрыта (x0)
+- либо частично открыта (колготки, вуаль, лохмотья и пр.) (x0.5)
+- либо полностью открыта (x1)
+
+Сами части тела имеют свои коэффициенты:
+1. Руки (от плеч до запястий) = 0.2
+2. Плечи = 0.2
+3. Голени / ступни = 0.4
+4. Живот = 0.4
+5. Бёдра (внутренняя/внешняя поверхность)= 0.5
+6. Верхняя спина = 0.3
+7. Поясница / нижняя спина= 0.5
+8. Грудь нейтральная (мужской торс / зона декольте без сосков) = 0.5
+9. Женская грудь (соски и ареолы) = 1.4
+10. Ягодицы = 1.4
+11. Лобковая область (без гениталий) = 1.0
+12. Гениталии = 3.4
+
+### pfg — сексуальность позы/ракурса
+
+Этот параметр считается как максимум от трёх составляющих:
+1. p — Поза тела
+  - Функциональная = 0 (тело как объект документации, не презентации)
+  - Презентационная = 2 (поза осознанно «показывает» тело, но без сексуального контекста: модельный каталог, мода, спорт)
+  - Акцентирующая = 5 (тело начинает «предлагать» себя — прогиб, выдвинутое бедро, части тела становятся сообщением)
+  - Имплицитно сексуальная = 7 (поза воспроизводит логику полового контекста: доступность, раскрытость, имитация акта)
+  - Порнографическая = 10 (поза существует только для демонстрации проникновения)
+2. f — Фрейминг камеры
+  - Нейтральный = 0 (камера фиксирует человека целиком, без интерпретации)
+  - Эстетизирующий = 3 (угол и кадр работают на привлекательность, не на анатомию; выгодный ракурс, но субъект — человек, не части тела)
+  - Анатомизирующий = 5 (камера наведена на часть тела как самостоятельный объект: грудь, бёдра, ягодицы как основной визуальный «текст»)
+  - POV/партнёрский = 8 (ракурс помещает зрителя в позицию сексуального участника)
+  - Порнографический = 10 (гениталии/проникновение как единственный предмет кадра)
+3. g — Взгляд и мимика
+  - Нейтральный = 0 (взгляд не направлен на зрителя, мимика функциональная)
+  - Контактный = 1 (осознанный контакт со зрителем или другим персонажем, но без подтекста)
+  - Приглашающий= 4 (зритель или другой персонаж неявно трактуется как потенциальный партнёр: «bedroom eyes», приоткрытый рот, направленная интимность)
+  - Сексуально эксплицитный = 7 (взгляд прямо транслирует сексуальное намерение: мимика разыгрывает сцену — возбуждение, оргазм)
+  - Порнографический = 10 (выражение существует только как часть полового акта)
+
+### D — сексуализированность дизайна/костюма
+
+Здесь все присутствующие на изображении персонажа пункты суммируются. Если сумма больше 10, то обрезается до 10.
+- Архетипы
+  - Школьница = 1
+  - Горничная = 1
+  - Bunny-suit = 2
+  - «Боевой купальник» = 2
+  - Микробикини или костюм из ремней = 3
+- Материалы
+  - Прозрачная ткань = 1
+  - Кожа = 2
+  - Латекс = 3
+- Маркеры
+  - BDSM-атрибутика: ошейник, поводок, наручники = 3
+  - Body writing = 3
+  - Секс-игрушка как элемент костюма = 5
+
+### A — явность сексуальных действий
+
+Понятно, что именно *действия* сложно анализировать на изображении, но иногда по косвенным признакам это можно сделать.
+Здесь нужно выбрать один подходящий пункт на шкале:
+- Нет действий = 0
+- Сексуальный сигнал без контакта (намеренная поза) = 2
+- Первый физический контакт с сексуальным намерением (поцелуй, объятие с прижатием, рука на бедре) = 4
+- Прямой контакт с гениталиями / эрогенными зонами (ласка груди, ручная стимуляция, оральный контакт) = 5
+- Фрикции / симуляция акта (dry humping, характерные движения бёдрами) = 7
+- Проникновение = 9
+- Экстремальные практики = 10
+</scale_guide>
+`.trim();
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) processFile(file);
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) processFile(fileInput.files[0]);
+});
+
+let fakeProgressTimer = null;
+
+function startFakeProgress() {
+  const wrap = $('fakeProgressWrap');
+  const bar  = $('fakeProgressBar');
+
+  // сброс
+  if (fakeProgressTimer) clearTimeout(fakeProgressTimer);
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  wrap.style.display = 'block';
+
+  // форсируем reflow чтобы transition не применился к сбросу
+  void bar.offsetWidth;
+
+  // фаза 1: 0% → 80% за 5 с
+  bar.style.transition = 'width 5s linear';
+  bar.style.width = '80%';
+
+  // фаза 2: 80% → 98% за 5 с (замедляемся, до 100 не доходим — ждём реального ответа)
+  fakeProgressTimer = setTimeout(() => {
+    bar.style.transition = 'width 5s ease-out';
+    bar.style.width = '98%';
+  }, 5000);
+}
+
+function finishFakeProgress() {
+  const wrap = $('fakeProgressWrap');
+  const bar  = $('fakeProgressBar');
+
+  if (fakeProgressTimer) { clearTimeout(fakeProgressTimer); fakeProgressTimer = null; }
+
+  bar.style.transition = 'width 0.2s ease';
+  bar.style.width = '100%';
+
+  setTimeout(() => {
+    wrap.style.display = 'none';
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+  }, 300);
+}
+
+function resetFakeProgress() {
+  if (fakeProgressTimer) { clearTimeout(fakeProgressTimer); fakeProgressTimer = null; }
+  const wrap = $('fakeProgressWrap');
+  const bar  = $('fakeProgressBar');
+  wrap.style.display = 'none';
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+}
+
+function processFile(file) {
+  const key = localStorage.getItem('keyNSFW');
+  if (!key) {
+    analyzeStatus.textContent = '⚠ Сначала сохрани API-ключ';
+    analyzeStatus.style.color = 'var(--accent)';
+    return;
+  }
+
+  // --- превью ---
+  const url = URL.createObjectURL(file);
+  let img = dropZone.querySelector('img.preview');
+  if (!img) {
+    img = document.createElement('img');
+    img.className = 'preview';
+    dropZone.appendChild(img);
+  }
+  img.src = url;
+  dropZone.classList.add('has-preview');
+  // --- /превью ---
+
+  analyzeStatus.textContent = 'Читаю файл…';
+  startFakeProgress();
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64    = reader.result.split(',')[1];
+    const mediaType = file.type;
+    analyzeStatus.textContent = 'Отправляю на анализ…';
+    try {
+      const result = await analyzeImage(key, base64, mediaType);
+      finishFakeProgress();
+      applyScores(result);
+      analyzeStatus.textContent = `✓ Готово — N:${result.N} pfg:${result.pfg} D:${result.D} A:${result.A}`;
+      analyzeStatus.style.color = 'var(--accent)';
+    } catch (err) {
+      resetFakeProgress();
+      analyzeStatus.textContent = `✗ Ошибка: ${err.message}`;
+      analyzeStatus.style.color = '#cc4444';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeImage(key, base64, mediaType) {
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-3-pro-image-preview',
+      temperature: 0,
+      seed: 42,
+      messages: [
+        {
+          role: 'system',
+          content: ANALYZE_PROMPT
+        },
+        {
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
+            { type: 'text', text: 'Оцени изображение.' }
+          ]
+        }
+      ]
+    })
+  });
+
+  if (!resp.ok) {
+    console.log('resp.text()', await resp.text());
+    throw new Error(`HTTP ${resp.status}`);
+  }
+  const data = await resp.json();
+  const text = data.choices[0].message.content.trim();
+  const json = JSON.parse(text.replace(/```json|```/g, '').trim());
+  console.log(json);
+
+  for (const k of ['N', 'pfg', 'D', 'A']) {
+    if (typeof json[k] !== 'number') {
+      console.log('resp.text()', await resp.text());
+      throw new Error(`Нет поля ${k} в ответе`);
     }
   }
+  return json;
+}
 
-  function val(id, max) {
-    const v = parseFloat($(id).value);
-    if (isNaN(v)) return 0;
-    return Math.max(0, Math.min(max, v));
-  }
-
-  function calc() {
-    const wn = val('wn', 1);
-    const wf = val('wf', 1);
-    const wd = val('wd', 1);
-
-    const n = val('nudity', 10) / 10;
-    const f = val('framing', 10) / 10;
-    const d = val('design', 10) / 10;
-    const a = val('actions', 10) / 10;
-
-    const P = 1 - (1 - wn * n) * (1 - wf * f) * (1 - wd * d);
-    const S = 1 - (1 - a) * (1 - P);
-
-    $('presOut').textContent = (P * 10).toFixed(2);
-    $('scoreOut').textContent = (S * 10).toFixed(2);
-    $('scoreBar').style.width = (S * 100) + '%';
-
-    const hue = 40 - S * 40;
-    const sat = 60 + S * 30;
-    $('scoreBar').style.background = `hsl(${hue}, ${sat}%, 55%)`;
-  }
-
-  allFields.forEach(id => {
-    $(id).addEventListener('input', e => { sanitize(e); calc(); });
-  });
-
-  $('lockCoeffs').addEventListener('change', e => {
-    const locked = e.target.checked;
-    coeffFields.forEach(id => { $(id).disabled = locked; });
-  });
-
+function applyScores({ N, pfg, D, A }) {
+  $('nudity').value = N;
+  $('framing').value = pfg;
+  $('design').value = D;
+  $('actions').value = A;
   calc();
+}
+
+// --- Main calculation function ---
+function calc() {
+  const wn = val('wn', 1);
+  const wf = val('wf', 1);
+  const wd = val('wd', 1);
+
+  const n = val('nudity', 10) / 10;
+  const pfg = val('framing', 10) / 10;
+  const d = val('design', 10) / 10;
+  const a = val('actions', 10) / 10;
+
+  const P = 1 - (1 - wn * n) * (1 - wf * pfg) * (1 - wd * d);
+  const S = 1 - (1 - a) * (1 - P);
+
+  $('presOut').textContent = (P * 10).toFixed(2);
+  $('scoreOut').textContent = (S * 10).toFixed(2);
+  $('scoreBar').style.width = (S * 100) + '%';
+
+  const hue = 40 - S * 40;
+  const sat = 60 + S * 30;
+  $('scoreBar').style.background = `hsl(${hue}, ${sat}%, 55%)`;
+}
+
+allFields.forEach(id => {
+  $(id).addEventListener('input', e => { sanitize(e); calc(); });
+});
+
+$('lockCoeffs').addEventListener('change', e => {
+  const locked = e.target.checked;
+  coeffFields.forEach(id => { $(id).disabled = locked; });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  dataFields.forEach(id => {
+    if ($(id).value.trim() !== '') $(id).value = '0';
+  });
+  calc();
+});
+
 </script>
 </body>
 </html>
