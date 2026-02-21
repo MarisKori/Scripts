@@ -1,3 +1,4 @@
 - https://mariskori.github.io/Scripts/hr-calc.html
 - https://mariskori.github.io/Scripts/ping-test.html
 - https://mariskori.github.io/Scripts/orvi_infectivity_html.html
+- https://mariskori.github.io/Scripts/nsfw-calculator.html
