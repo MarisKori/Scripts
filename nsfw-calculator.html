@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSFW Score Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #1a1a1e;
+    --surface: #242429;
+    --surface-2: #2e2e35;
+    --border: #3a3a42;
+    --text: #e0e0e4;
+    --text-dim: #8888a0;
+    --accent: #f0a050;
+    --accent-dim: #a07030;
+    --input-bg: #2c2c33;
+    --input-locked: #1e1e23;
+    --result-bg: #302a20;
+    --result-border: #504030;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 780px;
+    width: 100%;
+  }
+
+  h1 {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .legend {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  .legend-key {
+    font-weight: 600;
+    color: var(--accent);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .legend-val {
+    color: var(--text-dim);
+  }
+
+  .legend-divider {
+    grid-column: 1 / -1;
+    border-top: 1px dashed var(--border);
+    margin: 4px 0;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 28px 24px;
+    margin-bottom: 16px;
+  }
+
+  .section-label {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+
+  .formula-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    font-size: 15px;
+    line-height: 40px;
+  }
+
+  .op {
+    color: var(--text-dim);
+    padding: 0 2px;
+  }
+
+  .eq {
+    color: var(--accent-dim);
+    padding: 0 8px 0 4px;
+    font-weight: 600;
+  }
+
+  input[type="text"] {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    width: 52px;
+    height: 34px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    margin: 0 1px;
+  }
+
+  input[type="text"]::placeholder {
+    color: #555566;
+    font-size: 10px;
+    font-weight: 400;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(240, 160, 80, 0.15);
+  }
+
+  input[type="text"].coeff {
+    background: var(--input-locked);
+    color: var(--accent);
+    width: 46px;
+    font-size: 13px;
+    border-color: var(--border);
+  }
+
+  input[type="text"].coeff:not(:disabled):focus {
+    border-color: var(--accent);
+  }
+
+  input[type="text"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .result-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 62px;
+    height: 34px;
+    padding: 0 10px;
+    background: var(--result-bg);
+    border: 1px solid var(--result-border);
+    border-radius: 4px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 0 1px;
+    font-size: 15px;
+  }
+
+  .final-score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--result-border);
+    border-radius: 8px;
+    padding: 20px 28px;
+    margin-top: 16px;
+  }
+
+  .final-score .label-side {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+  }
+
+  .final-score .value-side {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .score-big {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -1px;
+    min-width: 90px;
+    text-align: right;
+  }
+
+  .score-bar-wrap {
+    width: 120px;
+    height: 8px;
+    background: var(--surface-2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .score-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.2s ease;
+    width: 0%;
+  }
+
+  .lock-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .lock-row label {
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--input-bg);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  input[type="checkbox"]:checked {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+  }
+
+  input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -1px;
+    left: 2px;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .dot {
+    color: var(--accent-dim);
+    font-weight: 700;
+    padding: 0 1px;
+  }
+
+  .paren {
+    color: var(--text-dim);
+    font-size: 18px;
+    font-weight: 300;
+  }
+
+  .intermediate-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .intermediate-row .result-inline {
+    font-size: 13px;
+    height: 28px;
+    min-width: 50px;
+  }
+
+  .scale-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0.5;
+  }
+
+  .norm-note {
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0.4;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  [title] {
+    cursor: help;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>NSFW Score Calculator</h1>
+
+  <div class="legend">
+    <span class="legend-key">N</span>
+    <span class="legend-val">Nudity — степень наготы (0–10)</span>
+    <span class="legend-key">F</span>
+    <span class="legend-val">Framing — сексуальность позы, ракурса, фокуса камеры (0–10)</span>
+    <span class="legend-key">D</span>
+    <span class="legend-val">Design — сексуализированность костюма, пропорций, атрибутики (0–10)</span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">A</span>
+    <span class="legend-val">Actions — степень явности сексуальных действий (0–10)</span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">P</span>
+    <span class="legend-val">Presentation — сексуальная подача тела, noisy-OR от N, F, D (вычисляется)</span>
+    <span class="legend-key">S</span>
+    <span class="legend-val">Score — итоговый балл NSFW, noisy-OR от A и P (вычисляется)</span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">wn wf wd</span>
+    <span class="legend-val">Весовые коэффициенты макс. вклада N, F, D (0–1)</span>
+  </div>
+
+  <div class="lock-row">
+    <input type="checkbox" id="lockCoeffs" checked>
+    <label for="lockCoeffs">Зафиксировать коэффициенты</label>
+  </div>
+
+  <!-- Presentation -->
+  <div class="section">
+    <div class="section-label">Presentation</div>
+    <div class="formula-row">
+      <span>P</span>
+      <span class="eq">=</span>
+      <span>1</span>
+      <span class="op">−</span>
+      <span class="paren">(</span>
+      <span>1</span>
+      <span class="op">−</span>
+      <input type="text" class="coeff" id="wn" value="0.9" disabled
+        title="wn — вес наготы (0–1). Ограничивает макс. вклад Nudity">
+      <span class="dot">·</span>
+      <input type="text" id="nudity" placeholder="Nud"
+        title="Nudity (0–10): степень наготы. 0 = полностью одет, 10 = полная нагота с генитальным фокусом">
+      <span class="paren">)</span>
+      <span class="op">×</span>
+      <span class="paren">(</span>
+      <span>1</span>
+      <span class="op">−</span>
+      <input type="text" class="coeff" id="wf" value="0.6" disabled
+        title="wf — вес фрейминга (0–1). Ограничивает макс. вклад Framing">
+      <span class="dot">·</span>
+      <input type="text" id="framing" placeholder="Frm"
+        title="Framing (0–10): сексуальность подачи. 0 = нейтральная поза/ракурс, 10 = максимально провокативно">
+      <span class="paren">)</span>
+      <span class="op">×</span>
+      <span class="paren">(</span>
+      <span>1</span>
+      <span class="op">−</span>
+      <input type="text" class="coeff" id="wd" value="0.6" disabled
+        title="wd — вес дизайна (0–1). Ограничивает макс. вклад Design">
+      <span class="dot">·</span>
+      <input type="text" id="design" placeholder="Dsn"
+        title="Design (0–10): сексуализированность дизайна. 0 = нейтральный, 10 = максимально сексуализирован">
+      <span class="paren">)</span>
+    </div>
+    <div class="intermediate-row">
+      <span>P =</span>
+      <div class="result-inline" id="presOut">0.00</div>
+      <span class="scale-hint">/ 10</span>
+    </div>
+    <div class="norm-note">Значения N, F, D нормализуются ÷10 перед подстановкой в формулу</div>
+  </div>
+
+  <!-- Score -->
+  <div class="section">
+    <div class="section-label">Score</div>
+    <div class="formula-row">
+      <span>S</span>
+      <span class="eq">=</span>
+      <span>1</span>
+      <span class="op">−</span>
+      <span class="paren">(</span>
+      <span>1</span>
+      <span class="op">−</span>
+      <input type="text" id="actions" placeholder="Act"
+        title="Actions (0–10): степень явности сексуальных действий. 0 = отсутствуют, 10 = изображены явно">
+      <span class="paren">)</span>
+      <span class="op">×</span>
+      <span class="paren">(</span>
+      <span>1</span>
+      <span class="op">−</span>
+      <span>P</span>
+      <span class="paren">)</span>
+    </div>
+    <div class="norm-note">Значение A нормализуется ÷10 перед подстановкой; результат ×10</div>
+  </div>
+
+  <!-- Final -->
+  <div class="final-score">
+    <div class="label-side">Score <span class="scale-hint">/ 10</span></div>
+    <div class="value-side">
+      <div class="score-bar-wrap">
+        <div class="score-bar" id="scoreBar"></div>
+      </div>
+      <div class="score-big" id="scoreOut">0.00</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  const dataFields = ['nudity', 'framing', 'design', 'actions'];
+  const coeffFields = ['wn', 'wf', 'wd'];
+  const allFields = [...dataFields, ...coeffFields];
+
+  function sanitize(e) {
+    const el = e.target;
+    el.value = el.value.replace(/[^0-9.]/g, '');
+    const dots = el.value.split('.');
+    if (dots.length > 2) {
+      el.value = dots[0] + '.' + dots.slice(1).join('');
+    }
+  }
+
+  function val(id, max) {
+    const v = parseFloat($(id).value);
+    if (isNaN(v)) return 0;
+    return Math.max(0, Math.min(max, v));
+  }
+
+  function calc() {
+    const wn = val('wn', 1);
+    const wf = val('wf', 1);
+    const wd = val('wd', 1);
+
+    const n = val('nudity', 10) / 10;
+    const f = val('framing', 10) / 10;
+    const d = val('design', 10) / 10;
+    const a = val('actions', 10) / 10;
+
+    const P = 1 - (1 - wn * n) * (1 - wf * f) * (1 - wd * d);
+    const S = 1 - (1 - a) * (1 - P);
+
+    $('presOut').textContent = (P * 10).toFixed(2);
+    $('scoreOut').textContent = (S * 10).toFixed(2);
+    $('scoreBar').style.width = (S * 100) + '%';
+
+    const hue = 40 - S * 40;
+    const sat = 60 + S * 30;
+    $('scoreBar').style.background = `hsl(${hue}, ${sat}%, 55%)`;
+  }
+
+  allFields.forEach(id => {
+    $(id).addEventListener('input', e => { sanitize(e); calc(); });
+  });
+
+  $('lockCoeffs').addEventListener('change', e => {
+    const locked = e.target.checked;
+    coeffFields.forEach(id => { $(id).disabled = locked; });
+  });
+
+  calc();
+</script>
+</body>
+</html>
