@@ -488,6 +488,7 @@ button:hover {
       <input type="file" id="fileInput" accept="image/*" style="display:none">
     </div>
     <div id="analyzeStatus" style="margin-top: 12px; font-size: 13px; color: var(--text-dim);"></div>
+    <div id="analyzeModel" style="margin-top: 4px; font-size: 11px; color: var(--text-dim); opacity: 0.5;"></div>
   </div>
   
   <div id="fakeProgressWrap" style="display:none; margin-top: 10px;">
@@ -737,6 +738,7 @@ const dropZone = $('dropZone');
 const fileInput = $('fileInput');
 const analyzeStatus = $('analyzeStatus');
 
+const MODEL = 'anthropic/claude-opus-4.6';
 const ANALYZE_PROMPT = `<role>Ты эксперт по разметке NSFW-контента. Оцени изображение по четырём параметрам.</role>
 <goal>
 Верни ТОЛЬКО валидный JSON без пояснений:
@@ -939,11 +941,13 @@ function processFile(file) {
       const result = await analyzeImage(key, base64, mediaType);
       finishFakeProgress();
       applyScores(result);
-      analyzeStatus.textContent = `✓ Готово — N:${result.N} pfg:${result.pfg} D:${result.D} A:${result.A}`;
+      analyzeStatus.textContent = `✓ Готово — N:${result.N} pfg:${result.pfg} D:${result.D} A:${result.A} (${result.name})`;
+      $('analyzeModel').textContent = MODEL;
       analyzeStatus.style.color = 'var(--accent)';
     } catch (err) {
       resetFakeProgress();
       analyzeStatus.textContent = `✗ Ошибка: ${err.message}`;
+      $('analyzeModel').textContent = '';
       analyzeStatus.style.color = '#cc4444';
     }
   };
@@ -958,7 +962,7 @@ async function analyzeImage(key, base64, mediaType) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'google/gemini-3-pro-image-preview',
+      model: MODEL,
       temperature: 0,
       seed: 42,
       messages: [
