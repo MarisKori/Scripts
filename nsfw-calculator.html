@@ -990,6 +990,11 @@ async function analyzeImage(key, base64, mediaType) {
   const data = await resp.json();
   const text = data.choices[0].message.content.trim();
   GLOBAL_TEXT = text;
+  if (typeof(text) === 'string' && (text.match(/I'm sorry, but/) || text.match(/I'm not able to provide/) )) {
+    return {
+      N:0, pfg:0, D:0, A:10, name:'Слишком горячая!',
+    }
+  }
   const json = JSON.parse(text.replace(/```json|```/g, '').trim());
   console.log(json);
 
