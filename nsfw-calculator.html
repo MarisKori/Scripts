@@ -477,7 +477,7 @@ button:hover {
 </head>
 <body>
 <div class="container">
-  <h1>NSFW Score Calculator v0.1</h1>
+  <h1>NSFW Score Calculator v0.2</h1>
 
   <div class="ref-heading" style="margin-top: 40px;">Анализ изображения</div>
   <div class="section" id="dropSection">
@@ -603,7 +603,7 @@ button:hover {
   <span class="legend-key">N</span>
   <span class="legend-val">
     Nudity — взвешенная сумма открытых частей тела (0–10)<br>
-    <span class="legend-sub">∑ коэффициент × (0 / 0.5 / 1) по 12 зонам: руки 0.2, плечи 0.2, голени/стопы 0.4, живот 0.4, бёдра 0.5, верх. спина 0.3, поясница 0.5, грудь нейтр. 0.5, женская грудь 1.4, ягодицы 1.4, лобок 1.0, гениталии 3.4</span>
+    <span class="legend-sub">∑ коэффициент × (0 / 0.5 / 1) по 12 зонам: руки 0.1, плечи 0.2, голени/ступни 0.6, живот 0.6, бёдра 0.5, верх. спина 0.2, поясница 0.6, грудь нейтр. 0.2, женская грудь 4.0, ягодицы 2.6, лобок 1.0, гениталии 4.0</span>
   </span>
 
   <div class="legend-divider"></div>
@@ -644,7 +644,7 @@ button:hover {
 
   <!-- вычисляемые -->
   <span class="legend-key">P</span>
-  <span class="legend-val">Presentation — noisy-OR от N, pfg, D: <code class="legend-code">1 − (1−wn·N)(1−wf·F)(1−wd·D)</code></span>
+  <span class="legend-val">Presentation — noisy-OR от N, pfg, D: <code class="legend-code">1 − (1−wn·N)(1−wf·pfg)(1−wd·D)</code></span>
 
   <span class="legend-key">S</span>
   <span class="legend-val">Score — noisy-OR от A и P: <code class="legend-code">1 − (1−A)(1−P)</code></span>
@@ -782,30 +782,32 @@ D — сексуализированность дизайна/костюма (0 
 A — явность сексуальных действий (0 = нет действий, 10 = экстремальная явность)
 </brief>
 <scale_guide>
-Перед началом необходимо выбрать самого сексуализированного персонажа на изображении и дать ему краткое описание (либо null) в поле "name". Далее все вычисления будут касаться только этого персонажа. Далее нужно заполнить массив N_arr значениями 12 частей тела с учётом обнажённости.
+Перед началом необходимо выбрать самого сексуализированного персонажа-гуманоида на изображении и дать ему краткое описание (либо null) в поле "name". Далее все вычисления будут касаться только этого персонажа. Далее нужно заполнить массив N_arr значениями 12 частей тела с учётом обнажённости.
 
 Более подробно про каждый параметр:
 
 ### N - степень экспозиции тела
 
-N считается как сумма коэффициентов для открытых частей тела. Каждая часть тела считается:
+N считается как сумма (без ограничений) коэффициентов для открытых частей тела. Каждая часть тела считается:
 - либо полностью закрыта (x0)
-- либо частично открыта (колготки, вуаль, лохмотья и пр.) (x0.5)
+- либо частично открыта (колготки, вуаль, лохмотья, размытие и пр.) (x0.5)
 - либо полностью открыта (x1)
 
 Сами части тела имеют свои коэффициенты:
-1. Руки (от плеч до запястий) = 0.2
+1. Руки (от плеч до запястий) = 0.1
 2. Плечи = 0.2
-3. Голени / ступни = 0.4
-4. Живот = 0.4
+3. Голени / ступни = 0.6
+4. Живот = 0.6
 5. Бёдра (внутренняя/внешняя поверхность)= 0.5
-6. Верхняя спина = 0.3
-7. Поясница / нижняя спина= 0.5
-8. Грудь нейтральная (мужской торс / зона декольте без сосков) = 0.5
-9. Женская грудь (соски и ареолы) = 1.4
-10. Ягодицы = 1.4
-11. Лобковая область (без гениталий) = 1.0
-12. Гениталии = 3.4
+6. Верхняя спина = 0.2
+7. Поясница / нижняя спина= 0.6
+8. Грудь нейтральная (мужской торс / зона декольте без сосков) = 0.2
+9. Женская грудь (соски и ареолы) = 4
+10. Ягодицы = 2.6
+11. Лобковая область (без гениталий) = 1
+12. Гениталии = 4
+
+Больше 0 только обнажённые и полуобнажённые части тела! Закрытые одеждой или не в кадре - это 0.
 
 ### pfg — сексуальность позы/ракурса
 
@@ -1010,7 +1012,7 @@ async function processFile(file) {
       const result = await analyzeImage(key, base64, mediaType);
       finishFakeProgress();
       applyScores(result);
-      analyzeStatus.textContent = `✓ Готово — N:${result.N} pfg:${result.pfg} D:${result.D} A:${result.A} (${result.name})`;
+      analyzeStatus.textContent = `✓ Готово — N:${result.N} pfg:${result.pfg}${result.pfg_arr ? ` (${result.pfg_arr[0]},${result.pfg_arr[1]},${result.pfg_arr[2]})` : ''} D:${result.D} A:${result.A} (${result.name})`;
       $('analyzeModel').textContent = `${MODEL}`;
       if (PRICE[MODEL] && result.prompt_tokens) {
         let money = (PRICE[MODEL].input * result.prompt_tokens + PRICE[MODEL].output * result.completion_tokens) * 0.000001; // price was per 1M
@@ -1098,7 +1100,30 @@ async function analyzeImage(key, base64, mediaType) {
   const json = JSON.parse(text.replace(/```json|```/g, '').trim());
   json.prompt_tokens = prompt_tokens
   json.completion_tokens = completion_tokens
-  console.log(json, referer, title);
+  if (json.N_arr) {
+    const a = json.N_arr;
+    json.N_keys = {
+      ['Руки']: a[0],
+      ['Плечи']: a[1],
+      ['Голени / ступни']: a[2],
+      ['Живот']: a[3],
+      ['Бёдра']: a[4],
+      ['Верхняя спина']: a[5],
+      ['Поясница / нижняя спина']: a[6],
+      ['Грудь нейтральная']: a[7],
+      ['Женская грудь']: a[8],
+      ['Ягодицы']: a[9],
+      ['Лобковая область без гениталий']: a[10],
+      ['Гениталии']: a[11],
+    }
+  }
+  if (json.pfg_arr) {
+    const a = json.pfg_arr;
+    a['Pose_поза_тела'] = a['p'];
+    a['Framing_фрейминг_камеры'] = a['f'];
+    a['Gaze_взгляд_и_мимика'] = a['g'];
+  }
+  console.log('Answer:',json);
 
   for (const k of ['N', 'pfg', 'D', 'A']) {
     if (typeof json[k] !== 'number') {
@@ -1118,9 +1143,9 @@ function applyScores({ N, pfg, D, A }) {
 
 // --- Main calculation function ---
 function calc() {
-  const wn = val('wn', 1);
-  const wf = val('wf', 1);
-  const wd = val('wd', 1);
+  const wn = val('wn', 5);
+  const wf = val('wf', 5);
+  const wd = val('wd', 5);
 
   const n = val('nudity', 10) / 10;
   const pfg = val('framing', 10) / 10;
