@@ -477,7 +477,7 @@ button:hover {
 </head>
 <body>
 <div class="container">
-  <h1>NSFW Score Calculator</h1>
+  <h1>NSFW Score Calculator v0.1</h1>
 
   <div class="ref-heading" style="margin-top: 40px;">Анализ изображения</div>
   <div class="section" id="dropSection">
@@ -487,6 +487,7 @@ button:hover {
       <div class="drop-hint">Перетащите изображение или нажмите</div>
       <input type="file" id="fileInput" accept="image/*" style="display:none">
     </div>
+    <div id="imgSize" style="font-size: 11px; color: var(--text-dim); opacity: 0.5; margin-top: 4px; display: none;"></div>
     <div id="analyzeStatus" style="margin-top: 12px; font-size: 13px; color: var(--text-dim);"></div>
     <div id="analyzeModel" style="margin-top: 4px; font-size: 11px; color: var(--text-dim); opacity: 0.5;"></div>
   </div>
@@ -602,7 +603,7 @@ button:hover {
   <span class="legend-key">N</span>
   <span class="legend-val">
     Nudity — взвешенная сумма открытых частей тела (0–10)<br>
-    <span class="legend-sub">∑ коэффициент × (0 / 0.5 / 1) по 12 зонам: руки 0.2, плечи 0.2, голени 0.2, живот 0.4, бёдра 0.5, верх. спина 0.3, поясница 0.5, грудь нейтр. 0.5, женская грудь 1.5, ягодицы 1.5, лобок 1.0, гениталии 3.4</span>
+    <span class="legend-sub">∑ коэффициент × (0 / 0.5 / 1) по 12 зонам: руки 0.2, плечи 0.2, голени/стопы 0.4, живот 0.4, бёдра 0.5, верх. спина 0.3, поясница 0.5, грудь нейтр. 0.5, женская грудь 1.4, ягодицы 1.4, лобок 1.0, гениталии 3.4</span>
   </span>
 
   <div class="legend-divider"></div>
@@ -739,6 +740,13 @@ const fileInput = $('fileInput');
 const analyzeStatus = $('analyzeStatus');
 
 const MODEL = 'anthropic/claude-opus-4.6';
+const PRICE = {
+  ['anthropic/claude-opus-4.6']: {
+    input: 5,
+    output: 25,
+  },
+}
+
 const ANALYZE_PROMPT = `<role>Ты эксперт по разметке NSFW-контента. Оцени изображение по четырём параметрам.</role>
 <goal>
 Верни ТОЛЬКО валидный JSON без пояснений:
@@ -909,8 +917,53 @@ function resetFakeProgress() {
   bar.style.width = '0%';
 }
 
+function resizeIfNeeded(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const { naturalWidth: w, naturalHeight: h } = img;
+      const needsResize = Math.min(w, h) < 1200 || Math.max(w, h) > 1568;
+
+      if (!needsResize) {
+        // читаем оригинал как base64 без изменений
+        const reader = new FileReader();
+        reader.onload = () => resolve({
+          base64: reader.result.split(',')[1],
+          mediaType: file.type,
+          width: w,
+          height: h,
+        });
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const scale = 1568 / Math.max(w, h);
+      const outW = Math.round(w * scale);
+      const outH = Math.round(h * scale);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = outW;
+      canvas.height = outH;
+      canvas.getContext('2d').drawImage(img, 0, 0, outW, outH);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      resolve({
+        base64: dataUrl.split(',')[1],
+        mediaType: 'image/jpeg',
+        width: outW,
+        height: outH,
+      });
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 let GLOBAL_TEXT = '';
-function processFile(file) {
+async function processFile(file) {
   const key = localStorage.getItem('keyNSFW');
   if (!key) {
     analyzeStatus.textContent = '⚠ Сначала сохрани API-ключ';
@@ -933,17 +986,22 @@ function processFile(file) {
   analyzeStatus.textContent = 'Читаю файл…';
   startFakeProgress();
 
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const base64    = reader.result.split(',')[1];
-    const mediaType = file.type;
+  try {
+    const { base64, mediaType, width, height } = await resizeIfNeeded(file);
+    $('imgSize').textContent = `${width}×${height}`;
+    $('imgSize').style.display = 'block';
     analyzeStatus.textContent = 'Отправляю на анализ…';
     try {
       const result = await analyzeImage(key, base64, mediaType);
       finishFakeProgress();
       applyScores(result);
       analyzeStatus.textContent = `✓ Готово — N:${result.N} pfg:${result.pfg} D:${result.D} A:${result.A} (${result.name})`;
-      $('analyzeModel').textContent = MODEL;
+      $('analyzeModel').textContent = `${MODEL}`;
+      if (PRICE[MODEL] && result.prompt_tokens) {
+        let money = (PRICE[MODEL].input * result.prompt_tokens + PRICE[MODEL].output * result.completion_tokens) * 0.000001; // price was per 1M
+        money = Math.ceil(money * 100) / 100;
+        $('analyzeModel').innerHTML += ` · <span style="color:#0f0">\$${money}</span>`;
+      }
       analyzeStatus.style.color = 'var(--accent)';
     } catch (err) {
       resetFakeProgress();
@@ -952,8 +1010,11 @@ function processFile(file) {
       analyzeStatus.style.color = '#cc4444';
       console.log('Answer:', GLOBAL_TEXT);
     }
-  };
-  reader.readAsDataURL(file);
+  } catch (err) {
+    resetFakeProgress();
+    analyzeStatus.textContent = `✗ Ошибка чтения файла: ${err.message}`;
+    analyzeStatus.style.color = '#cc4444';
+  }
 }
 
 async function analyzeImage(key, base64, mediaType) {
@@ -983,9 +1044,10 @@ async function analyzeImage(key, base64, mediaType) {
       model: MODEL,
       temperature: 0,
       seed: 42,
+      reasoning: { effort: "none" },
       provider: {
         order: ['google-vertex'],
-        allow_fallbacks: false  // запретить fallback на других провайдеров
+        allow_fallbacks: false,  // запретить fallback на других провайдеров
       },
       messages: [
         {
@@ -1004,18 +1066,23 @@ async function analyzeImage(key, base64, mediaType) {
   });
 
   if (!resp.ok) {
-    throw new Error(`HTTP ${resp.status}`);
+    const errBody = await resp.text();
+    throw new Error(`HTTP ${resp.status}: ${errBody}`);
   }
   const data = await resp.json();
+  const { prompt_tokens, completion_tokens } = data.usage;
   const text = data.choices[0].message.content.trim();
   GLOBAL_TEXT = text;
   if (typeof(text) === 'string' && (text.match(/I'm sorry, but/) || text.match(/I'm not able to provide/) )) {
     console.log('HOT ANSWER:', text);
     return {
       N:0, pfg:0, D:0, A:10, name:'Слишком горячая!',
+      prompt_tokens: prompt_tokens, completion_tokens: completion_tokens,
     }
   }
   const json = JSON.parse(text.replace(/```json|```/g, '').trim());
+  json.prompt_tokens = prompt_tokens
+  json.completion_tokens = completion_tokens
   console.log(json, referer, title);
 
   for (const k of ['N', 'pfg', 'D', 'A']) {
