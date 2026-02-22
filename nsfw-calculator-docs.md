@@ -1,4 +1,4 @@
-# NSFW Score Calculator — техническая документация
+# NSFW Score Calculator v0.1 — техническая документация
 
 ## Назначение
 
@@ -15,7 +15,7 @@
 | **D** (Design) | 0–10 | Сумма маркеров сексуализации костюма/атрибутики (обрезается до 10) |
 | **A** (Actions) | 0–10 | Дискретная шкала явности сексуальных действий |
 
-Весовые коэффициенты `wn / wf / wd` (по умолчанию `0.9 / 0.6 / 0.6`) ограничивают максимальный вклад каждого слагаемого в Presentation.
+Весовые коэффициенты `wn / wf / wd` (по умолчанию `0.9 / 0.6 / 0.6`) ограничивают максимальный вклад каждого слагаемого в Presentation. Редактирование коэффициентов блокируется чекбоксом «Зафиксировать коэффициенты» (по умолчанию включён); при снятии флага поля `wn`, `wf`, `wd` становятся доступны для ввода.
 
 ---
 
@@ -68,30 +68,43 @@ function sanitize(e)
 
 Фильтрует нечисловые символы прямо при вводе, не даёт пройти второй точке.
 
+При загрузке страницы (`DOMContentLoaded`) поля данных сбрасываются в `0`, коэффициентам выставляются дефолтные значения, после чего вызывается `calc()`.
+
 ### 3. Слой работы с API
 
 ```
-processFile(file)
-  └─ FileReader.readAsDataURL
-       └─ analyzeImage(key, base64, mediaType)   // fetch → OpenRouter
-            └─ applyScores({ N, pfg, D, A })
-                 └─ calc()
+Пользователь → drop / paste / click
+  → processFile(file)
+      └─ resizeIfNeeded(file)         // масштабирование на canvas
+           └─ analyzeImage(key, base64, mediaType)   // fetch → OpenRouter
+                └─ applyScores({ N, pfg, D, A })
+                     └─ calc()
 ```
 
-**`analyzeImage`** формирует запрос к `openrouter.ai/api/v1/chat/completions`:
+**Источники изображения** — три независимых обработчика:
+- `drop` на drop-зоне,
+- `change` на скрытом `<input type="file">` (открывается по клику на зону),
+- `paste` на `document` — перехватывает вставку изображения из буфера обмена через `clipboardData.items`.
+
+**`resizeIfNeeded(file)`** — подготовка изображения перед отправкой. Если меньшая сторона менее 1200 px или большая сторона более 1568 px, изображение масштабируется: вычисляется коэффициент `1568 / max(w, h)`, рисуется на `canvas` и конвертируется в JPEG с качеством 0.92. Иначе файл читается как есть. Возвращает `{ base64, mediaType, width, height }`.
+
+**`analyzeImage(key, base64, mediaType)`** формирует запрос к `openrouter.ai/api/v1/chat/completions`:
 - Модель: `anthropic/claude-opus-4.6` через провайдера `google-vertex` без fallback.
 - `temperature: 0`, `seed: 42` — детерминированный вывод.
+- Заголовки `HTTP-Referer` и `X-Title` зависят от origin: для `mariskori.github.io` title будет `NSFW calculator`, для прочих http-хостов — `NSFL calculator`, для локального файла — `Local-host`.
 - System prompt содержит полную разметочную инструкцию с описанием шкал и формата ответа.
 - Модель обязана вернуть чистый JSON с полями `N`, `pfg`, `D`, `A`, `name`, `N_arr`, `pfg_arr`.
 
 После получения ответа функция:
 1. Стрипает возможные markdown-обёртки (` ```json ``` `).
 2. Проверяет наличие обязательных числовых полей.
-3. Обрабатывает отказ модели как крайний случай: если в ответе `I'm sorry, but...` — выставляет `A: 10` как сигнал «слишком горячая».
+3. Обрабатывает отказ модели как крайний случай: если в ответе есть подстрока `I'm sorry, but` или `I'm not able to provide` — выставляет `A: 10` как сигнал «слишком горячая».
+
+**Подсчёт стоимости.** Объект `PRICE` хранит цены за 1M токенов для каждой модели (для `claude-opus-4.6`: input — $5, output — $25). После успешного анализа вычисляется стоимость запроса и отображается зелёным рядом с именем модели.
 
 ### 4. Состояние и хранилище
 
-Состояние полностью в DOM. Единственный `localStorage`-ключ — `keyNSFW` (API-ключ пользователя). Глобальная переменная `GLOBAL_TEXT` — последний сырой ответ модели для отладки в консоли.
+Состояние полностью в DOM. Единственный `localStorage`-ключ — `keyNSFW` (API-ключ пользователя), загружается при старте через `loadKey()`. Глобальная переменная `GLOBAL_TEXT` — последний сырой ответ модели для отладки в консоли.
 
 ---
 
@@ -103,18 +116,21 @@ processFile(file)
 - Фаза 2: `80% → 98%` за 5 с, `transition: ease-out` (замедление — симуляция ожидания ответа).
 - По завершении запроса: мгновенный доезд до `100%`, затем скрытие.
 
-Таймер хранится в `fakeProgressTimer` и очищается при ошибке (`resetFakeProgress`) или успехе (`finishFakeProgress`).
+Таймер хранится в `fakeProgressTimer` и очищается при ошибке (`resetFakeProgress`) или успехе (`finishFakeProgress`). Перед каждым новым запуском бар сбрасывается через `void bar.offsetWidth` (принудительный reflow), чтобы transition не применился к сбросу.
 
 ---
 
-## Поток данных
+## Полный поток данных
 
 ```
-Пользователь → drop/paste/click
-  → FileReader (base64)
-    → fetch OpenRouter (Vision-модель)
-      → JSON { N, pfg, D, A }
-        → DOM-поля (applyScores)
-          → calc()
-            → P, S → DOM (presOut, scoreOut, scoreBar)
+Пользователь (drop / paste / click)
+  → processFile(file)
+      → превью в drop-зоне
+      → resizeIfNeeded → { base64, mediaType, width, height }
+          → analyzeImage → fetch OpenRouter (Vision-модель)
+              → JSON { N, pfg, D, A, name, ... }
+                  → applyScores → DOM-поля
+                      → calc()
+                          → P, S → DOM (presOut, scoreOut, scoreBar, цвет полосы)
+                          → стоимость → analyzeModel
 ```
