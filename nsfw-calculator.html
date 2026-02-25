@@ -477,7 +477,7 @@ button:hover {
 </head>
 <body>
 <div class="container">
-  <h1>NSFW Score Calculator v0.3</h1>
+  <h1>NSFW Score Calculator v0.4</h1>
 
   <div class="ref-heading" style="margin-top: 40px;">Анализ изображения</div>
   <div class="section" id="dropSection">
@@ -490,6 +490,7 @@ button:hover {
     <div id="imgSize" style="font-size: 11px; color: var(--text-dim); opacity: 0.5; margin-top: 4px; display: none;"></div>
     <div id="analyzeStatus" style="margin-top: 12px; font-size: 13px; color: var(--text-dim);"></div>
     <div id="analyzeModel" style="margin-top: 4px; font-size: 11px; color: var(--text-dim); opacity: 0.5;"></div>
+    <div id="balanceStatus" style="margin-top: 4px; font-size: 11px; color: var(--text-dim); opacity: 0.8;"></div>
   </div>
   
   <div id="fakeProgressWrap" style="display:none; margin-top: 10px;">
@@ -751,6 +752,19 @@ $('saveKey').addEventListener('click', () => {
 });
 
 loadKey();
+
+// Balance
+const MONEY = {
+  deposit: 0,
+  spent: 0,
+  balance: 0,
+}
+
+function updateBalance() {
+  const el = $('balanceStatus');
+  if (!el) return;
+  el.innerHTML = `balance: <span style="color:#0f0">$${MONEY.balance.toFixed(4)}</span>`;
+}
 
 // --- Image analyze ---
 const dropZone = $('dropZone');
@@ -1039,16 +1053,18 @@ async function processFile(file) {
     $('imgSize').style.display = 'block';
     analyzeStatus.textContent = 'Отправляю на анализ…';
     try {
+      //const analyzePromise = analyzeImage(key, base64, mediaType);
+      //const depositPromise = checkOpenRouterKey(key);
+      //const [result, deposit] = await Promise.all([
+      //  analyzePromise,
+      //  depositPromise,
+      //]);
       const result = await analyzeImage(key, base64, mediaType);
+      
       finishFakeProgress();
       applyScores(result);
       analyzeStatus.textContent = `✓ Готово — N:${result.N} pfg:${result.pfg}${result.pfg_arr ? ` (${result.pfg_arr[0]},${result.pfg_arr[1]},${result.pfg_arr[2]})` : ''} D:${result.D} A:${result.A} (${result.name})`;
-      $('analyzeModel').textContent = `${MODEL}`;
-      if (PRICE[MODEL] && result.prompt_tokens) {
-        let money = (PRICE[MODEL].input * result.prompt_tokens + PRICE[MODEL].output * result.completion_tokens) * 0.000001; // price was per 1M
-        money = Math.ceil(money * 100) / 100;
-        $('analyzeModel').innerHTML += ` · <span style="color:#0f0">\$${money}</span>`;
-      }
+      //$('analyzeModel').textContent = `${MODEL}`;
       analyzeStatus.style.color = 'var(--accent)';
     } catch (err) {
       resetFakeProgress();
@@ -1119,6 +1135,16 @@ async function analyzeImage(key, base64, mediaType) {
   }
   const data = await resp.json();
   const { prompt_tokens, completion_tokens } = data.usage;
+  
+  // add price
+  if (PRICE[MODEL] && prompt_tokens) {
+    let spent = (PRICE[MODEL].input * prompt_tokens + PRICE[MODEL].output * completion_tokens) * 0.000001; // price was per 1M
+    //money = Math.ceil(money * 100) / 100;
+    MONEY.spent += spent;
+    MONEY.balance = MONEY.deposit - MONEY.spent;
+    updateBalance();
+  }
+  
   const text = data.choices[0].message.content.trim();
   GLOBAL_TEXT = text;
   if (typeof(text) === 'string' && (
@@ -1174,6 +1200,39 @@ async function analyzeImage(key, base64, mediaType) {
   return json;
 }
 
+/**
+ * Проверяет баланс аккаунта OpenRouter по Management ключу.
+ * @param {string} apiKey - Management ключ OpenRouter.
+ * @returns {Promise<{total_credits: number, total_usage: number, balance: number}>}
+ * @throws {Error} Если запрос неуспешен или ключ недействителен.
+ */
+async function checkOpenRouterKey(apiKey) {
+  const url = 'https://openrouter.ai/api/v1/auth/key';
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    let errorMessage = `HTTP error ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage += `: ${errorData.error?.message || JSON.stringify(errorData)}`;
+    } catch {
+      errorMessage += `: ${response.statusText}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  const data = await response.json(); GLOBAL_DATA = data;
+  return data;
+}
+
+
 function applyScores({ N, pfg, D, A }) {
   $('nudity').value = N;
   $('framing').value = pfg;
@@ -1220,7 +1279,7 @@ $('lockCoeffs').addEventListener('change', e => {
   coeffFields.forEach(id => { $(id).disabled = locked; });
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   dataFields.forEach(id => {
     if ($(id).value.trim() !== '') $(id).value = '0';
   });
@@ -1228,6 +1287,17 @@ document.addEventListener('DOMContentLoaded', () => {
   $('wf').value = '0.6';
   $('wd').value = '0.6';
   calc();
+  // узнаём депозит ключа
+  const key = localStorage.getItem('keyNSFW');
+  if (key) {
+    try {
+      const data = await checkOpenRouterKey(key);
+      MONEY.deposit = data.data?.limit_remaining || 0;
+      MONEY.balance = MONEY.deposit - MONEY.spent;
+      updateBalance();
+    } catch {
+    }
+  }
 });
 
 </script>
