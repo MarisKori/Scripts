@@ -1108,6 +1108,7 @@ async function analyzeImage(key, base64, mediaType) {
       model: MODEL,
       temperature: 0,
       seed: 42,
+      max_tokens: 500,
       reasoning: { effort: "none" },
       provider: {
         order: ['google-vertex'],
@@ -1130,8 +1131,35 @@ async function analyzeImage(key, base64, mediaType) {
   });
 
   if (!resp.ok) {
-    const errBody = await resp.text();
-    throw new Error(`HTTP ${resp.status}: ${errBody}`);
+    let errBody;
+    try {
+      errBody = await resp.json();
+    } catch {
+      const text = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${text}`);
+    }
+
+    const msg = errBody?.error?.message || '';
+
+    // удаляем user_id из объекта перед возможным выводом
+    if (errBody?.user_id) delete errBody.user_id;
+    if (errBody?.error?.metadata) delete errBody.error.metadata;
+
+    // известные ошибки → короткий русский текст
+    if (msg.includes('requires more credits')) {
+      throw new Error(`HTTP ${resp.status}: Не хватает денег на счету`);
+    }
+    if (msg.includes('Key limit exceeded')) {
+      throw new Error(`HTTP ${resp.status}: Не хватает денег на счету`);
+    }
+
+    // неизвестная ошибка с message
+    if (msg) {
+      throw new Error(`HTTP ${resp.status}: ${msg}`);
+    }
+
+    // нет message — полный JSON
+    throw new Error(`HTTP ${resp.status}: ${JSON.stringify(errBody)}`);
   }
   const data = await resp.json();
   const { prompt_tokens, completion_tokens } = data.usage;
