@@ -38,7 +38,7 @@ body {
 }
 
 .container {
-  max-width: 780px;
+  max-width: 900px;
   width: 100%;
 }
 
@@ -168,8 +168,9 @@ input[type="text"]:disabled {
 
 .final-score .value-side {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .score-big {
@@ -187,6 +188,7 @@ input[type="text"]:disabled {
   background: var(--surface-2);
   border-radius: 4px;
   overflow: hidden;
+  align-self: stretch;
 }
 
 .score-bar {
@@ -195,6 +197,14 @@ input[type="text"]:disabled {
   border-radius: 4px;
   transition: width 0.2s ease;
   width: 0%;
+}
+
+.ai-opinion {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--accent);
+  text-align: right;
 }
 
 .lock-row {
@@ -240,167 +250,375 @@ input[type="checkbox"]:checked::after {
   font-weight: 700;
 }
 
-.intermediate-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--border);
-  font-size: 13px;
-  color: var(--text-dim);
-}
-
-.intermediate-row .result-inline {
-  font-size: 13px;
-  height: 28px;
-  min-width: 50px;
-}
-
 .scale-hint {
   font-size: 11px;
   color: var(--text-dim);
   opacity: 0.5;
 }
 
-.norm-note {
-  font-size: 11px;
-  color: var(--text-dim);
-  opacity: 0.4;
-  margin-top: 8px;
-  font-style: italic;
-}
-
 [title] { cursor: help; }
 
-/* --- Legend --- */
+/* === Tri-state checkbox === */
 
-.legend {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 16px;
+.tri-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--input-bg);
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: transparent;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.tri-check[data-state="0.5"] {
+  background: var(--accent-dim);
+  border-color: var(--accent-dim);
+  color: var(--text);
+}
+
+.tri-check[data-state="0.5"]::after {
+  content: '½';
+  font-size: 10px;
+}
+
+.tri-check[data-state="1"] {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.tri-check[data-state="1"]::after {
+  content: '✓';
+  font-size: 12px;
+}
+
+/* === Scale item (radio-style checkbox) === */
+
+.scale-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+.scale-item:hover {
+  color: var(--text);
+}
+
+.scale-item .si-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--input-bg);
+  flex-shrink: 0;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.scale-item.active .si-check {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.scale-item.active .si-check::after {
+  content: '✓';
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.scale-item.active {
+  color: var(--accent);
+}
+
+.scale-item .si-val {
+  font-weight: 600;
+  min-width: 14px;
+  text-align: right;
+  color: var(--accent-dim);
+  font-size: 10px;
+}
+
+.scale-item.active .si-val {
+  color: var(--accent);
+}
+
+/* === Design checkbox item === */
+
+.design-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+.design-item:hover {
+  color: var(--text);
+}
+
+.design-item .di-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--input-bg);
+  flex-shrink: 0;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.design-item.active .di-check {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.design-item.active .di-check::after {
+  content: '✓';
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.design-item.active {
+  color: var(--accent);
+}
+
+.design-item .di-val {
+  font-weight: 600;
+  min-width: 10px;
+  text-align: right;
+  color: var(--accent-dim);
+  font-size: 10px;
+}
+
+.design-item.active .di-val {
+  color: var(--accent);
+}
+
+/* === Flow layout === */
+
+.calc-flow {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+
+.flow-block {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 20px 24px;
-  margin-bottom: 16px;
-  font-size: 12px;
-  line-height: 1.8;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
 }
 
-.legend-key {
+.flow-block-n     { flex: 2;   border-radius: 8px 0 0 8px; }
+.flow-block-pfg   { flex: 1.5; border-radius: 0; border-left: none; }
+.flow-block-d     { flex: 1.2; border-radius: 0; border-left: none; }
+.flow-block-sum   { flex: 1.2; border-radius: 0; border-left: none; }
+
+.flow-label {
+  font-family: var(--sans);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--accent);
-  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
   white-space: nowrap;
 }
 
-.legend-val { color: var(--text-dim); }
-
-.legend-divider {
-  grid-column: 1 / -1;
-  border-top: 1px dashed var(--border);
-  margin: 4px 0;
+/* Sex toggle */
+.sex-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
-.legend-sub {
-  display: block;
+.sex-btn {
   font-size: 11px;
-  color: var(--text-dim);
-  opacity: 0.6;
-  margin-top: 3px;
-  line-height: 1.7;
-}
-
-.legend-sub-grid {
-  display: grid;
-  grid-template-columns: 14px 1fr;
-  gap: 2px 8px;
-  margin-top: 5px;
-}
-
-.legend-sub-key {
-  font-weight: 700;
-  color: var(--accent-dim);
-  font-size: 11px;
-  line-height: 1.7;
-  text-align: right;
-}
-
-code.legend-code {
+  height: 22px;
+  padding: 0 10px;
   font-family: var(--mono);
-  font-size: 11px;
-  color: var(--accent-dim);
-  background: var(--surface-2);
-  padding: 1px 5px;
-  border-radius: 3px;
+  font-weight: 500;
 }
 
-/* --- Scale reference --- */
-
-.ref-heading {
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 600;
+.sex-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
   color: var(--text);
-  margin: 32px 0 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
 }
 
-.scale-block {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 12px;
-  overflow: hidden;
+/* Zone grid: 2 columns — label on top, coeff + input + tri on bottom */
+.zone-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(4, auto);
+  grid-auto-flow: column;
+  gap: 4px 14px;
+}
+.zone-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.scale-block-title {
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--accent);
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.scale-block-sub {
-  font-weight: 400;
+.zone-name {
   color: var(--text-dim);
-  text-transform: none;
-  letter-spacing: 0;
-  margin-left: 8px;
   font-size: 11px;
 }
 
-.scale-row {
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: 0;
-  font-size: 12px;
-  line-height: 1.6;
-  border-bottom: 1px solid var(--border);
-}
-
-.scale-row:last-child { border-bottom: none; }
-
-.scale-num {
-  font-weight: 600;
-  color: var(--accent);
-  text-align: center;
-  padding: 8px 0;
-  background: var(--surface-2);
+.zone-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 3px;
 }
 
-.scale-desc {
+.zone-w {
+  color: var(--accent-dim);
+  font-size: 10px;
+  min-width: 22px;
+  text-align: right;
+  opacity: 0.7;
+}
+
+.zone-x {
   color: var(--text-dim);
-  padding: 8px 16px;
+  font-size: 10px;
+  opacity: 0.4;
+}
+
+.zone-controls input[type="text"] {
+  width: 38px;
+  height: 24px;
+  font-size: 12px;
+}
+
+/* pfg sub-groups */
+.pfg-group {
+  margin-bottom: 6px;
+}
+
+.pfg-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.pfg-key {
+  color: var(--accent-dim);
+  font-weight: 600;
+  font-size: 13px;
+  min-width: 14px;
+}
+
+.pfg-group-header input[type="text"] {
+  width: 40px;
+  height: 24px;
+  font-size: 12px;
+}
+
+.pfg-items {
+  padding-left: 20px;
+}
+
+/* D sub-groups */
+.d-subgroup {
+  margin-bottom: 6px;
+}
+
+.d-subgroup-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+/* Param rows in summary & score columns */
+.param-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.param-key {
+  color: var(--accent-dim);
+  font-weight: 600;
+  min-width: 28px;
+}
+
+.param-row input[type="text"] {
+  width: 52px;
+  height: 30px;
+}
+
+.param-w {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* A sub-group in params */
+.a-items {
+  padding-left: 36px;
+}
+
+/* flow-sum: bottom line in N and pfg blocks */
+.flow-sum {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.flow-sum .result-inline {
+  font-size: 13px;
+  height: 28px;
+  min-width: 50px;
+}
+
+.flow-divider {
+  border-top: 1px dashed var(--border);
+  margin: 6px 0;
+}
+
+/* Score column result emphasis */
+.score-result {
+  font-size: 15px;
+  font-weight: 700;
 }
 
 button {
@@ -473,11 +691,174 @@ button:hover {
 .drop-zone.has-preview .drop-hint {
   display: none;
 }
+
+/* --- Legend --- */
+
+.legend {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.legend-key {
+  font-weight: 600;
+  color: var(--accent);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.legend-val { color: var(--text-dim); }
+
+.legend-divider {
+  grid-column: 1 / -1;
+  border-top: 1px dashed var(--border);
+  margin: 4px 0;
+}
+
+.legend-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  margin-top: 3px;
+  line-height: 1.7;
+}
+
+.legend-sub-grid {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 2px 8px;
+  margin-top: 5px;
+}
+
+.legend-sub-key {
+  font-weight: 700;
+  color: var(--accent-dim);
+  font-size: 11px;
+  line-height: 1.7;
+  text-align: right;
+}
+
+code.legend-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent-dim);
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.ref-heading {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 32px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .calc-flow {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .flow-block-n,
+  .flow-block-pfg,
+  .flow-block-d,
+  .flow-block-sum {
+    border-radius: 8px;
+    border-left: 1px solid var(--border);
+  }
+}
+
+input[type="text"].over-limit {
+  border-color: #cc4444;
+  background: #2a1818;
+}
+
+input[type="text"].over-limit:focus {
+  border-color: #cc4444;
+  box-shadow: 0 0 0 2px rgba(204, 68, 68, 0.15);
+}
+
+.calc-flow {
+  position: relative;
+}
+
+.arrow-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  overflow: visible;
+}
+
+.arrow-path {
+  fill: none;
+  stroke: var(--accent-dim);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  opacity: 0.6;
+}
+
+.arrow-anchor {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: middle;
+}
+
+@media (max-width: 900px) {
+  .arrow-overlay {
+    display: none;
+  }
+}
+
+/* Обёртки прозрачны на десктопе */
+.pfg-columns,
+.params-columns {
+  display: contents;
+}
+
+@media (max-width: 900px) {
+  .pfg-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .pfg-group { margin-bottom: 0; }
+
+  #designItems {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .d-subgroup { margin-bottom: 0; }
+
+  .params-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>NSFW Score Calculator v0.4</h1>
+  <h1>NSFW Score Calculator v1.0</h1>
 
   <div class="ref-heading" style="margin-top: 40px;">Анализ изображения</div>
   <div class="section" id="dropSection">
@@ -492,22 +873,10 @@ button:hover {
     <div id="analyzeModel" style="margin-top: 4px; font-size: 11px; color: var(--text-dim); opacity: 0.5;"></div>
     <div id="balanceStatus" style="margin-top: 4px; font-size: 11px; color: var(--text-dim); opacity: 0.8;"></div>
   </div>
-  
+
   <div id="fakeProgressWrap" style="display:none; margin-top: 10px;">
-    <div style="
-      width: 100%;
-      height: 4px;
-      background: var(--surface-2);
-      border-radius: 2px;
-      overflow: hidden;
-    ">
-      <div id="fakeProgressBar" style="
-        height: 100%;
-        width: 0%;
-        background: var(--accent);
-        border-radius: 2px;
-        transition: none;
-      "></div>
+    <div style="width: 100%; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden;">
+      <div id="fakeProgressBar" style="height: 100%; width: 0%; background: var(--accent); border-radius: 2px; transition: none;"></div>
     </div>
   </div>
 
@@ -519,6 +888,7 @@ button:hover {
         <div class="score-bar" id="scoreBar"></div>
       </div>
       <div class="score-big" id="scoreOut">0.00</div>
+      <div class="ai-opinion" id="aiOpinion" style="display:none"></div>
     </div>
   </div>
 
@@ -527,171 +897,199 @@ button:hover {
     <label for="lockCoeffs">Зафиксировать коэффициенты</label>
   </div>
 
-  <!-- Presentation -->
-  <div class="section">
-    <div class="section-label">Presentation</div>
-    <div class="formula-row">
-      <span>P</span>
-      <span class="eq">=</span>
-      <span>1</span>
-      <span class="op">−</span>
-      <span class="paren">(</span>
-      <span>1</span>
-      <span class="op">−</span>
-      <input type="text" class="coeff" id="wn" value="0.9" disabled
-        title="wn — вес наготы (0–1). Ограничивает макс. вклад Nudity">
-      <span class="dot">·</span>
-      <input type="text" id="nudity" placeholder="Nud"
-        title="Nudity (0–10): степень наготы">
-      <span class="paren">)</span>
-      <span class="op">×</span>
-      <span class="paren">(</span>
-      <span>1</span>
-      <span class="op">−</span>
-      <input type="text" class="coeff" id="wf" value="0.6" disabled
-        title="wf — вес фрейминга (0–1). Ограничивает макс. вклад Framing">
-      <span class="dot">·</span>
-      <input type="text" id="framing" placeholder="Frm"
-        title="Framing (0–10): сексуальность позы, ракурса, фокуса камеры">
-      <span class="paren">)</span>
-      <span class="op">×</span>
-      <span class="paren">(</span>
-      <span>1</span>
-      <span class="op">−</span>
-      <input type="text" class="coeff" id="wd" value="0.6" disabled
-        title="wd — вес дизайна (0–1). Ограничивает макс. вклад Design">
-      <span class="dot">·</span>
-      <input type="text" id="design" placeholder="Dsn"
-        title="Design (0–10): сексуализированность костюма, пропорций, атрибутики">
-      <span class="paren">)</span>
-    </div>
-    <div class="intermediate-row">
-      <span>P =</span>
-      <div class="result-inline" id="presOut">0.00</div>
-      <span class="scale-hint">/ 10</span>
-    </div>
-    <div class="norm-note">Значения N, F, D нормализуются ÷10 перед подстановкой в формулу</div>
-  </div>
+  <!-- ===== Calculation Flow ===== -->
+  <div class="calc-flow">
 
-  <!-- Score -->
-  <div class="section">
-    <div class="section-label">Score</div>
-    <div class="formula-row">
-      <span>S</span>
-      <span class="eq">=</span>
-      <span>1</span>
-      <span class="op">−</span>
-      <span class="paren">(</span>
-      <span>1</span>
-      <span class="op">−</span>
-      <input type="text" id="actions" placeholder="Act"
-        title="Actions (0–10): степень явности сексуальных действий">
-      <span class="paren">)</span>
-      <span class="op">×</span>
-      <span class="paren">(</span>
-      <span>1</span>
-      <span class="op">−</span>
-      <span>P</span>
-      <span class="paren">)</span>
+    <svg id="arrowSvg" class="arrow-overlay">
+      <defs>
+        <marker id="arrowHead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent-dim)" stroke-width="1.2"/>
+        </marker>
+      </defs>
+      <path id="arrowN" class="arrow-path" marker-end="url(#arrowHead)"/>
+      <path id="arrowPfg" class="arrow-path" marker-end="url(#arrowHead)"/>
+      <path id="arrowD" class="arrow-path" marker-end="url(#arrowHead)"/>
+    </svg>
+
+    <!-- N — Nudity zones -->
+    <div class="flow-block flow-block-n">
+      <div class="flow-label">N — Nudity <span class="arrow-anchor" id="anchorN"></span></div>
+      <div class="sex-toggle">
+        <button class="sex-btn active" data-sex="f">Жен</button>
+        <button class="sex-btn" data-sex="m">Муж</button>
+      </div>
+      <div class="zone-grid" id="zoneGrid">
+        <!-- Filled by JS -->
+      </div>
+      <div class="flow-sum">
+        <span>Σ →</span>
+        <div class="result-inline" id="nSum">0.00</div>
+      </div>
     </div>
-    <div class="norm-note">Значение A нормализуется ÷10 перед подстановкой; результат ×10</div>
+
+    <!-- pfg — Framing (expanded) -->
+    <div class="flow-block flow-block-pfg">
+      <div class="flow-label">pfg — Framing <span class="arrow-anchor" id="anchorPfg"></span></div>
+
+      <div class="pfg-columns">
+        <!-- p — Pose -->
+        <div class="pfg-group">
+          <div class="pfg-group-header">
+            <span class="pfg-key">p</span>
+            <input type="text" id="pose" value="0" placeholder="0–10"
+              title="Поза тела">
+          </div>
+          <div class="pfg-items" id="poseItems"></div>
+        </div>
+
+        <!-- f — Camera -->
+        <div class="pfg-group">
+          <div class="pfg-group-header">
+            <span class="pfg-key">f</span>
+            <input type="text" id="cam" value="0" placeholder="0–10"
+              title="Фрейминг камеры">
+          </div>
+          <div class="pfg-items" id="camItems"></div>
+        </div>
+
+        <!-- g — Gaze -->
+        <div class="pfg-group">
+          <div class="pfg-group-header">
+            <span class="pfg-key">g</span>
+            <input type="text" id="gaze" value="0" placeholder="0–10"
+              title="Взгляд/мимика">
+          </div>
+          <div class="pfg-items" id="gazeItems"></div>
+        </div>
+      </div>
+
+      <div class="flow-sum">
+        <span>max →</span>
+        <div class="result-inline" id="pfgCalc">0</div>
+      </div>
+    </div>
+
+    <!-- D — Design -->
+    <div class="flow-block flow-block-d">
+      <div class="flow-label">D — Design <span class="arrow-anchor" id="anchorD"></span></div>
+      <div id="designItems">
+        <!-- Filled by JS — три .d-subgroup -->
+      </div>
+      <div class="flow-sum">
+        <span>Σ →</span>
+        <div class="result-inline" id="dSum">0</div>
+      </div>
+    </div>
+
+    <!-- Summary: N, pfg, D, A -->
+    <div class="flow-block flow-block-sum">
+      <div class="flow-label">Параметры</div>
+      <div class="params-columns">
+        <div class="params-left">
+          <div class="param-row">
+            <span class="param-key">N</span>
+            <input type="text" id="nudity" value="0" placeholder="0–10">
+            <span class="param-w">×<span id="wn_label">0.9</span></span>
+          </div>
+          <div class="param-row">
+            <span class="param-key">pfg</span>
+            <input type="text" id="framing" value="0" placeholder="0–10">
+            <span class="param-w">×<span id="wf_label">0.6</span></span>
+          </div>
+          <div class="param-row">
+            <span class="param-key">D</span>
+            <input type="text" id="design" value="0" placeholder="0–10">
+            <span class="param-w">×<span id="wd_label">0.6</span></span>
+          </div>
+        </div>
+        <div class="params-right">
+          <div class="param-row">
+            <span class="param-key">A</span>
+            <input type="text" id="actions" value="0" placeholder="0–10">
+          </div>
+          <div class="a-items" id="actionItems"></div>
+        </div>
+      </div>
+      <!-- Hidden coefficient inputs -->
+      <div style="display:none">
+        <input type="text" class="coeff" id="wn" value="0.9" disabled>
+        <input type="text" class="coeff" id="wf" value="0.6" disabled>
+        <input type="text" class="coeff" id="wd" value="0.6" disabled>
+      </div>
+    </div>
+
+    <!-- Score elements (hidden, used by JS) -->
+    <div style="display:none">
+      <div id="presOut">0.00</div>
+      <div id="sOut">0.00</div>
+      <div id="aiRow"><div id="aiVal">—</div></div>
+    </div>
+
   </div>
 
   <!-- ========== LEGEND ========== -->
 
-<div class="legend">
-  <!-- N -->
-  <span class="legend-key">N</span>
-  <span class="legend-val">
-    Nudity — взвешенная сумма открытых частей тела (≥ 0, без верхней границы)<br>
-    <span class="legend-sub">∑ коэфф_зоны × степень_открытости (0 | 0.1–0.9 | 1) по 8 зонам на персонажа.<br>
-    Муж.: ступни 0.2, бёдра 1.2, гениталии 4.0, лобок 1.0, ягодицы 1.5, живот 0.9, грудь муж. 0.2, соски/ареолы 0.5.<br>
-    Жен.: ступни 0.5, бёдра 1.4, гениталии+лобок 4.0, переход талии 1.0, ягодицы 2.0, живот 0.7, грудь жен. 2.5, соски/ареолы 4.0.<br>
-    Лицо, спина, руки, плечи, голени — всегда 0 (игнорируются).</span>
-  </span>
+  <div class="legend">
+    <span class="legend-key">N</span>
+    <span class="legend-val">
+      Nudity — взвешенная сумма открытых частей тела (≥ 0, без верхней границы)<br>
+      <span class="legend-sub">∑ коэфф_зоны × степень_открытости (0 | 0.1–0.9 | 1) по 8 зонам на персонажа.</span>
+    </span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">pfg</span>
+    <span class="legend-val">
+      Framing — <code class="legend-code">max(p, f, g)</code> (0–10)
+      <div class="legend-sub-grid">
+        <span class="legend-sub-key">p</span>
+        <span class="legend-sub">Поза: функц. 0 · презент. 2 · акцент. 5 · имплиц. секс. 7 · порно 10</span>
+        <span class="legend-sub-key">f</span>
+        <span class="legend-sub">Камера: нейтр. 0 · эстетиз. 3 · анатомиз. 5 · POV 8 · порно 10</span>
+        <span class="legend-sub-key">g</span>
+        <span class="legend-sub">Взгляд: нейтр. 0 · контакт. 1 · приглаш. 4 · секс. эксплиц. 7 · порно 10</span>
+      </div>
+    </span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">D</span>
+    <span class="legend-val">
+      Design — сумма маркеров сексуализации, макс. 10<br>
+      <span class="legend-sub">Архетипы, материалы, маркеры — суммируются</span>
+    </span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">A</span>
+    <span class="legend-val">
+      Actions — дискретная шкала явности действий (0–10)
+    </span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">P</span>
+    <span class="legend-val">Presentation — noisy-OR: <code class="legend-code">1 − (1−wn·N)(1−wf·pfg)(1−wd·D)</code></span>
+    <span class="legend-key">S</span>
+    <span class="legend-val">Score — noisy-OR: <code class="legend-code">1 − (1−A)(1−P)</code></span>
+    <div class="legend-divider"></div>
+    <span class="legend-key">wn wf wd</span>
+    <span class="legend-val">Весовые коэффициенты (0–1) — по умолчанию 0.9 / 0.6 / 0.6</span>
+  </div>
 
-  <div class="legend-divider"></div>
-
-  <!-- pfg -->
-  <span class="legend-key">pfg</span>
-  <span class="legend-val">
-    Framing — <code class="legend-code">max(p, f, g)</code> (0–10)
-    <div class="legend-sub-grid">
-      <span class="legend-sub-key">p</span>
-      <span class="legend-sub">Поза: функц. 0 · презентац. 2 · акцент. 5 · имплицитно секс. 7 · порно 10</span>
-      <span class="legend-sub-key">f</span>
-      <span class="legend-sub">Фрейминг камеры: нейтр. 0 · эстетиз. 3 · анатомиз. 5 · POV 8 · порно 10</span>
-      <span class="legend-sub-key">g</span>
-      <span class="legend-sub">Взгляд/мимика: нейтр. 0 · контакт. 1 · приглаш. 4 · секс. эксплиц. 7 · порно 10</span>
-    </div>
-  </span>
-
-  <div class="legend-divider"></div>
-
-  <!-- D -->
-  <span class="legend-key">D</span>
-  <span class="legend-val">
-    Design — сумма маркеров сексуализации, макс. 10<br>
-    <span class="legend-sub">Архетипы: школьница 1, горничная 1, bunny-suit 2, боевой купальник 2, микробикини/ремни 3 · Материалы: прозрачная ткань 1, кожа 2, латекс 3 · Маркеры: BDSM-атрибутика 3, body writing 3, секс-игрушка в костюме 5</span>
-  </span>
-
-  <div class="legend-divider"></div>
-
-  <!-- A -->
-  <span class="legend-key">A</span>
-  <span class="legend-val">
-    Actions — дискретная шкала явности действий (0–10)<br>
-    <span class="legend-sub">Нет 0 · сигнал без контакта 2 · первый контакт 4 · прямой контакт с эрогенными зонами 5 · фрикции 7 · проникновение 9 · экстремальные практики 10</span>
-  </span>
-
-  <div class="legend-divider"></div>
-
-  <!-- вычисляемые -->
-  <span class="legend-key">P</span>
-  <span class="legend-val">Presentation — noisy-OR от N, pfg, D: <code class="legend-code">1 − (1−wn·N)(1−wf·pfg)(1−wd·D)</code></span>
-
-  <span class="legend-key">S</span>
-  <span class="legend-val">Score — noisy-OR от A и P: <code class="legend-code">1 − (1−A)(1−P)</code></span>
-
-  <div class="legend-divider"></div>
-
-  <!-- веса -->
-  <span class="legend-key">wn wf wd</span>
-  <span class="legend-val">Весовые коэффициенты максимального вклада N, pfg, D (0–1) — по умолчанию 0.9 / 0.6 / 0.6</span>
-</div>
-
-  <!-- Блок добавления ключа для API к OpenRouter -->
+  <!-- API Key -->
   <div class="ref-heading" style="margin-top: 40px;">API Key</div>
   <div class="section" id="keySection">
     <div class="section-label">OpenRouter API Key</div>
     <div class="formula-row" style="gap: 8px;">
-      <input
-        type="text"
-        id="apiKey"
-        placeholder="sk-or-..."
-        style="width: 100%; max-width: 420px; text-align: left; padding: 0 10px;"
-      >
+      <input type="text" id="apiKey" placeholder="sk-or-..."
+        style="width: 100%; max-width: 420px; text-align: left; padding: 0 10px;">
       <button id="saveKey">Save</button>
       <span id="keyStatus" style="font-size: 12px; color: var(--text-dim);"></span>
     </div>
   </div>
 
   <footer style="
-    margin-top: 40px;
-    padding: 16px 0 24px;
+    margin-top: 40px; padding: 16px 0 24px;
     border-top: 1px solid var(--border);
-    text-align: center;
-    font-size: 12px;
-    color: var(--text-dim);
-    opacity: 0.6;
+    text-align: center; font-size: 12px;
+    color: var(--text-dim); opacity: 0.6;
   ">
-    <a href="https://github.com/MarisKori/Scripts/blob/main/nsfw-calculator-docs.md" target="_blank" rel="noopener" style="
-      color: var(--accent-dim);
-      text-decoration: none;
-      letter-spacing: 1px;
-    ">Документация</a>
+    <a href="https://github.com/MarisKori/Scripts/blob/main/nsfw-calculator-docs.md" target="_blank" rel="noopener"
+      style="color: var(--accent-dim); text-decoration: none; letter-spacing: 1px;">Документация</a>
   </footer>
-
 </div>
 
 <script>
@@ -708,15 +1106,12 @@ const $ = id => document.getElementById(id);
 
 const dataFields = ['nudity', 'framing', 'design', 'actions'];
 const coeffFields = ['wn', 'wf', 'wd'];
-const allFields = [...dataFields, ...coeffFields];
 
 function sanitize(e) {
   const el = e.target;
   el.value = el.value.replace(/[^0-9.]/g, '');
   const dots = el.value.split('.');
-  if (dots.length > 2) {
-    el.value = dots[0] + '.' + dots.slice(1).join('');
-  }
+  if (dots.length > 2) el.value = dots[0] + '.' + dots.slice(1).join('');
 }
 
 function val(id, max) {
@@ -725,7 +1120,425 @@ function val(id, max) {
   return Math.max(0, Math.min(max, v));
 }
 
-// --- API Key ---
+function checkLimit(el, max) {
+  const v = parseFloat(el.value);
+  el.classList.toggle('over-limit', !isNaN(v) && v > max);
+}
+
+
+// =====================================================
+// ZONE DATA
+// =====================================================
+
+const ZONES = [
+  { id: 'feet',     f: 0.5, m: 0.2, nameF: 'Ступни',   nameM: 'Ступни'   },
+  { id: 'thighs',   f: 1.4, m: 1.2, nameF: 'Бёдра',    nameM: 'Бёдра'    },
+  { id: 'genitals', f: 4.0, m: 4.0, nameF: 'Гнт.лоб.', nameM: 'Генит.'   },
+  { id: 'pubic',    f: 1.0, m: 1.0, nameF: 'Талия',     nameM: 'Лобок'    },
+  { id: 'buttocks', f: 2.0, m: 1.5, nameF: 'Ягодицы',   nameM: 'Ягодицы'  },
+  { id: 'belly',    f: 0.7, m: 0.9, nameF: 'Живот',     nameM: 'Живот'    },
+  { id: 'breasts',  f: 2.5, m: 0.2, nameF: 'Грудь',     nameM: 'Грудь'    },
+  { id: 'nipples',  f: 4.0, m: 0.5, nameF: 'Соски',     nameM: 'Соски'    },
+];
+
+let currentSex = 'f';
+let zoneManualOverride = false;
+let pfgManualOverride = false;
+let designManualOverride = false;
+
+// =====================================================
+// BUILD ZONE GRID (label on top, coeff + input + tri-state below)
+// =====================================================
+
+function buildZoneGrid() {
+  const grid = $('zoneGrid');
+  grid.innerHTML = '';
+  ZONES.forEach(z => {
+    const name = currentSex === 'f' ? z.nameF : z.nameM;
+    const weight = z[currentSex];
+    const cell = document.createElement('div');
+    cell.className = 'zone-cell';
+    cell.innerHTML = `
+      <span class="zone-name" id="zn_${z.id}">${name}</span>
+      <div class="zone-controls">
+        <span class="zone-w" id="zw_${z.id}">${weight.toFixed(1)}</span>
+        <span class="zone-x">×</span>
+        <input type="text" id="z_${z.id}" value="0" placeholder="0–1">
+        <span class="tri-check" id="zt_${z.id}" data-state="0" data-zone="${z.id}"
+          title="0 → 0.5 → 1 → 0"></span>
+      </div>
+    `;
+    grid.appendChild(cell);
+  });
+
+  // Bind zone inputs
+  ZONES.forEach(z => {
+    const inp = $('z_' + z.id);
+    inp.addEventListener('input', e => {
+      sanitize(e);
+      zoneManualOverride = false;
+      syncTriFromInput(z.id);
+      calcNudity();
+    });
+    inp.addEventListener('input', e => {
+      sanitize(e);
+      checkLimit(inp, 1);
+      zoneManualOverride = false;
+      syncTriFromInput(z.id);
+      calcNudity();
+    });    
+    
+    // Tri-state click
+    const tri = $('zt_' + z.id);
+    tri.addEventListener('click', () => {
+      const states = ['0', '0.5', '1'];
+      const cur = tri.dataset.state;
+      const next = states[(states.indexOf(cur) + 1) % 3];
+      tri.dataset.state = next;
+      $('z_' + z.id).value = next;
+      zoneManualOverride = false;
+      calcNudity();
+    });
+  });
+}
+
+function syncTriFromInput(zoneId) {
+  const v = parseFloat($('z_' + zoneId).value) || 0;
+  const tri = $('zt_' + zoneId);
+  if (v <= 0) tri.dataset.state = '0';
+  else if (v > 0 && v < 1) tri.dataset.state = '0.5';
+  else tri.dataset.state = '1';
+}
+
+function updateZoneWeights() {
+  ZONES.forEach(z => {
+    const wEl = $('zw_' + z.id);
+    const nEl = $('zn_' + z.id);
+    if (wEl) wEl.textContent = z[currentSex].toFixed(1);
+    if (nEl) nEl.textContent = currentSex === 'f' ? z.nameF : z.nameM;
+  });
+}
+
+// =====================================================
+// PFG SCALE ITEMS (radio behavior)
+// =====================================================
+
+const PFG_SCALES = {
+  pose: {
+    title: 'Поза тела: функциональная → презентационная → акцентирующая → имплицитно сексуальная → порнографическая',
+    items: [
+      { val: 0,  label: 'функц.',   tip: 'Тело как объект документации, не презентации' },
+      { val: 2,  label: 'презент.', tip: 'Поза осознанно «показывает» тело, но без сексуального контекста' },
+      { val: 5,  label: 'акцент.',  tip: 'Тело начинает «предлагать» себя — прогиб, выдвинутое бедро' },
+      { val: 7,  label: 'секс.',    tip: 'Поза воспроизводит логику полового контекста: доступность, раскрытость' },
+      { val: 10, label: 'порно',    tip: 'Поза существует только для демонстрации проникновения' },
+    ],
+  },
+  cam: {
+    title: 'Фрейминг камеры: нейтральный → эстетизирующий → анатомизирующий → POV → порнографический',
+    items: [
+      { val: 0,  label: 'нейтр.',    tip: 'Камера фиксирует человека целиком, без интерпретации' },
+      { val: 3,  label: 'эстетиз.',  tip: 'Угол и кадр работают на привлекательность, не на анатомию' },
+      { val: 5,  label: 'анатомиз.', tip: 'Камера наведена на часть тела как самостоятельный объект' },
+      { val: 8,  label: 'POV',       tip: 'Ракурс помещает зрителя в позицию сексуального участника' },
+      { val: 10, label: 'порно',     tip: 'Гениталии/проникновение как единственный предмет кадра' },
+    ],
+  },
+  gaze: {
+    title: 'Взгляд и мимика: нейтральный → контактный → приглашающий → сексуально эксплицитный → порнографический',
+    items: [
+      { val: 0,  label: 'нейтр.',    tip: 'Взгляд не направлен на зрителя, мимика функциональная' },
+      { val: 1,  label: 'контакт.',  tip: 'Осознанный контакт со зрителем, но без подтекста' },
+      { val: 4,  label: 'приглаш.',  tip: 'Зритель неявно трактуется как потенциальный партнёр: bedroom eyes, приоткрытый рот' },
+      { val: 7,  label: 'секс.',     tip: 'Взгляд прямо транслирует сексуальное намерение: возбуждение, оргазм' },
+      { val: 10, label: 'порно',     tip: 'Выражение существует только как часть полового акта' },
+    ],
+  },
+};
+
+function buildPfgItems() {
+  Object.keys(PFG_SCALES).forEach(groupId => {
+    const container = $(groupId + 'Items');
+    container.innerHTML = '';
+    PFG_SCALES[groupId].forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'scale-item';
+      el.dataset.group = groupId;
+      el.dataset.val = item.val;
+      el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`;
+      el.addEventListener('click', () => {
+        // Radio: deactivate others in group
+        container.querySelectorAll('.scale-item').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        $(groupId).value = item.val;
+        pfgManualOverride = false;
+        calcPfg();
+      });
+      container.appendChild(el);
+    });
+  });
+}
+
+function syncPfgItemsFromValue(groupId) {
+  const v = parseFloat($(groupId).value) || 0;
+  const container = $(groupId + 'Items');
+  container.querySelectorAll('.scale-item').forEach(el => {
+    el.classList.toggle('active', parseFloat(el.dataset.val) === v);
+  });
+}
+
+// =====================================================
+// DESIGN ITEMS (checkboxes, additive)
+// =====================================================
+
+const DESIGN_GROUPS = [
+  {
+    label: 'Архетипы',
+    items: [
+      { id: 'd_schoolgirl',  val: 1, label: 'Школьница',     tip: 'Школьная форма, гольфы, бант — фетишизация «невинности»' },
+      { id: 'd_maid',        val: 1, label: 'Горничная',      tip: 'Костюм горничной — ролевой архетип подчинения' },
+      { id: 'd_bunny',       val: 2, label: 'Bunny-suit',     tip: 'Корсет с ушами и хвостом — Playboy-эстетика' },
+      { id: 'd_battlesuit',  val: 2, label: 'Бой. купальник', tip: '«Боевой купальник» — бикини-броня в аниме/играх' },
+      { id: 'd_microbikini', val: 3, label: 'Микробикини',    tip: 'Микробикини или костюм из ремней — минимальное покрытие' },
+    ]
+  },
+  {
+    label: 'Материалы',
+    items: [
+      { id: 'd_sheer',   val: 1, label: 'Прозрачная', tip: 'Прозрачная ткань — тело видно сквозь одежду' },
+      { id: 'd_leather', val: 2, label: 'Кожа',       tip: 'Кожаная одежда — фетиш-коннотация' },
+      { id: 'd_latex',   val: 3, label: 'Латекс',     tip: 'Латекс/винил — выраженная фетиш-эстетика' },
+    ]
+  },
+  {
+    label: 'Маркеры',
+    items: [
+      { id: 'd_bdsm',      val: 3, label: 'BDSM',         tip: 'Ошейник, поводок, наручники — BDSM-атрибутика' },
+      { id: 'd_bodywrite',  val: 3, label: 'Body writing',  tip: 'Надписи на теле — маркер объективации' },
+      { id: 'd_sextoy',    val: 5, label: 'Секс-игрушка',  tip: 'Секс-игрушка как элемент костюма или аксессуар' },
+    ]
+  },
+];
+
+function buildDesignItems() {
+  const container = $('designItems');
+  container.innerHTML = '';
+  DESIGN_GROUPS.forEach(group => {
+    const sub = document.createElement('div');
+    sub.className = 'd-subgroup';
+    sub.innerHTML = `<div class="d-subgroup-label">${group.label}</div>`;
+    group.items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'design-item';
+      el.dataset.id = item.id;
+      el.dataset.val = item.val;
+      el.innerHTML = `<span class="di-check"></span><span class="di-val">${item.val}</span><span>${item.label}</span>`;
+      el.addEventListener('click', () => {
+        el.classList.toggle('active');
+        designManualOverride = false;
+        calcDesign();
+      });
+      sub.appendChild(el);
+    });
+    container.appendChild(sub);
+  });
+}
+
+function calcDesign() {
+  let sum = 0;
+  document.querySelectorAll('.design-item.active').forEach(el => {
+    sum += parseFloat(el.dataset.val) || 0;
+  });
+  sum = Math.min(10, sum);
+  $('dSum').textContent = sum;
+  if (!designManualOverride) {
+    $('design').value = sum;
+    calc();
+  }
+}
+
+function syncDesignItemsFromValue() {
+  // Deactivate all — when API sets D directly, we can't know which items
+  // so just leave items as-is and let manual override handle it
+}
+
+// =====================================================
+// ACTION ITEMS (radio behavior)
+// =====================================================
+
+const ACTION_SCALE = [
+  { val: 0,  label: 'Нет' },
+  { val: 2,  label: 'Сигнал' },
+  { val: 4,  label: '1-й контакт' },
+  { val: 5,  label: 'Эрогенные' },
+  { val: 7,  label: 'Фрикции' },
+  { val: 9,  label: 'Проникн.' },
+  { val: 10, label: 'Экстрем.' },
+];
+
+let actionManualOverride = false;
+
+function buildActionItems() {
+  const container = $('actionItems');
+  container.innerHTML = '';
+  ACTION_SCALE.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'scale-item';
+    el.dataset.val = item.val;
+    el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`;
+    el.addEventListener('click', () => {
+      container.querySelectorAll('.scale-item').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+      actionManualOverride = false;
+      $('actions').value = item.val;
+      calc();
+    });
+    container.appendChild(el);
+  });
+}
+
+function syncActionItemsFromValue() {
+  const v = parseFloat($('actions').value) || 0;
+  $('actionItems').querySelectorAll('.scale-item').forEach(el => {
+    el.classList.toggle('active', parseFloat(el.dataset.val) === v);
+  });
+}
+
+// =====================================================
+// N CALCULATION
+// =====================================================
+
+function calcNudity() {
+  let sum = 0;
+  ZONES.forEach(z => {
+    const openness = parseFloat($('z_' + z.id).value) || 0;
+    const clamped = Math.max(0, Math.min(1, openness));
+    sum += z[currentSex] * clamped;
+  });
+  $('nSum').textContent = sum.toFixed(2);
+  if (!zoneManualOverride) {
+    $('nudity').value = Math.min(10, sum).toFixed(1);
+    calc();
+  }
+}
+
+$('nudity').addEventListener('input', e => {
+  sanitize(e);
+  zoneManualOverride = true;
+  calc();
+});
+
+// =====================================================
+// PFG CALCULATION
+// =====================================================
+
+function calcPfg() {
+  const p = parseFloat($('pose').value) || 0;
+  const f = parseFloat($('cam').value) || 0;
+  const g = parseFloat($('gaze').value) || 0;
+  const mx = Math.max(p, f, g);
+  $('pfgCalc').textContent = mx.toFixed(0);
+  if (!pfgManualOverride) {
+    $('framing').value = Math.min(10, mx).toFixed(0);
+    calc();
+  }
+}
+
+['pose', 'cam', 'gaze'].forEach(id => {
+  $(id).addEventListener('input', e => {
+    sanitize(e);
+    pfgManualOverride = false;
+    syncPfgItemsFromValue(id);
+    calcPfg();
+  });
+});
+
+$('framing').addEventListener('input', e => {
+  sanitize(e);
+  pfgManualOverride = true;
+  calc();
+});
+
+// =====================================================
+// D, A — прямой ввод
+// =====================================================
+
+$('design').addEventListener('input', e => {
+  sanitize(e);
+  designManualOverride = true;
+  calc();
+});
+
+$('actions').addEventListener('input', e => {
+  sanitize(e);
+  actionManualOverride = true;
+  syncActionItemsFromValue();
+  calc();
+});
+
+// =====================================================
+// SEX TOGGLE
+// =====================================================
+
+document.querySelectorAll('.sex-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sex-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSex = btn.dataset.sex;
+    updateZoneWeights();
+    calcNudity();
+  });
+});
+
+// =====================================================
+// COEFFICIENTS
+// =====================================================
+
+coeffFields.forEach(id => {
+  $(id).addEventListener('input', e => {
+    sanitize(e);
+    $('wn_label').textContent = $('wn').value;
+    $('wf_label').textContent = $('wf').value;
+    $('wd_label').textContent = $('wd').value;
+    calc();
+  });
+});
+
+// =====================================================
+// MAIN CALC
+// =====================================================
+
+function calc() {
+  const wn = val('wn', 5);
+  const wf = val('wf', 5);
+  const wd = val('wd', 5);
+
+  const n   = val('nudity', 10) / 10;
+  const pfg = val('framing', 10) / 10;
+  const d   = val('design', 10) / 10;
+  const a   = val('actions', 10) / 10;
+
+  const P = 1 - (1 - wn * n) * (1 - wf * pfg) * (1 - wd * d);
+  let S = 1 - (1 - a) * (1 - P);
+
+  if (GLOBAL_JSON && GLOBAL_JSON.NSFW && GLOBAL_JSON.NSFW > S) {
+    S = GLOBAL_JSON.NSFW;
+  }
+
+  $('presOut').textContent = (P * 10).toFixed(2);
+  $('sOut').textContent = (S * 10).toFixed(2);
+  $('scoreOut').textContent = (S * 10).toFixed(2);
+  $('scoreBar').style.width = (S * 100) + '%';
+
+  const hue = 40 - S * 40;
+  const sat = 60 + S * 30;
+  $('scoreBar').style.background = `hsl(${hue}, ${sat}%, 55%)`;
+}
+
+// =====================================================
+// API KEY
+// =====================================================
+
 const keyInput = $('apiKey');
 const keyStatus = $('keyStatus');
 
@@ -753,12 +1566,7 @@ $('saveKey').addEventListener('click', () => {
 
 loadKey();
 
-// Balance
-const MONEY = {
-  deposit: 0,
-  spent: 0,
-  balance: 0,
-}
+const MONEY = { deposit: 0, spent: 0, balance: 0 };
 
 function updateBalance() {
   const el = $('balanceStatus');
@@ -766,18 +1574,22 @@ function updateBalance() {
   el.innerHTML = `balance: <span style="color:#0f0">$${MONEY.balance.toFixed(4)}</span>`;
 }
 
-// --- Image analyze ---
+// =====================================================
+// IMAGE ANALYZE
+// =====================================================
+
 const dropZone = $('dropZone');
 const fileInput = $('fileInput');
 const analyzeStatus = $('analyzeStatus');
 
 const MODEL = 'anthropic/claude-opus-4.6';
 const PRICE = {
-  ['anthropic/claude-opus-4.6']: {
-    input: 5,
-    output: 25,
-  },
-}
+  ['anthropic/claude-opus-4.6']: { input: 5, output: 25 },
+};
+
+
+// N считается как сумма (без ограничений) коэффициентов для открытых частей тела. Сами части тела имеют свои коэффициенты.
+// pfg - Этот параметр считается как максимум от трёх составляющих.
 
 const ANALYZE_PROMPT = `<role>Ты эксперт по разметке NSFW-контента. Оцени изображение по четырём параметрам.</role>
 <goal>
@@ -785,10 +1597,8 @@ const ANALYZE_PROMPT = `<role>Ты эксперт по разметке NSFW-к�
 {
   "name": "<краткое описание>",
   "N_arr": [<значения обнажённости>],
-  "N": <0–10>,
   "pfg_arr": [три составляющие],
-  "pfg": <0–10>,
-  "D": <0–10>,
+  "D_tags": [<строковые элементы>],
   "A": <0–10>,
   "NSFW": <0-1>
 }
@@ -813,13 +1623,11 @@ NSFW — независимая оценка
 - частично открыта (полуспущенная одежда, лохмотья и пр.) (от x0.1 до x0.9 по степени открытости)
 - полностью открыта (x1)
 
-N считается как сумма (без ограничений) коэффициентов для открытых частей тела. Сами части тела имеют свои коэффициенты.
-
 Если мужчина:
 1. Ступни = 0.2
 2. Бёдра (между тазом и коленями) = 1.2
-4. Гениталии = 4.0
-3. Лобковая область (кроме гениталий) = 1.0
+3. Гениталии = 4.0
+4. Лобковая область (кроме гениталий) = 1.0
 5. Ягодицы = 1.5
 6. Живот = 0.9
 7. Грудь мужская (кроме сосков) = 0.2
@@ -828,8 +1636,8 @@ N считается как сумма (без ограничений) коэф�
 Если женщина или смешанный пол:
 1. Ступни = 0.5
 2. Бёдра (между тазом и коленями) = 1.4
-4. Гениталии и лобок = 4.0
-3. Переход талии (изгиб между тазом и талией) = 1.0
+3. Гениталии и лобок = 4.0
+4. Переход талии (изгиб между тазом и талией) = 1.0
 5. Ягодицы = 2.0
 6. Живот = 0.7
 7. Женская грудь (зона декольте, сами груди, кроме сосков и ареол) = 2.5
@@ -837,6 +1645,7 @@ N считается как сумма (без ограничений) коэф�
 
 Пример 1: наполовину закрытые гениталии будут иметь значение 4.0 * 0.5 = 2.0
 Пример 2: у женщины показаны соски, но не ареолы, тогда значение (на глазок) 4.0 / 2 = 2.0
+Пример 3: у женщины выражена и оголена талия (песочные часы) по бокам = 1.0
 
 Больше 0 только обнажённые и полуобнажённые части тела! Закрытые одеждой или не в кадре - это 0.
 Лицо, спина, руки, плечи и голени нужно игнорировать, это всегда 0.
@@ -844,7 +1653,7 @@ N считается как сумма (без ограничений) коэф�
 <pfg>
 ### pfg — сексуальность позы/ракурса
 
-Этот параметр считается как максимум от трёх составляющих:
+Для этого параметра нужно оценить каждую из трёх составляющих одним числом:
 1. p — Поза тела
   - Функциональная = 0 (тело как объект документации, не презентации)
   - Презентационная = 2 (поза осознанно «показывает» тело, но без сексуального контекста: модельный каталог, мода, спорт)
@@ -866,22 +1675,21 @@ N считается как сумма (без ограничений) коэф�
 </pfg>
 <D>
 ### D — сексуализированность дизайна/костюма
-
-Здесь все присутствующие на изображении персонажа пункты суммируются. Если сумма больше 10, то обрезается до 10.
+Здесь нужно перечислить все присутствующие на изображении персонажа пункты (теги).
 - Архетипы
-  - Школьница = 1
-  - Горничная = 1
-  - Bunny-suit = 2
-  - «Боевой купальник» = 2
-  - Микробикини или костюм из ремней = 3
+  - Школьница = School
+  - Горничная = Maid
+  - Bunny-suit = Bunny
+  - «Боевой купальник» = Combat
+  - Микробикини или костюм из ремней = Micro
 - Материалы
-  - Прозрачная ткань = 1
-  - Кожа = 2
-  - Латекс = 3
+  - Прозрачная ткань = Sheer
+  - Кожа = Leather
+  - Латекс = Latex
 - Маркеры
-  - BDSM-атрибутика: ошейник, поводок, наручники = 3
-  - Body writing = 3
-  - Секс-игрушка как элемент костюма = 5
+  - BDSM-атрибутика: ошейник, поводок или наручники = BDSM
+  - Body writing = Writing
+  - Секс-игрушка как элемент костюма = Toy
 </D>
 <A>
 ### A — явность сексуальных действий
@@ -907,45 +1715,28 @@ N считается как сумма (без ограничений) коэф�
 `.trim();
 
 dropZone.addEventListener('click', () => fileInput.click());
-
-dropZone.addEventListener('dragover', e => {
-  e.preventDefault();
-  dropZone.classList.add('drag-over');
-});
-
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
   const file = e.dataTransfer.files[0];
   if (file && file.type.startsWith('image/')) processFile(file);
 });
-
-fileInput.addEventListener('change', () => {
-  if (fileInput.files[0]) processFile(fileInput.files[0]);
-});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) processFile(fileInput.files[0]); });
 
 let fakeProgressTimer = null;
 
 function startFakeProgress() {
   const wrap = $('fakeProgressWrap');
-  const bar  = $('fakeProgressBar');
-
-  // сброс
+  const bar = $('fakeProgressBar');
   if (fakeProgressTimer) clearTimeout(fakeProgressTimer);
   bar.style.transition = 'none';
   bar.style.width = '0%';
   wrap.style.display = 'block';
-
-  // форсируем reflow чтобы transition не применился к сбросу
   void bar.offsetWidth;
-
-  // фаза 1: 0% → 80% за 5 с
   bar.style.transition = 'width 5s linear';
   bar.style.width = '80%';
-
-  // фаза 2: 80% → 98% за 5 с (замедляемся, до 100 не доходим — ждём реального ответа)
   fakeProgressTimer = setTimeout(() => {
     bar.style.transition = 'width 5s ease-out';
     bar.style.width = '98%';
@@ -954,25 +1745,17 @@ function startFakeProgress() {
 
 function finishFakeProgress() {
   const wrap = $('fakeProgressWrap');
-  const bar  = $('fakeProgressBar');
-
+  const bar = $('fakeProgressBar');
   if (fakeProgressTimer) { clearTimeout(fakeProgressTimer); fakeProgressTimer = null; }
-
   bar.style.transition = 'width 0.2s ease';
   bar.style.width = '100%';
-
-  setTimeout(() => {
-    wrap.style.display = 'none';
-    bar.style.transition = 'none';
-    bar.style.width = '0%';
-  }, 300);
+  setTimeout(() => { wrap.style.display = 'none'; bar.style.transition = 'none'; bar.style.width = '0%'; }, 300);
 }
 
 function resetFakeProgress() {
   if (fakeProgressTimer) { clearTimeout(fakeProgressTimer); fakeProgressTimer = null; }
-  const wrap = $('fakeProgressWrap');
-  const bar  = $('fakeProgressBar');
-  wrap.style.display = 'none';
+  $('fakeProgressWrap').style.display = 'none';
+  const bar = $('fakeProgressBar');
   bar.style.transition = 'none';
   bar.style.width = '0%';
 }
@@ -985,37 +1768,22 @@ function resizeIfNeeded(file) {
       URL.revokeObjectURL(url);
       const { naturalWidth: w, naturalHeight: h } = img;
       const needsResize = Math.min(w, h) < 1200 || Math.max(w, h) > 1568;
-
       if (!needsResize) {
-        // читаем оригинал как base64 без изменений
         const reader = new FileReader();
-        reader.onload = () => resolve({
-          base64: reader.result.split(',')[1],
-          mediaType: file.type,
-          width: w,
-          height: h,
-        });
+        reader.onload = () => resolve({ base64: reader.result.split(',')[1], mediaType: file.type, width: w, height: h });
         reader.onerror = reject;
         reader.readAsDataURL(file);
         return;
       }
-
       const scale = 1568 / Math.max(w, h);
       const outW = Math.round(w * scale);
       const outH = Math.round(h * scale);
-
       const canvas = document.createElement('canvas');
       canvas.width = outW;
       canvas.height = outH;
       canvas.getContext('2d').drawImage(img, 0, 0, outW, outH);
-
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-      resolve({
-        base64: dataUrl.split(',')[1],
-        mediaType: 'image/jpeg',
-        width: outW,
-        height: outH,
-      });
+      resolve({ base64: dataUrl.split(',')[1], mediaType: 'image/jpeg', width: outW, height: outH });
     };
     img.onerror = reject;
     img.src = url;
@@ -1024,6 +1792,52 @@ function resizeIfNeeded(file) {
 
 let GLOBAL_TEXT = '';
 let GLOBAL_JSON = undefined;
+let GLOBAL_RESP = {};
+
+/*
+- Архетипы
+  - Школьница = 1
+  - Горничная = 1
+  - Bunny-suit = 2
+  - «Боевой купальник» = 2
+  - Микробикини или костюм из ремней = 3
+- Материалы
+  - Прозрачная ткань = 1
+  - Кожа = 2
+  - Латекс = 3
+- Маркеры
+  - BDSM-атрибутика: ошейник, поводок, наручники = 3
+  - Body writing = 3
+  - Секс-игрушка как элемент костюма = 5
+*/
+
+const D_TAGS = {
+  School: 1,
+  Maid: 1,
+  Bunny: 2,
+  Combat: 2,
+  Micro: 3,
+  Sheer: 2,
+  Leather: 2,
+  Latex: 3,
+  BDSM: 3,
+  Writing: 3,
+  Toy: 5,
+}
+const D_TAG_TO_ID = {
+  School: 'd_schoolgirl',
+  Maid: 'd_maid',
+  Bunny: 'd_bunny',
+  Combat: 'd_battlesuit',
+  Micro: 'd_microbikini',
+  Sheer: 'd_sheer',
+  Leather: 'd_leather',
+  Latex: 'd_latex',
+  BDSM: 'd_bdsm',
+  Writing: 'd_bodywrite',
+  Toy: 'd_sextoy',
+};
+
 async function processFile(file) {
   const key = localStorage.getItem('keyNSFW');
   if (!key) {
@@ -1031,40 +1845,24 @@ async function processFile(file) {
     analyzeStatus.style.color = 'var(--accent)';
     return;
   }
-
-  // --- превью ---
   const url = URL.createObjectURL(file);
   let img = dropZone.querySelector('img.preview');
-  if (!img) {
-    img = document.createElement('img');
-    img.className = 'preview';
-    dropZone.appendChild(img);
-  }
+  if (!img) { img = document.createElement('img'); img.className = 'preview'; dropZone.appendChild(img); }
   img.src = url;
   dropZone.classList.add('has-preview');
-  // --- /превью ---
 
   analyzeStatus.textContent = 'Читаю файл…';
   startFakeProgress();
-
   try {
     const { base64, mediaType, width, height } = await resizeIfNeeded(file);
     $('imgSize').textContent = `${width}×${height}`;
     $('imgSize').style.display = 'block';
     analyzeStatus.textContent = 'Отправляю на анализ…';
     try {
-      //const analyzePromise = analyzeImage(key, base64, mediaType);
-      //const depositPromise = checkOpenRouterKey(key);
-      //const [result, deposit] = await Promise.all([
-      //  analyzePromise,
-      //  depositPromise,
-      //]);
       const result = await analyzeImage(key, base64, mediaType);
-      
       finishFakeProgress();
       applyScores(result);
       analyzeStatus.textContent = `✓ Готово — N:${result.N} pfg:${result.pfg}${result.pfg_arr ? ` (${result.pfg_arr[0]},${result.pfg_arr[1]},${result.pfg_arr[2]})` : ''} D:${result.D} A:${result.A} (${result.name})`;
-      //$('analyzeModel').textContent = `${MODEL}`;
       analyzeStatus.style.color = 'var(--accent)';
     } catch (err) {
       resetFakeProgress();
@@ -1080,23 +1878,25 @@ async function processFile(file) {
   }
 }
 
+const FETCH_URL = localStorage.testURL || 'https://openrouter.ai/api/v1/chat/completions';
+
 async function analyzeImage(key, base64, mediaType) {
   let referer = "localhost";
   let title = "unknown host";
   GLOBAL_JSON = undefined;
   if (window.location.href) {
     if (window.location.href.startsWith('http')) {
-      referer = window.location.href
+      referer = window.location.href;
       if (window.location.origin === 'https://mariskori.github.io') {
-        title = 'NSFW calculator'
+        title = 'NSFW calculator';
       } else {
-        title = 'NSFL calculator'
+        title = 'NSFL calculator';
       }
     } else {
       title = 'Local-host';
     }
   }
-  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const resp = await fetch(FETCH_URL, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${key}`,
@@ -1110,84 +1910,49 @@ async function analyzeImage(key, base64, mediaType) {
       seed: 42,
       max_tokens: 500,
       reasoning: { effort: "none" },
-      provider: {
-        order: ['google-vertex'],
-        allow_fallbacks: false,  // запретить fallback на других провайдеров
-      },
+      provider: { order: ['google-vertex'], allow_fallbacks: false },
       messages: [
-        {
-          role: 'system',
-          content: ANALYZE_PROMPT
-        },
-        {
-          role: 'user',
-          content: [
-            { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
-            { type: 'text', text: 'Оцени изображение.' }
-          ]
-        }
+        { role: 'system', content: ANALYZE_PROMPT },
+        { role: 'user', content: [
+          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}` } },
+          { type: 'text', text: 'Оцени изображение.' }
+        ]}
       ]
     })
   });
+  GLOBAL_RESP = resp;
 
   if (!resp.ok) {
     let errBody;
-    try {
-      errBody = await resp.json();
-    } catch {
-      const text = await resp.text();
-      throw new Error(`HTTP ${resp.status}: ${text}`);
-    }
-
+    try { errBody = await resp.json(); } catch { const text = await resp.text(); throw new Error(`HTTP ${resp.status}: ${text}`); }
     const msg = errBody?.error?.message || '';
-
-    // удаляем user_id из объекта перед возможным выводом
     if (errBody?.user_id) delete errBody.user_id;
     if (errBody?.error?.metadata) delete errBody.error.metadata;
-
-    // известные ошибки → короткий русский текст
-    if (msg.includes('requires more credits')) {
-      throw new Error(`HTTP ${resp.status}: Не хватает денег на счету`);
-    }
-    if (msg.includes('Key limit exceeded')) {
-      throw new Error(`HTTP ${resp.status}: Не хватает денег на счету`);
-    }
-
-    // неизвестная ошибка с message
-    if (msg) {
-      throw new Error(`HTTP ${resp.status}: ${msg}`);
-    }
-
-    // нет message — полный JSON
+    if (msg.includes('requires more credits')) throw new Error(`HTTP ${resp.status}: Не хватает денег на счету`);
+    if (msg.includes('Key limit exceeded')) throw new Error(`HTTP ${resp.status}: Не хватает денег на счету`);
+    if (msg) throw new Error(`HTTP ${resp.status}: ${msg}`);
     throw new Error(`HTTP ${resp.status}: ${JSON.stringify(errBody)}`);
   }
+
   const data = await resp.json();
   const { prompt_tokens, completion_tokens } = data.usage;
-  
-  // add price
   if (PRICE[MODEL] && prompt_tokens) {
-    let spent = (PRICE[MODEL].input * prompt_tokens + PRICE[MODEL].output * completion_tokens) * 0.000001; // price was per 1M
-    //money = Math.ceil(money * 100) / 100;
+    let spent = (PRICE[MODEL].input * prompt_tokens + PRICE[MODEL].output * completion_tokens) * 0.000001;
     MONEY.spent += spent;
     MONEY.balance = MONEY.deposit - MONEY.spent;
     updateBalance();
   }
-  
+
   const text = data.choices[0].message.content.trim();
   GLOBAL_TEXT = text;
   if (typeof(text) === 'string' && (
-      text.match(/I'm sorry, but/)
-      || text.match(/I'm not able to /)
-      || text.match(/I cannot /)
-      || text.match(/I can't /)
-      || text.match(/missingkids\.org/)
-    )) {
+    text.match(/I'm sorry, but/) || text.match(/I'm not able to /) ||
+    text.match(/I cannot /) || text.match(/I can't /) || text.match(/missingkids\.org/)
+  )) {
     console.log('HOT ANSWER:', text);
-    return {
-      N:0, pfg:0, D:0, A:10, name:'Слишком горячая!',
-      prompt_tokens: prompt_tokens, completion_tokens: completion_tokens,
-    }
+    return { N:0, pfg:0, D:0, A:10, name:'Слишком горячая!', prompt_tokens, completion_tokens };
   }
+
   let json;
   try {
     json = JSON.parse(text.replace(/```json|```/g, '').trim());
@@ -1196,126 +1961,192 @@ async function analyzeImage(key, base64, mediaType) {
     if (!match) throw new Error('No JSON block found in response');
     json = JSON.parse(match[1].trim());
   }
-  json.prompt_tokens = prompt_tokens
-  json.completion_tokens = completion_tokens
+  json.prompt_tokens = prompt_tokens;
+  json.completion_tokens = completion_tokens;
   if (json.N_arr) {
     const a = json.N_arr;
     json.N_keys = {
-      ['Ступни']: a[0],
-      ['Бёдра']: a[1],
-      ['Гениталии (и лобок)']: a[2],
-      ['Лобок / Переход талии']: a[3],
-      ['Ягодицы']: a[4],
-      ['Живот']: a[5],
-      ['Грудь']: a[6],
-      ['Соски и ареолы']: a[7],
-    }
+      'Ступни': a[0], 'Бёдра': a[1], 'Гениталии (и лобок)': a[2],
+      'Лобок / Переход талии': a[3], 'Ягодицы': a[4], 'Живот': a[5],
+      'Грудь': a[6], 'Соски и ареолы': a[7],
+    };
+    const sum = a.reduce((a, b) => a + b, 0);
+    json.N = sum;
   }
   if (json.pfg_arr) {
-    const a = json.pfg_arr;
-    a['Pose_поза_тела'] = a['p'];
-    a['Framing_фрейминг_камеры'] = a['f'];
-    a['Gaze_взгляд_и_мимика'] = a['g'];
+    json.pfg = Math.max(json.pfg_arr[0], json.pfg_arr[1], json.pfg_arr[2]);
   }
-  console.log('Answer:',json);
-  GLOBAL_JSON = json
+  if (json.D_tags) {
+    let sum = 0;
+    json.D_tags.forEach(tag=>{
+      if (D_TAGS[tag]) sum += D_TAGS[tag];
+      else console.log(`ERROR: Unknown tag "${tag}"`);
+    });
+    json.D = sum;
+  }
+  console.log('Answer:', json);
+  GLOBAL_JSON = json;
 
   for (const k of ['N', 'pfg', 'D', 'A']) {
-    if (typeof json[k] !== 'number') {
-      throw new Error(`Нет поля ${k} в ответе`);
-    }
+    if (typeof json[k] !== 'number') throw new Error(`Нет поля ${k} в ответе`);
   }
   return json;
 }
 
-/**
- * Проверяет баланс аккаунта OpenRouter по Management ключу.
- * @param {string} apiKey - Management ключ OpenRouter.
- * @returns {Promise<{total_credits: number, total_usage: number, balance: number}>}
- * @throws {Error} Если запрос неуспешен или ключ недействителен.
- */
 async function checkOpenRouterKey(apiKey) {
-  const url = 'https://openrouter.ai/api/v1/auth/key';
-  
-  const response = await fetch(url, {
+  const response = await fetch('https://openrouter.ai/api/v1/auth/key', {
     method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    }
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
   });
-
   if (!response.ok) {
     let errorMessage = `HTTP error ${response.status}`;
-    try {
-      const errorData = await response.json();
-      errorMessage += `: ${errorData.error?.message || JSON.stringify(errorData)}`;
-    } catch {
-      errorMessage += `: ${response.statusText}`;
-    }
+    try { const errorData = await response.json(); errorMessage += `: ${errorData.error?.message || JSON.stringify(errorData)}`; }
+    catch { errorMessage += `: ${response.statusText}`; }
     throw new Error(errorMessage);
   }
-
-  const data = await response.json(); GLOBAL_DATA = data;
-  return data;
+  return await response.json();
 }
 
+// =====================================================
+// APPLY SCORES FROM API
+// =====================================================
 
-function applyScores({ N, pfg, D, A }) {
-  $('nudity').value = N;
-  $('framing').value = pfg;
-  $('design').value = D;
-  $('actions').value = A;
-  calc();
-}
-
-// --- Main calculation function ---
-function calc() {
-  const wn = val('wn', 5);
-  const wf = val('wf', 5);
-  const wd = val('wd', 5);
-
-  const n = val('nudity', 10) / 10;
-  const pfg = val('framing', 10) / 10;
-  const d = val('design', 10) / 10;
-  const a = val('actions', 10) / 10;
-
-  const P = 1 - (1 - wn * n) * (1 - wf * pfg) * (1 - wd * d);
-  let S = 1 - (1 - a) * (1 - P);
-  
-  // Подстраховка на случай странных неучтённых деталей.
-  if (GLOBAL_JSON && GLOBAL_JSON.NSFW && GLOBAL_JSON.NSFW > S) {
-    console.log('S =',S,'но внутренняя AI-оценка выше!');
-    S = GLOBAL_JSON.NSFW;
+function applyScores({ N, pfg, D, A, N_arr, pfg_arr }) {
+  // Zones
+  if (N_arr && N_arr.length === 8) {
+    ZONES.forEach((z, i) => {
+      const contribution = N_arr[i] || 0;
+      const weight = z[currentSex];
+      const openness = weight > 0 ? Math.min(1, contribution / weight) : 0;
+      $('z_' + z.id).value = openness > 0 ? openness.toFixed(2) : '0';
+      syncTriFromInput(z.id);
+    });
+    zoneManualOverride = false;
+    calcNudity();
   }
+  $('nudity').value = N;
+  zoneManualOverride = true;
 
-  $('presOut').textContent = (P * 10).toFixed(2);
-  $('scoreOut').textContent = (S * 10).toFixed(2);
-  $('scoreBar').style.width = (S * 100) + '%';
+  // pfg
+  if (pfg_arr && pfg_arr.length >= 3) {
+    $('pose').value = pfg_arr[0];
+    $('cam').value = pfg_arr[1];
+    $('gaze').value = pfg_arr[2];
+    syncPfgItemsFromValue('pose');
+    syncPfgItemsFromValue('cam');
+    syncPfgItemsFromValue('gaze');
+    pfgManualOverride = false;
+    calcPfg();
+  }
+  $('framing').value = pfg;
+  pfgManualOverride = true;
 
-  const hue = 40 - S * 40;
-  const sat = 60 + S * 30;
-  $('scoreBar').style.background = `hsl(${hue}, ${sat}%, 55%)`;
+  // D — activate checkboxes from tags, then set value
+  document.querySelectorAll('.design-item').forEach(el => el.classList.remove('active'));
+  if (GLOBAL_JSON && GLOBAL_JSON.D_tags) {
+    GLOBAL_JSON.D_tags.forEach(tag => {
+      const id = D_TAG_TO_ID[tag];
+      if (!id) return;
+      const el = document.querySelector(`.design-item[data-id="${id}"]`);
+      if (el) el.classList.add('active');
+    });
+  }
+  designManualOverride = false;
+  calcDesign();
+  $('design').value = D;
+  designManualOverride = true;
+  // A
+  $('actions').value = A;
+  syncActionItemsFromValue();
+
+  calc();
+
+  // AI opinion
+  if (GLOBAL_JSON && typeof GLOBAL_JSON.NSFW === 'number') {
+    $('aiRow').style.display = 'flex';
+    $('aiVal').textContent = (GLOBAL_JSON.NSFW * 10).toFixed(2);
+    const aiEl = $('aiOpinion');
+    aiEl.textContent = `Мнение AI: ${(GLOBAL_JSON.NSFW * 10).toFixed(2)}`;
+    aiEl.style.display = 'block';
+  }
 }
 
-allFields.forEach(id => {
-  $(id).addEventListener('input', e => { sanitize(e); calc(); });
-});
+// =====================================================
+// LOCK COEFFICIENTS
+// =====================================================
 
 $('lockCoeffs').addEventListener('change', e => {
   const locked = e.target.checked;
   coeffFields.forEach(id => { $(id).disabled = locked; });
 });
 
-document.addEventListener('DOMContentLoaded', async () => {
-  dataFields.forEach(id => {
-    if ($(id).value.trim() !== '') $(id).value = '0';
+// =====================================================
+// INIT
+// =====================================================
+
+function buildPfgItems() {
+  Object.keys(PFG_SCALES).forEach(groupId => {
+    const group = PFG_SCALES[groupId];
+    const container = $(groupId + 'Items');
+    container.innerHTML = '';
+    $(groupId).title = group.title;
+    group.items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'scale-item';
+      el.dataset.group = groupId;
+      el.dataset.val = item.val;
+      el.title = item.tip;
+      el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`;
+      el.addEventListener('click', () => {
+        container.querySelectorAll('.scale-item').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        $(groupId).value = item.val;
+        pfgManualOverride = false;
+        calcPfg();
+      });
+      container.appendChild(el);
+    });
   });
+}
+
+function buildDesignItems() {
+  const container = $('designItems');
+  container.innerHTML = '';
+  DESIGN_GROUPS.forEach(group => {
+    const sub = document.createElement('div');
+    sub.className = 'd-subgroup';
+    sub.innerHTML = `<div class="d-subgroup-label">${group.label}</div>`;
+    group.items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'design-item';
+      el.dataset.id = item.id;
+      el.dataset.val = item.val;
+      el.title = item.tip;
+      el.innerHTML = `<span class="di-check"></span><span class="di-val">${item.val}</span><span>${item.label}</span>`;
+      el.addEventListener('click', () => {
+        el.classList.toggle('active');
+        designManualOverride = false;
+        calcDesign();
+      });
+      sub.appendChild(el);
+    });
+    container.appendChild(sub);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  buildZoneGrid();
+  buildPfgItems();
+  buildDesignItems();
+  buildActionItems();
+  requestAnimationFrame(updateArrows);
+
+  dataFields.forEach(id => { if ($(id).value.trim() !== '') $(id).value = '0'; });
   $('wn').value = '0.9';
   $('wf').value = '0.6';
   $('wd').value = '0.6';
   calc();
-  // узнаём депозит ключа
+
   const key = localStorage.getItem('keyNSFW');
   if (key) {
     try {
@@ -1323,11 +2154,71 @@ document.addEventListener('DOMContentLoaded', async () => {
       MONEY.deposit = data.data?.limit_remaining || 0;
       MONEY.balance = MONEY.deposit - MONEY.spent;
       updateBalance();
-    } catch {
-    }
+    } catch {}
   }
+  updateZoneWeights();
+  $('wn_label').textContent = $('wn').value;
+  $('wf_label').textContent = $('wf').value;
+  $('wd_label').textContent = $('wd').value;
+  
+  const limitedFields = ['nudity', 'framing', 'design', 'actions', 'pose', 'cam', 'gaze'];
+  limitedFields.forEach(id => {
+    $(id).addEventListener('input', () => checkLimit($(id), 10));
+  });
+  
+  buildPfgItems();
+  buildDesignItems();
+  
+  updateArrows();
 });
 
+const ARROWS = [
+  { pathId: 'arrowN',   fromSel: '#anchorN',   toSel: '.flow-block-sum .param-row:nth-child(1) .param-key', lift: -100 },
+  { pathId: 'arrowPfg', fromSel: '#anchorPfg', toSel: '.flow-block-sum .param-row:nth-child(2) .param-key', lift: -40 },
+  { pathId: 'arrowD',   fromSel: '#anchorD',   toSel: '.flow-block-sum .param-row:nth-child(3) .param-key', lift: 70 },
+];
+
+function updateArrows() {
+  const svg = $('arrowSvg');
+  const flow = document.querySelector('.calc-flow');
+  if (!svg || !flow) return;
+
+  const flowRect = flow.getBoundingClientRect();
+
+  ARROWS.forEach(({ pathId, fromSel, toSel, lift }) => {
+    const fromEl = document.querySelector(fromSel);
+    const toEl = document.querySelector(toSel);
+    const path = $(pathId);
+    if (!fromEl || !toEl || !path) return;
+
+    const fr = fromEl.getBoundingClientRect();
+    const tr = toEl.getBoundingClientRect();
+
+    const x1 = fr.left - flowRect.left;
+    const y1 = fr.top + fr.height / 2 - flowRect.top;
+
+    const x2 = tr.left - flowRect.left - 4;
+    const y2 = tr.top + tr.height / 2 - flowRect.top;
+
+    const dx = x2 - x1;
+    const isVertical = Math.abs(dx) < 40;
+
+    let d;
+    if (isVertical) {
+      const bow = 30;
+      d = `M${x1},${y1} C${x1 + bow},${y1} ${x2 + bow},${y2} ${x2},${y2}`;
+    } else {
+      const mid = 0.6;
+      const cx = x1 + dx * mid;
+      const cy = Math.min(y1, y2) + (lift || 0);
+      d = `M${x1},${y1} C${cx},${cy} ${cx},${cy} ${x2},${y2}`;
+    }
+
+    path.setAttribute('d', d);
+  });
+}
+
+window.addEventListener('resize', updateArrows);
 </script>
 </body>
 </html>
