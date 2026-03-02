@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Попарное сравнение критериев</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 520px;
+      width: 100%;
+      padding: 24px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #2a2a4a;
+      border-radius: 3px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #7c5cbf;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      text-align: right;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    .question-label {
+      font-size: 15px;
+      color: #aaa;
+      margin-bottom: 16px;
+    }
+
+    .pair-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .pair-btn {
+      padding: 16px 20px;
+      font-size: 16px;
+      background: #2a2a4a;
+      color: #e0e0e0;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+
+    .pair-btn:hover {
+      background: #33335a;
+      border-color: #7c5cbf;
+    }
+
+    .pair-btn.selected {
+      background: #3b2d6b;
+      border-color: #7c5cbf;
+    }
+
+    .next-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      background: #7c5cbf;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .next-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .next-btn:not(:disabled):hover {
+      opacity: 0.85;
+    }
+
+    .done-screen {
+      text-align: center;
+    }
+
+    .done-btn {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 16px 48px;
+      font-size: 20px;
+      background: #7c5cbf;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .done-btn:hover {
+      opacity: 0.85;
+    }
+
+    .results {
+      margin-top: 8px;
+    }
+
+    .results h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      background: #2a2a4a;
+      border-radius: 10px;
+    }
+
+    .result-rank {
+      font-size: 22px;
+      font-weight: 700;
+      color: #7c5cbf;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .result-name {
+      flex: 1;
+      font-size: 16px;
+    }
+
+    .result-wins {
+      font-size: 14px;
+      color: #888;
+      white-space: nowrap;
+    }
+
+    .result-bar-bg {
+      width: 100%;
+      height: 4px;
+      background: #1a1a2e;
+      border-radius: 2px;
+      margin-top: 6px;
+    }
+
+    .result-bar-fill {
+      height: 100%;
+      background: #7c5cbf;
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    .result-info {
+      flex: 1;
+    }
+
+    .post-status {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app"></div>
+
+  <script>
+    const CRITERIA = [
+      'Детектив',
+      'Мистика',
+      'Гарем-девочка',
+      'Гарем-мальчик',
+      'Ксенолюди',
+      'Телепорты',
+      'Космические полёты',
+      'Мумии',
+      'Пески',
+      'Пираты',
+      'Работорговля',
+      'Файтинг',
+    ];
+
+    const POST_URL = 'https://h139775.s08.test-hf.su/test/gen-survey.php';
+
+    function generatePairs(items) {
+      const pairs = [];
+      for (let i = 0; i < items.length; i++)
+        for (let j = i + 1; j < items.length; j++)
+          pairs.push([items[i], items[j]]);
+      return pairs;
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function calcRanking(answers) {
+      const wins = {};
+      CRITERIA.forEach(c => wins[c] = 0);
+      answers.forEach(a => wins[a.winner]++);
+
+      const maxWins = Math.max(...Object.values(wins));
+
+      const sorted = Object.entries(wins)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, w]) => ({
+          name,
+          wins: w,
+          total: answers.length,
+          pct: maxWins > 0 ? w / maxWins : 0,
+        }));
+
+      let currentRank = 1;
+      for (let i = 0; i < sorted.length; i++) {
+        if (i > 0 && sorted[i].wins < sorted[i - 1].wins) {
+          currentRank = i + 1;
+        }
+        sorted[i].rank = currentRank;
+      }
+
+      return sorted;
+    }
+
+    const pairs = shuffle(generatePairs(CRITERIA));
+    const total = pairs.length;
+    const answers = [];
+    let current = 0;
+    let selected = null;
+
+    const app = document.getElementById('app');
+
+    function randomInts(count, min, max) {
+      const range = max - min + 1;
+      const buf = new Uint32Array(count);
+      crypto.getRandomValues(buf);
+      return buf.map(n => min + (n % range));
+    }
+
+    function renderQuestion() {
+      const [a, b] = pairs[current];
+      const pct = Math.round((current / total) * 100);
+      
+      const is_reverse = randomInts(1, 0, 1)[0];
+      const buttons = is_reverse ?
+`
+          <button class="pair-btn" data-choice="1">${b}</button>
+          <button class="pair-btn" data-choice="0">${a}</button>`:
+`
+          <button class="pair-btn" data-choice="0">${a}</button>
+          <button class="pair-btn" data-choice="1">${b}</button>`;
+      
+
+      app.innerHTML = `
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${pct}%"></div>
+        </div>
+        <div class="progress-text">${current + 1} / ${total}</div>
+        <div class="question-label">Что важнее?</div>
+        <div class="pair-container">${buttons}
+        </div>
+        <button class="next-btn" disabled>Далее</button>
+      `;
+
+      const btns = app.querySelectorAll('.pair-btn');
+      const nextBtn = app.querySelector('.next-btn');
+
+      btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          btns.forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selected = Number(btn.dataset.choice);
+          nextBtn.disabled = false;
+        });
+      });
+
+      nextBtn.addEventListener('click', () => {
+        if (selected === null) return;
+        const [a, b] = pairs[current];
+        answers.push({ pair: [a, b], winner: selected === 0 ? a : b });
+        selected = null;
+        current++;
+
+        if (current >= total) {
+          renderDone();
+        } else {
+          renderQuestion();
+        }
+      });
+    }
+
+    function renderDone() {
+      app.innerHTML = `
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 100%"></div>
+        </div>
+        <div class="done-screen">
+          <button class="done-btn">Готово!</button>
+        </div>
+      `;
+
+      app.querySelector('.done-btn').addEventListener('click', renderResults);
+    }
+
+    async function renderResults() {
+      const ranked = calcRanking(answers);
+
+      const rows = ranked.map(r => `
+        <div class="result-row">
+          <div class="result-rank">${r.rank}</div>
+          <div class="result-info">
+            <div class="result-name">${r.name}</div>
+            <div class="result-bar-bg">
+              <div class="result-bar-fill" style="width: ${Math.round(r.pct * 100)}%"></div>
+            </div>
+          </div>
+          <div class="result-wins">${r.wins} из ${r.total}</div>
+        </div>
+      `).join('');
+
+      app.innerHTML = `
+        <div class="results">
+          <h2>Приоритеты</h2>
+          ${rows}
+        </div>
+        <div class="post-status">Отправка результатов…</div>
+      `;
+
+      const statusEl = app.querySelector('.post-status');
+
+      const payload = {
+        answers,
+        ranking: ranked.map(r => ({
+          name: r.name,
+          rank: r.rank,
+          wins: r.wins,
+          total: r.total,
+          pct: Math.round(r.pct * 100),
+        })),
+      };
+
+      try {
+        const res = await fetch(POST_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        statusEl.textContent = res.ok
+          ? 'Результаты отправлены ✓'
+          : `Ошибка сервера: ${res.status}`;
+      } catch (e) {
+        statusEl.textContent = `Ошибка сети: ${e.message}`;
+      }
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>
