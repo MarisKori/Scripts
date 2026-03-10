@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RimWorld — Калькулятор пространства</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0d1117;
+    --panel:     #141b24;
+    --border:    #1e2d3d;
+    --accent:    #e8a838;
+    --accent2:   #4fc3f7;
+    --text:      #c9d1d9;
+    --muted:     #6b7785;
+    --mono:      'Share Tech Mono', monospace;
+    --sans:      'Barlow', sans-serif;
+    --red:       #e05c5c;
+    --green:     #56c290;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+    background-image:
+      linear-gradient(rgba(78,195,247,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(78,195,247,.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    color: var(--accent);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: .3rem;
+  }
+  .subtitle {
+    font-size: .8rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 2rem;
+    letter-spacing: .08em;
+  }
+
+  .layout {
+    max-width: 860px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+  @media(max-width:620px){ .layout{ grid-template-columns:1fr; } }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem 1.4rem;
+  }
+  .card-title {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── ROOM INPUT ── */
+  .room-toggle {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: 1rem;
+  }
+  .toggle-btn {
+    flex: 1;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: .78rem;
+    letter-spacing: .06em;
+    padding: .45rem .6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .toggle-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,168,56,.07);
+  }
+
+  .room-fields { display: flex; gap: .8rem; align-items: center; }
+  .room-fields label { font-size: .78rem; color: var(--muted); }
+
+  input[type=number] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: .95rem;
+    padding: .4rem .6rem;
+    border-radius: 4px;
+    width: 72px;
+    transition: border-color .15s;
+    -moz-appearance: textfield;
+  }
+  input[type=number]::-webkit-inner-spin-button { display: none; }
+  input[type=number]:focus {
+    outline: none;
+    border-color: var(--accent2);
+  }
+  .sep { color: var(--muted); font-family: var(--mono); font-size: 1.1rem; }
+
+  /* ── ITEMS ── */
+  .items-card { grid-column: 1 / -1; }
+  .items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: .5rem;
+  }
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .4rem .5rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: background .12s, border-color .12s;
+  }
+  .item-row:hover { background: rgba(255,255,255,.025); }
+  .item-row.active { border-color: rgba(232,168,56,.25); background: rgba(232,168,56,.04); }
+
+  .item-check {
+    width: 16px; height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .item-label {
+    flex: 1;
+    font-size: .82rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .item-size {
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--muted);
+    min-width: 30px;
+    text-align: right;
+  }
+  .item-qty {
+    width: 48px;
+    text-align: center;
+  }
+  .item-qty:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+  }
+
+  /* ── RESULT ── */
+  .result-card { grid-column: 1 / -1; }
+  .result-inner {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .result-main { flex: 1; min-width: 180px; }
+  .result-score {
+    font-family: var(--mono);
+    font-size: 3rem;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: .3rem;
+  }
+  .result-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .8rem;
+  }
+
+  .progress-wrap { margin-bottom: .8rem; }
+  .progress-bg {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: .35rem;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 3px;
+    transition: width .4s cubic-bezier(.4,0,.2,1);
+  }
+  .progress-label {
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    margin-top: .3rem;
+  }
+
+  .result-meta {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    min-width: 200px;
+  }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    font-size: .8rem;
+  }
+  .meta-key { color: var(--muted); font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; }
+  .meta-val { font-family: var(--mono); color: var(--text); }
+  .meta-val.good { color: var(--green); }
+  .meta-val.warn { color: var(--accent); }
+  .meta-val.bad  { color: var(--red); }
+
+  .tier-bar {
+    grid-column: 1/-1;
+    display: flex;
+    gap: 2px;
+    margin-top: .2rem;
+  }
+  .tier-seg {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background .3s;
+  }
+  .tier-seg.lit { background: var(--accent); }
+  .tier-seg.current { background: var(--accent2); }
+</style>
+</head>
+<body>
+
+<div style="max-width:860px;margin:0 auto 1.5rem">
+  <h1>// RIMWORLD :: SPACE CALCULATOR</h1>
+  <div class="subtitle">Калькулятор пространства комнаты</div>
+</div>
+
+<div class="layout">
+
+  <!-- ROOM SIZE -->
+  <div class="card">
+    <div class="card-title">Размер комнаты</div>
+    <div class="room-toggle">
+      <button class="toggle-btn active" id="btn-rect" onclick="setMode('rect')">Прямоугольник</button>
+      <button class="toggle-btn" id="btn-free" onclick="setMode('free')">Кол-во клеток</button>
+    </div>
+    <div id="field-rect" class="room-fields">
+      <label>Ш</label>
+      <input type="number" id="rw" value="7" min="1" oninput="recalc()">
+      <span class="sep">×</span>
+      <label>В</label>
+      <input type="number" id="rh" value="8" min="1" oninput="recalc()">
+    </div>
+    <div id="field-free" class="room-fields" style="display:none">
+      <label>Клеток</label>
+      <input type="number" id="rf" value="56" min="1" style="width:90px" oninput="recalc()">
+    </div>
+  </div>
+
+  <!-- STAT CARD -->
+  <div class="card">
+    <div class="card-title">Быстрые цифры</div>
+    <div style="display:flex;flex-direction:column;gap:.55rem">
+      <div class="meta-row"><span class="meta-key">КЛЕТОК В КОМНАТЕ</span><span class="meta-val" id="st-total">—</span></div>
+      <div class="meta-row"><span class="meta-key">ЗАНЯТО ОБЪЕКТАМИ</span><span class="meta-val" id="st-occ">—</span></div>
+      <div class="meta-row"><span class="meta-key">ШТРАФ (×0.9)</span><span class="meta-val bad" id="st-pen">—</span></div>
+      <div class="meta-row"><span class="meta-key">БАЗОВОЕ (×1.4)</span><span class="meta-val" id="st-base">—</span></div>
+    </div>
+  </div>
+
+  <!-- ITEMS -->
+  <div class="card items-card">
+    <div class="card-title">Объекты в комнате</div>
+    <div class="items-grid" id="items-grid"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="card result-card">
+    <div class="card-title">Результат</div>
+    <div class="result-inner">
+      <div class="result-main">
+        <div class="result-score" id="res-score">—</div>
+        <div class="result-label" id="res-label">—</div>
+        <div class="progress-wrap">
+          <div class="progress-bg"><div class="progress-fill" id="res-bar" style="width:0%"></div></div>
+          <div class="progress-label">
+            <span id="bar-lo">—</span>
+            <span id="bar-hi">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="result-meta">
+        <div class="meta-row"><span class="meta-key">ЗАПАС ОТ ПОРОГА</span><span class="meta-val good" id="res-margin">—</span></div>
+        <div class="meta-row"><span class="meta-key">ДО СЛЕДУЮЩЕГО</span><span class="meta-val warn" id="res-next">—</span></div>
+        <div style="margin-top:.8rem">
+          <div class="meta-key" style="margin-bottom:.4rem">УРОВНИ</div>
+          <div class="tier-bar" id="tier-bar"></div>
+          <div style="font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-top:.4rem" id="tier-names"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TIERS = [
+  { label: 'Тесная',                  min: -Infinity,  max: 12.5   },
+  { label: 'Довольно узкая',          min: 12.5,       max: 29     },
+  { label: 'Средняя',                 min: 29,         max: 55     },
+  { label: 'Относительно просторная', min: 55,         max: 70     },
+  { label: 'Довольно просторная',     min: 70,         max: 130    },
+  { label: 'Очень просторная',        min: 130,        max: 349.5  },
+  { label: 'Исключительно просторная',min: 349.5,      max: Infinity },
+];
+
+const ITEMS = [
+  { name: 'Двуспальная кровать', size: '2×2', tiles: 4  },
+  { name: 'Простая кровать',     size: '1×2', tiles: 2  },
+  { name: 'Ширма',               size: '1×2', tiles: 2  },
+  { name: 'Комод',               size: '1×2', tiles: 2  },
+  { name: 'Прикроватный столик', size: '1×1', tiles: 1  },
+  { name: 'Стол',                size: '1×2', tiles: 2  },
+  { name: 'Предмет мебели',      size: '1×2', tiles: 2  },
+  { name: 'Скульптура',          size: '1×1', tiles: 1  },
+  { name: 'Обогреватель',        size: '1×1', tiles: 1  },
+  { name: 'Костёр',              size: '1×1', tiles: 1  },
+  { name: 'Стеллаж',             size: '1×2', tiles: 2  },
+  { name: 'Малый стеллаж',       size: '1×1', tiles: 1  },
+  { name: 'Станок',              size: '1×3', tiles: 3  },
+  { name: 'Большой станок',      size: '2×5', tiles: 10 },
+  { name: 'Технич. устройство',  size: '2×2', tiles: 4  },
+  { name: 'Занятая клетка',      size: '1×1', tiles: 1  },
+];
+
+let mode = 'rect';
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('field-rect').style.display = m === 'rect' ? 'flex' : 'none';
+  document.getElementById('field-free').style.display = m === 'free' ? 'flex' : 'none';
+  document.getElementById('btn-rect').classList.toggle('active', m === 'rect');
+  document.getElementById('btn-free').classList.toggle('active', m === 'free');
+  recalc();
+}
+
+function buildItems() {
+  const grid = document.getElementById('items-grid');
+  ITEMS.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.id = `row-${i}`;
+    row.innerHTML = `
+      <input class="item-check" type="checkbox" id="chk-${i}" onchange="onCheck(${i})">
+      <label class="item-label" for="chk-${i}">${item.name}</label>
+      <span class="item-size">${item.size}</span>
+      <input class="item-qty" type="number" id="qty-${i}" value="1" min="1" max="99"
+        disabled oninput="recalc()" style="width:48px">
+    `;
+    grid.appendChild(row);
+  });
+}
+
+function onCheck(i) {
+  const chk = document.getElementById(`chk-${i}`);
+  const qty = document.getElementById(`qty-${i}`);
+  const row = document.getElementById(`row-${i}`);
+  qty.disabled = !chk.checked;
+  if (chk.checked) qty.value = Math.max(1, parseInt(qty.value) || 1);
+  row.classList.toggle('active', chk.checked);
+  recalc();
+}
+
+function getRoomTiles() {
+  if (mode === 'rect') {
+    const w = parseInt(document.getElementById('rw').value) || 0;
+    const h = parseInt(document.getElementById('rh').value) || 0;
+    return w * h;
+  }
+  return parseInt(document.getElementById('rf').value) || 0;
+}
+
+function getOccupied() {
+  let total = 0;
+  ITEMS.forEach((item, i) => {
+    const chk = document.getElementById(`chk-${i}`);
+    if (chk.checked) {
+      const qty = parseInt(document.getElementById(`qty-${i}`).value) || 0;
+      total += item.tiles * qty;
+    }
+  });
+  return total;
+}
+
+function recalc() {
+  const n = getRoomTiles();
+  const occ = getOccupied();
+  const base = n * 1.4;
+  const penalty = occ * 0.9;
+  const score = base - penalty;
+
+  document.getElementById('st-total').textContent = n;
+  document.getElementById('st-occ').textContent   = occ;
+  document.getElementById('st-pen').textContent   = `−${penalty.toFixed(1)}`;
+  document.getElementById('st-base').textContent  = base.toFixed(1);
+  document.getElementById('res-score').textContent = score.toFixed(1);
+
+  // find tier
+  let tierIdx = 0;
+  for (let i = 0; i < TIERS.length; i++) {
+    if (score >= TIERS[i].min) tierIdx = i;
+  }
+  const tier = TIERS[tierIdx];
+  document.getElementById('res-label').textContent = tier.label;
+
+  // margin above threshold
+  const lo = tier.min === -Infinity ? 0 : tier.min;
+  const margin = tier.min === -Infinity ? null : score - tier.min;
+  document.getElementById('res-margin').textContent =
+    margin === null ? '—' : `+${margin.toFixed(1)}`;
+
+  // to next
+  const isLast = tierIdx === TIERS.length - 1;
+  const nextTier = isLast ? null : TIERS[tierIdx + 1];
+  document.getElementById('res-next').textContent =
+    isLast ? '— (макс)' : `${(nextTier.min - score).toFixed(1)}`;
+
+  // progress bar within tier
+  const hi = tier.max === Infinity ? tier.min + 100 : tier.max;
+  const loC = tier.min === -Infinity ? hi - 100 : tier.min;
+  const pct = Math.min(100, Math.max(0, ((score - loC) / (hi - loC)) * 100));
+  document.getElementById('res-bar').style.width = pct + '%';
+  document.getElementById('bar-lo').textContent = tier.min === -Infinity ? '—' : loC;
+  document.getElementById('bar-hi').textContent = tier.max === Infinity ? '∞' : hi;
+
+  // tier bar
+  const tbar = document.getElementById('tier-bar');
+  tbar.innerHTML = '';
+  TIERS.forEach((t, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'tier-seg' + (i < tierIdx ? ' lit' : '') + (i === tierIdx ? ' current' : '');
+    tbar.appendChild(seg);
+  });
+
+  document.getElementById('tier-names').textContent =
+    `${tierIdx + 1} / ${TIERS.length} — ${tier.label}`;
+}
+
+buildItems();
+recalc();
+</script>
+</body>
+</html>
