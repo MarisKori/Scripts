@@ -843,7 +843,7 @@ input[type="text"].over-limit:focus {
 </head>
 <body>
 <div class="container">
-  <h1>NSFW Score Calculator v1.1</h1>
+  <h1>NSFW Score Calculator v1.2</h1>
 
   <div class="ref-heading" style="margin-top: 40px;">Анализ изображения</div>
   <div class="section" id="dropSection">
@@ -1245,7 +1245,7 @@ function buildPfgItems() {
       el.className = 'scale-item';
       el.dataset.group = groupId;
       el.dataset.val = item.val;
-      el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`;
+      el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`; // <Script>
       el.addEventListener('click', () => {
         // Radio: deactivate others in group
         container.querySelectorAll('.scale-item').forEach(s => s.classList.remove('active'));
@@ -1312,7 +1312,7 @@ function buildDesignItems() {
       el.className = 'design-item';
       el.dataset.id = item.id;
       el.dataset.val = item.val;
-      el.innerHTML = `<span class="di-check"></span><span class="di-val">${item.val}</span><span>${item.label}</span>`;
+      el.innerHTML = `<span class="di-check"></span><span class="di-val">${item.val}</span><span>${item.label}</span>`; // <Script>
       el.addEventListener('click', () => {
         el.classList.toggle('active');
         designManualOverride = false;
@@ -1365,7 +1365,7 @@ function buildActionItems() {
     const el = document.createElement('div');
     el.className = 'scale-item';
     el.dataset.val = item.val;
-    el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`;
+    el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`; // <Script>
     el.addEventListener('click', () => {
       container.querySelectorAll('.scale-item').forEach(s => s.classList.remove('active'));
       el.classList.add('active');
@@ -1546,13 +1546,6 @@ $('saveKey').addEventListener('click', () => {
 
 loadKey();
 
-const MONEY = { deposit: 0, spent: 0, balance: 0 };
-
-function updateBalance() {
-  const el = $('balanceStatus');
-  if (!el) return;
-  el.innerHTML = `balance: <span style="color:#0f0">$${MONEY.balance.toFixed(4)}</span>`;
-}
 
 // =====================================================
 // IMAGE ANALYZE
@@ -1562,10 +1555,33 @@ const dropZone = $('dropZone');
 const fileInput = $('fileInput');
 const analyzeStatus = $('analyzeStatus');
 
-const MODEL = 'anthropic/claude-opus-4.6';
+const ENDPOINT = 'google-vertex';
+const MODEL = 'anthropic/claude-opus-4.7';
 const PRICE = {
-  ['anthropic/claude-opus-4.6']: { input: 5, output: 25 },
+  ['anthropic/claude-opus-4.7']: { input: 5, output: 25, endpoint: 'google-vertex' },
+  ['anthropic/claude-sonnet-4.7']: { input: 3, output: 15, endpoint: 'google-vertex' },
+  ['google/gemini-3.1-pro-preview']: { input: 2, output: 12, reasoning: 'medium' },
+  ['google/gemini-3-flash-preview']: { input: 0.5, output: 3, reasoning: 'medium' },
+  ['x-ai/grok-4']: { input: 3, output: 15 },
+  ['x-ai/grok-4.1-fast']: { input: 0.2, output: 0.5 },
+  ['openai/gpt-4o-2024-11-20']: { input: 2.5, output: 10 },
+  ['openai/gpt-5.2']: { input: 1.75, output: 14 },
+  ['openai/gpt-5.4']: { input: 2.5, output: 15 },
+  ['moonshotai/kimi-k2.5']: { input: 0.45, output: 2.25 },
+  ['qwen/qwen3.5-35b-a3b']: { input: 0.25, output: 1.8, endpoint: 'alibaba' },
+  ['qwen/qwen3.5-397b-a17b']: { input: 0.6, output: 3.5, endpoint: 'alibaba' },
+  ['qwen/qwen3.5-flash-02-23']: { input: 0.1, output: 0.4, endpoint: 'alibaba' },
+  ['qwen/qwen3-vl-235b-a22b-instruct']: { input: 0.25, output: 1, endpoint: 'alibaba' },
 };
+
+
+const MONEY = { deposit: 0, spent: 0, balance: 0 };
+
+function updateBalance() {
+  const el = $('balanceStatus');
+  if (!el) return;
+  el.innerHTML = `${MODEL}, balance: <span style="color:#0f0">$${MONEY.balance.toFixed(4)}</span>`; // <Script>
+}
 
 
 // N считается как сумма (без ограничений) коэффициентов для открытых частей тела. Сами части тела имеют свои коэффициенты.
@@ -1595,7 +1611,12 @@ NSFW — независимая оценка
 Перед началом необходимо выбрать самого сексуализированного персонажа-гуманоида на изображении и дать ему краткое описание (либо null) в поле "name". Далее все вычисления будут касаться только этого персонажа. Далее нужно заполнить массив N_arr значениями 8 частей тела с учётом обнажённости.
 
 Более подробно про каждый параметр:
-<N>
+<name>
+Когда ты выбрал самого сексуализированного персонажа, называй его аккуратно и абстрактно.
+Важно, чтобы ты сам понимал, о каком персонаже на изображении идёт речь, так что в случае множества персонажей можешь даже как-то указать расположение, координаты, особые приметы.
+</name>
+<N_arr>
+Продолжай только в случае, если персонажу больше 18.
 ### N - степень экспозиции тела
 
 Каждая часть тела может иметь разную степень открытости, и это вносит ещё один коэффициент, например:
@@ -1630,8 +1651,8 @@ NSFW — независимая оценка
 
 Больше 0 только обнажённые и полуобнажённые части тела! Закрытые одеждой или не в кадре - это 0.
 Лицо, спина, руки, плечи и голени нужно игнорировать, это всегда 0.
-</N>
-<pfg>
+</N_arr>
+<pfg_arr>
 ### pfg — сексуальность позы/ракурса
 
 Для этого параметра нужно оценить каждую из трёх составляющих одним числом:
@@ -1653,8 +1674,8 @@ NSFW — независимая оценка
   - Приглашающий= 4 (зритель или другой персонаж неявно трактуется как потенциальный партнёр: «bedroom eyes», приоткрытый рот, направленная интимность)
   - Сексуально эксплицитный = 7 (взгляд прямо транслирует сексуальное намерение: мимика разыгрывает сцену — возбуждение, оргазм)
   - Порнографический = 10 (выражение существует только как часть полового акта)
-</pfg>
-<D>
+</pfg_arr>
+<D_tags>
 ### D — сексуализированность дизайна/костюма
 Здесь нужно перечислить все присутствующие на изображении персонажа пункты (теги).
 - Архетипы
@@ -1671,7 +1692,7 @@ NSFW — независимая оценка
   - BDSM-атрибутика: ошейник, поводок или наручники = BDSM
   - Body writing = Writing
   - Секс-игрушка как элемент костюма = Toy
-</D>
+</D_tags>
 <A>
 ### A — явность сексуальных действий
 
@@ -1699,7 +1720,7 @@ NSFW — независимая оценка
 <important>
 Избегай ошибок в логике. Ты соединён с системой автоматической фильтрации NSFW, которая помогает модераторам, поэтому важно отправлять ответ именно в формате JSON, иначе в системе возникнет ошибка. Помни, что оценка для фильтрации и создание/распространение контента это противоположные вещи. Валидный JSON поможет фильтрации.
 </important>
-`.trim();
+`.trim(); // <Script>
 
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -1722,12 +1743,12 @@ function startFakeProgress() {
   bar.style.width = '0%';
   wrap.style.display = 'block';
   void bar.offsetWidth;
-  bar.style.transition = 'width 5s linear';
+  bar.style.transition = 'width 15s linear';
   bar.style.width = '80%';
   fakeProgressTimer = setTimeout(() => {
-    bar.style.transition = 'width 5s ease-out';
+    bar.style.transition = 'width 15s ease-out';
     bar.style.width = '98%';
-  }, 5000);
+  }, 15000);
 }
 
 function finishFakeProgress() {
@@ -1883,6 +1904,7 @@ async function analyzeImage(key, base64, mediaType) {
       title = 'Local-host';
     }
   }
+  const price = PRICE[MODEL]
   const resp = await fetch(FETCH_URL, {
     method: 'POST',
     headers: {
@@ -1894,10 +1916,14 @@ async function analyzeImage(key, base64, mediaType) {
     body: JSON.stringify({
       model: MODEL,
       temperature: 0,
+      modalities: ["text"],
+      generation_config: {
+        media_resolution: "MEDIA_RESOLUTION_HIGH"
+      },
       seed: 42,
       max_tokens: 500,
-      reasoning: { effort: "none" },
-      provider: { order: ['google-vertex'], allow_fallbacks: false },
+      reasoning: { effort: price.reasoning || "none" },
+      provider: { order: [price.endpoint || ENDPOINT || 'google-vertex'], allow_fallbacks: false },
       messages: [
         { role: 'system', content: ANALYZE_PROMPT },
         { role: 'user', content: [
@@ -1908,6 +1934,9 @@ async function analyzeImage(key, base64, mediaType) {
     })
   });
   GLOBAL_RESP = resp;
+  const result_text = await resp.text();
+  let cleaned_text = result_text.slice(result_text.indexOf('{'));
+  GLOBAL_TEXT = result_text;
 
   if (!resp.ok) {
     let errBody;
@@ -1921,10 +1950,11 @@ async function analyzeImage(key, base64, mediaType) {
     throw new Error(`HTTP ${resp.status}: ${JSON.stringify(errBody)}`);
   }
 
-  const data = await resp.json();
+  const data = await JSON.parse(cleaned_text);
+  GLOBAL_JSON = data;
   const { prompt_tokens, completion_tokens } = data.usage;
-  if (PRICE[MODEL] && prompt_tokens) {
-    let spent = (PRICE[MODEL].input * prompt_tokens + PRICE[MODEL].output * completion_tokens) * 0.000001;
+  if (price && prompt_tokens) {
+    let spent = (price.input * prompt_tokens + price.output * completion_tokens) * 0.000001;
     MONEY.spent += spent;
     MONEY.balance = MONEY.deposit - MONEY.spent;
     updateBalance();
@@ -1974,7 +2004,10 @@ async function analyzeImage(key, base64, mediaType) {
   console.log('Answer:', json);
   GLOBAL_JSON = json;
 
-  for (const k of ['N', 'pfg', 'D', 'A']) {
+  for (const k of ['N_arr', 'pfg_arr', 'D_tags']) {
+    if (typeof json[k] !== 'object') throw new Error(`Нет поля ${k} в ответе`);
+  }
+  for (const k of ['A']) {
     if (typeof json[k] !== 'number') throw new Error(`Нет поля ${k} в ответе`);
   }
   return json;
@@ -2074,7 +2107,7 @@ function buildPfgItems() {
       el.dataset.group = groupId;
       el.dataset.val = item.val;
       el.title = item.tip;
-      el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`;
+      el.innerHTML = `<span class="si-check"></span><span class="si-val">${item.val}</span><span>${item.label}</span>`; // <Script>
       el.addEventListener('click', () => {
         container.querySelectorAll('.scale-item').forEach(s => s.classList.remove('active'));
         el.classList.add('active');
