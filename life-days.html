@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Прожитые дни</title>
+<style>
+  :root {
+    --paper:   #edf1f2;
+    --ink:     #12232b;
+    --muted:   #5b7078;
+    --hair:    #c9d4d7;
+    --lived:   #37535d;
+    --accent:  #0e7c86;
+
+    --display: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    --ui:      "Segoe UI", Roboto, system-ui, sans-serif;
+    --data:    Consolas, "DejaVu Sans Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--ui);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main {
+    width: 100%;
+    max-width: 620px;
+    padding: 12vh 24px 10vh;
+  }
+
+  /* ---- ввод даты ---- */
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  .field > span {
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input {
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--hair);
+    padding: 4px 0;
+  }
+
+  input:focus-visible {
+    outline: 0;
+    border-bottom-color: var(--accent);
+    box-shadow: 0 1px 0 0 var(--accent);
+  }
+
+  #birth {
+    font-family: var(--data);
+    font-size: 20px;
+    width: 100%;
+    max-width: 220px;
+  }
+
+  /* ---- результат ---- */
+
+  #result[hidden] { display: none; }
+
+  #result { margin-top: 8vh; }
+
+  .count {
+    font-family: var(--data);
+    font-size: clamp(52px, 15vw, 104px);
+    line-height: .95;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.03em;
+  }
+
+  .count-unit {
+    font-family: var(--display);
+    font-size: 20px;
+    font-style: italic;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  .share {
+    font-family: var(--display);
+    font-size: clamp(19px, 4.5vw, 24px);
+    margin-top: 28px;
+  }
+
+  .share b { font-weight: 400; color: var(--accent); }
+
+  /* ---- решётка недель ---- */
+
+  #grid-wrap { margin-top: 34px; }
+
+  canvas { display: block; width: 100%; }
+
+  .legend {
+    margin-top: 10px;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ---- допущение о длительности жизни ---- */
+
+  .span-row {
+    margin-top: 9vh;
+    padding-top: 16px;
+    border-top: 1px solid var(--hair);
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  #span {
+    font-family: var(--data);
+    font-size: 13px;
+    width: 3.4em;
+    text-align: center;
+    color: var(--ink);
+  }
+
+  #span::-webkit-outer-spin-button,
+  #span::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #span { -moz-appearance: textfield; }
+
+  #span-days:empty { display: none; }
+</style>
+</head>
+<body>
+<main>
+
+  <label class="field">
+    <span>дата рождения</span>
+    <input id="birth" type="date" autofocus>
+  </label>
+
+  <section id="result" hidden>
+    <div class="count" id="days"></div>
+    <div class="count-unit" id="days-unit"></div>
+
+    <p class="share">прожито <b id="percent"></b> предполагаемой жизни</p>
+
+    <div id="grid-wrap">
+      <canvas id="grid"></canvas>
+      <div class="legend">одна клетка — неделя, одна строка — год</div>
+    </div>
+  </section>
+
+  <p class="span-row">
+    предполагаемая длительность жизни
+    <input id="span" type="number" min="1" max="150" step="1" value="80"> лет<span id="span-days"></span>
+  </p>
+
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const DAY = 86400000;
+  const WEEKS_PER_ROW = 52;
+
+  const el = {
+    birth:    document.getElementById("birth"),
+    span:     document.getElementById("span"),
+    result:   document.getElementById("result"),
+    days:     document.getElementById("days"),
+    daysUnit: document.getElementById("days-unit"),
+    percent:  document.getElementById("percent"),
+    canvas:   document.getElementById("grid"),
+    spanDays: document.getElementById("span-days")
+  };
+
+  const nf = new Intl.NumberFormat("ru-RU");
+  const pf = new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const plural = (n, one, few, many) => {
+    const a = Math.abs(n) % 100, b = a % 10;
+    if (a > 10 && a < 20) return many;
+    if (b > 1 && b < 5) return few;
+    if (b === 1) return one;
+    return many;
+  };
+
+  /** Разбирает YYYY-MM-DD в полночь UTC; возвращает null, если такой даты нет. */
+  const parseDate = (value) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
+    if (!m) return null;
+    const y = +m[1], mo = +m[2] - 1, d = +m[3];
+    const dt = new Date(Date.UTC(y, mo, d));
+    const sane = dt.getUTCFullYear() === y && dt.getUTCMonth() === mo && dt.getUTCDate() === d;
+    return sane ? dt : null;
+  };
+
+  const today = () => {
+    const n = new Date();
+    return new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()));
+  };
+
+  // Средняя длина григорианского года. Даёт число дней, не зависящее от даты рождения.
+  const yearsToDays = (years) => Math.round(years * 365.2425);
+
+  const DEFAULT_SPAN = 80;
+
+  const readSpan = () => {
+    const raw = el.span.value.trim();
+    if (!/^\d+$/.test(raw)) return null;
+    const n = +raw;
+    return (n >= 1 && n <= 150) ? n : null;
+  };
+
+  /** Текущее состояние отрисовки решётки; хранится, чтобы перерисовать при resize. */
+  let grid = null;
+
+  const drawGrid = () => {
+    if (!grid) return;
+
+    const { rows, weeksLived } = grid;
+    const cv = el.canvas;
+    const width = cv.clientWidth;
+    if (!width) return;
+
+    const gutter = 26;
+    const cell = Math.max(3, Math.floor((width - gutter) / WEEKS_PER_ROW));
+    const height = rows * cell;
+    const dpr = window.devicePixelRatio || 1;
+
+    cv.width = Math.round(width * dpr);
+    cv.height = Math.round(height * dpr);
+    cv.style.height = height + "px";
+
+    const css = getComputedStyle(document.documentElement);
+    const colorLived  = css.getPropertyValue("--lived").trim();
+    const colorEmpty  = css.getPropertyValue("--hair").trim();
+    const colorNow    = css.getPropertyValue("--accent").trim();
+    const colorLabel  = css.getPropertyValue("--muted").trim();
+
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    const side = Math.max(2, cell - 1);
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < WEEKS_PER_ROW; col++) {
+        const index = row * WEEKS_PER_ROW + col;
+        const x = gutter + col * cell;
+        const y = row * cell;
+
+        if (index < weeksLived - 1) ctx.fillStyle = colorLived;
+        else if (index === weeksLived - 1) ctx.fillStyle = colorNow;
+        else ctx.fillStyle = colorEmpty;
+
+        ctx.fillRect(x, y, side, side);
+      }
+    }
+
+    // Подписи возраста: каждые 10 лет — они же ориентир по вертикали.
+    if (cell >= 5) {
+      ctx.fillStyle = colorLabel;
+      ctx.font = "10px " + css.getPropertyValue("--data").trim();
+      ctx.textBaseline = "top";
+      for (let row = 0; row < rows; row += 10) {
+        ctx.fillText(String(row), 0, row * cell);
+      }
+    }
+  };
+
+  const render = () => {
+    // Поля проверяются независимо: длительность жизни считается сразу и не ждёт дату рождения.
+    const years = readSpan();
+    const yearsUsed = years === null ? DEFAULT_SPAN : years;
+    const totalDays = yearsToDays(yearsUsed);
+
+    // Число дней показывается только для валидного ввода; расчёт при этом всё равно идёт по 80 годам.
+    el.spanDays.textContent = years === null ? ""
+      : " \u2014 это " + nf.format(totalDays) + "\u00A0" + plural(totalDays, "день", "дня", "дней");
+
+    const birth = parseDate(el.birth.value);
+    const now = today();
+
+    // Невалидная или будущая дата рождения — блок результата скрыт целиком.
+    if (!birth || birth > now) {
+      el.result.hidden = true;
+      grid = null;
+      return;
+    }
+
+    const daysLived = Math.round((now - birth) / DAY);
+
+    el.result.hidden = false;
+    el.days.textContent = nf.format(daysLived);
+    el.daysUnit.textContent = plural(daysLived, "день прожит", "дня прожито", "дней прожито");
+    el.percent.textContent = pf.format(daysLived / totalDays * 100) + "\u00A0%";
+
+    grid = {
+      rows: yearsUsed,
+      weeksLived: Math.min(Math.floor(daysLived / 7) + 1, yearsUsed * WEEKS_PER_ROW)
+    };
+    drawGrid();
+  };
+
+  el.birth.addEventListener("input", render);
+  el.span.addEventListener("input", render);
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(drawGrid).observe(el.canvas);
+  } else {
+    window.addEventListener("resize", drawGrid);
+  }
+
+  // Пересчёт на случай, если вкладка осталась открытой через полночь.
+  setInterval(render, 30000);
+
+  render();
+})();
+</script>
+</body>
+</html>
