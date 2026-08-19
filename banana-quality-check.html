@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Приёмка сушёных бананов</title>
+<style>
+  :root {
+    --paper: #ecefe6;
+    --paper-2: #e2e6da;
+    --ink: #241c14;
+    --ink-2: #5d5648;
+    --rule: #c3c8b6;
+    --mark: #8a7b22;
+    --bad: #8c2f1d;
+    --good: #2f6b4f;
+    --warn: #a06a12;
+    --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    padding: 28px 16px 64px;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  /* --- шапка --- */
+
+  .head {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 10px;
+    margin-bottom: 26px;
+  }
+
+  .head h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  /* --- выбор ветки --- */
+
+  .lede {
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.5;
+    margin: 0 0 22px;
+    max-width: 46ch;
+  }
+
+  .branches {
+    display: grid;
+    gap: 12px;
+  }
+
+  .branch {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--ink);
+    border-radius: 2px;
+    padding: 16px 18px;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    transition: background 120ms, border-color 120ms;
+  }
+
+  .branch:hover:not(:disabled) { background: var(--paper-2); border-left-color: var(--mark); }
+  .branch:disabled { opacity: 0.45; cursor: default; }
+
+  .branch .code {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--mark);
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .branch .name {
+    font-family: var(--serif);
+    font-size: 21px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .branch .desc {
+    font-size: 13.5px;
+    color: var(--ink-2);
+    line-height: 1.45;
+  }
+
+  /* --- вопрос --- */
+
+  .qhead {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .qcode {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--mark);
+    border: 1px solid var(--rule);
+    padding: 2px 6px;
+    border-radius: 2px;
+    flex: none;
+  }
+
+  .qtitle {
+    font-family: var(--serif);
+    font-size: 25px;
+    line-height: 1.2;
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .qhint {
+    font-size: 13.5px;
+    color: var(--ink-2);
+    line-height: 1.45;
+    margin: 0 0 18px;
+    max-width: 44ch;
+  }
+
+  .opts { display: grid; gap: 8px; }
+
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 13px 15px;
+    cursor: pointer;
+    font-size: 15.5px;
+    transition: background 120ms, border-color 120ms;
+  }
+
+  .opt:hover { background: var(--paper-2); border-color: var(--ink-2); }
+
+  .box {
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--ink-2);
+    border-radius: 1px;
+    flex: none;
+    position: relative;
+  }
+
+  .opt[aria-pressed="true"] .box { background: var(--ink); border-color: var(--ink); }
+  .opt[aria-pressed="true"] { border-color: var(--ink); background: var(--paper-2); }
+
+  .confirm {
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 2px;
+    padding: 11px 20px;
+    cursor: pointer;
+  }
+
+  .confirm:hover { background: var(--mark); }
+
+  /* --- прогресс и низ --- */
+
+  .trail {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 20px;
+  }
+
+  .tick {
+    height: 3px;
+    flex: 1;
+    background: var(--rule);
+  }
+
+  .tick.done { background: var(--ink); }
+  .tick.now { background: var(--mark); }
+
+  .foot {
+    margin-top: 26px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    gap: 18px;
+  }
+
+  .link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    cursor: pointer;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .link:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  /* --- результат --- */
+
+  .verdict {
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .verdict .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+  }
+
+  .verdict .word {
+    font-family: var(--serif);
+    font-size: 38px;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+
+  .meter {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 8px;
+  }
+
+  .seg {
+    height: 14px;
+    flex: 1;
+    background: var(--rule);
+  }
+
+  .seg.on { background: currentColor; }
+
+  .score {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--ink-2);
+  }
+
+  .v-good { color: var(--good); }
+  .v-ok { color: var(--mark); }
+  .v-warn { color: var(--warn); }
+  .v-bad { color: var(--bad); }
+
+  .findings { margin-bottom: 8px; }
+
+  .sect {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+    margin: 26px 0 12px;
+  }
+
+  .find {
+    display: grid;
+    grid-template-columns: 68px 1fr;
+    gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+
+  .find .tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding-top: 3px;
+  }
+
+  .find .text { font-size: 14.5px; line-height: 1.5; }
+  .find .text b { font-weight: 600; }
+
+  .t-stop { color: var(--bad); }
+  .t-minus { color: var(--warn); }
+  .t-ok { color: var(--good); }
+  .t-note { color: var(--ink-2); }
+
+  .anim { animation: rise 180ms ease-out; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim { animation: none; }
+  }
+
+  @media (max-width: 520px) {
+    .qtitle { font-size: 21px; }
+    .verdict .word { font-size: 30px; }
+    .find { grid-template-columns: 1fr; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="head">
+    <div class="eyebrow">Приёмочный контроль</div>
+    <h1>Сушёные бананы</h1>
+  </div>
+  <div id="app"></div>
+</div>
+
+<script>
+  var QUESTIONS = [
+    /* ---------- ветка «Этикетка» ---------- */
+    {
+      id: 'L1', path: 'label', title: 'Состав',
+      hint: 'Читайте строку «Состав», а не название на лицевой стороне.',
+      options: [
+        { v: 'single', label: 'Только банан', pen: 0, ok: 'Состав из одного компонента.' },
+        { v: 'multi', label: 'Банан и что-то ещё', pen: 0 },
+        { v: 'none', label: 'Состав не указан', pen: 35, note: 'Состав не заявлен — проверять нечего.' }
+      ]
+    },
+    {
+      id: 'L2', path: 'label', title: 'Что ещё в составе', type: 'multi',
+      when: function (a) { return a.L1 === 'multi'; },
+      hint: 'Отметьте всё, что нашли в строке состава.',
+      options: [
+        { v: 'sugar', label: 'Сахар, сироп или мёд', pen: 25, note: 'Продукт подслащён: это уже кондитерское изделие.' },
+        { v: 'oil', label: 'Растительное масло', pen: 30, note: 'Масло означает фритюр, а не сушку.' },
+        { v: 'so2', label: 'E220, диоксид серы', pen: 20, note: 'Сульфитация заявлена. Важно для астматиков.' },
+        { v: 'flav', label: 'Ароматизатор или краситель', pen: 15, note: 'Вкус и цвет доведены добавками.' }
+      ]
+    },
+    {
+      id: 'L3', path: 'label', title: 'Жиры на 100 г',
+      when: function (a) { return !has(a.L2, 'oil'); },
+      hint: 'Главный признак жарки. Сушка жир не добавляет.',
+      options: [
+        { v: 'low', label: '0–3 г', pen: 0, ok: 'Жира нет: продукт сушили, а не жарили.' },
+        { v: 'mid', label: '4–15 г', pen: 15, note: 'Жир есть, хотя сушка его не даёт. Часть сырья обжарена.' },
+        { v: 'high', label: 'Больше 20 г', pen: 30, note: 'Это жареные чипсы, как бы они ни назывались.' },
+        { v: 'none', label: 'Не указано', pen: 15, note: 'Жиры не заявлены — обязательный пункт маркировки пропущен.' }
+      ]
+    },
+    {
+      id: 'L4', path: 'label', title: 'Углеводы на 100 г',
+      hint: 'Проверка того, насколько аккуратно заполнена таблица.',
+      options: [
+        { v: 'ok', label: 'До 80 г', pen: 0 },
+        { v: 'hi', label: '81–90 г', pen: 5, note: 'Цифры округлены вверх: при влажности 15–20% столько не помещается.' },
+        { v: 'vhi', label: 'Больше 90 г', pen: 12, note: 'Таблица заполнена на глаз. Для подсчёта КБЖУ не годится.' },
+        { v: 'none', label: 'Не указано', pen: 12, note: 'Пищевая ценность не заявлена.' }
+      ]
+    },
+    {
+      id: 'L5', path: 'label', title: 'Изготовитель',
+      hint: 'Кому предъявлять претензию, если продукт окажется плохим.',
+      options: [
+        { v: 'full', label: 'Завод, адрес, страна', pen: 0, ok: 'Изготовитель идентифицируем.' },
+        { v: 'packer', label: 'Только фасовщик или импортёр', pen: 15, note: 'Происхождение сырья непроверяемо.' },
+        { v: 'none', label: 'Не указан', pen: 30, note: 'Ответственного за продукт на упаковке нет.' }
+      ]
+    },
+    {
+      id: 'L6', path: 'label', title: 'Даты',
+      options: [
+        { v: 'both', label: 'Есть дата выпуска и срок годности', pen: 0 },
+        { v: 'exp', label: 'Только «годен до»', pen: 8, note: 'Без даты выпуска не видно, сколько партия пролежала.' },
+        { v: 'tampered', label: 'Стёрты, перебиты или заклеены', pen: 60, crit: true, note: 'Партию перемаркировали. Брать нельзя.' }
+      ]
+    },
+    {
+      id: 'L7', path: 'label', title: 'Сколько срока осталось',
+      when: function (a) { return a.L6 && a.L6 !== 'tampered'; },
+      options: [
+        { v: 'most', label: 'Больше трети', pen: 0 },
+        { v: 'tail', label: 'Меньше трети', pen: 10, note: 'Хвост срока. Для сухофруктов это риск слёживания.' },
+        { v: 'over', label: 'Истёк', pen: 100, crit: true, note: 'Срок годности вышел.' }
+      ]
+    },
+    {
+      id: 'L8', path: 'label', title: 'Заявленный срок годности',
+      when: function (a) { return a.L1 === 'single'; },
+      hint: 'Сверяем с составом: консервантов там не заявлено.',
+      options: [
+        { v: 'norm', label: 'До 18 месяцев', pen: 0, ok: 'Срок соответствует сушке без консервантов.' },
+        { v: 'long', label: '19–24 месяца', pen: 6 },
+        { v: 'xl', label: 'Больше 24 месяцев', pen: 20, note: 'Без консервантов столько не хранится. Либо добавка не заявлена, либо срок взят с потолка.' }
+      ]
+    },
+
+    /* ---------- ветка «Внешний вид» ---------- */
+    {
+      id: 'V1', path: 'look', title: 'Форма продукта',
+      options: [
+        { v: 'whole', label: 'Целые плоды или половинки', pen: 0 },
+        { v: 'chips', label: 'Тонкие кружочки-ломтики', pen: 20, note: 'Форма чипсов. Обычно это фритюр, но не всегда — сверьтесь с жирами на этикетке.' }
+      ]
+    },
+    {
+      id: 'V2', path: 'look', title: 'Цвет',
+      when: function (a) { return a.V1 === 'whole'; },
+      hint: 'Потемнение при сушке неизбежно. Светлый цвет чем-то удержан.',
+      options: [
+        { v: 'dark', label: 'Тёмно-коричневый или темнее', pen: 0, ok: 'Цвет естественный для сушки.' },
+        { v: 'light', label: 'Светло-жёлтый или золотистый', pen: 25, note: 'Плод сульфитирован ради товарного вида.' },
+        { v: 'hidden', label: 'Не видно', pen: 0, note: 'Цвет не оценён: упаковка непрозрачная.' }
+      ]
+    },
+    {
+      id: 'V3', path: 'look', title: 'Поверхность',
+      when: function (a) { return a.V1 === 'whole'; },
+      options: [
+        { v: 'matte', label: 'Матовая', pen: 0 },
+        { v: 'oily', label: 'Жирно блестит', pen: 15, note: 'Обработка маслом или глицерином. Сушка блеска не даёт.' },
+        { v: 'hidden', label: 'Не видно', pen: 0 }
+      ]
+    },
+    {
+      id: 'V4', path: 'look', title: 'Белый налёт',
+      hint: 'Здесь два разных явления, и путать их нельзя.',
+      options: [
+        { v: 'none', label: 'Налёта нет', pen: 0 },
+        { v: 'sugar', label: 'Сухой, растирается пальцами', pen: 0, ok: 'Это выкристаллизовавшаяся фруктоза. Норма.' },
+        { v: 'mold', label: 'Пушистый или ворсистый', pen: 100, crit: true, note: 'Плесень. Продукт не спасти.' },
+        { v: 'hidden', label: 'Не видно', pen: 0 }
+      ]
+    },
+    {
+      id: 'V5', path: 'look', title: 'Если согнуть',
+      when: function (a) { return a.V1 === 'whole'; },
+      options: [
+        { v: 'flex', label: 'Гнётся и распрямляется', pen: 0, ok: 'Влажность в норме.' },
+        { v: 'snap', label: 'Ломается с треском', pen: 15, note: 'Пересушен или залежался.' },
+        { v: 'na', label: 'Не проверить', pen: 0 }
+      ]
+    },
+    {
+      id: 'V6', path: 'look', title: 'Плоды между собой',
+      options: [
+        { v: 'loose', label: 'Раздельны', pen: 0 },
+        { v: 'clump', label: 'Слиплись в мокрый ком', pen: 30, note: 'Недосушка. Плесень появится до конца срока.' },
+        { v: 'hidden', label: 'Не видно', pen: 0 }
+      ]
+    },
+    {
+      id: 'V7', path: 'look', title: 'Плёнка изнутри',
+      options: [
+        { v: 'dry', label: 'Сухая', pen: 0 },
+        { v: 'wet', label: 'Капли конденсата', pen: 25, note: 'Внутри свободная влага. До плесени недели.' },
+        { v: 'opaque', label: 'Упаковка непрозрачная', pen: 0 }
+      ]
+    },
+    {
+      id: 'V8', path: 'look', title: 'Паутинка, коконы, ходы в массе',
+      hint: 'Пищевая моль поражает сухофрукты чаще прочих продуктов.',
+      options: [
+        { v: 'no', label: 'Нет', pen: 0 },
+        { v: 'yes', label: 'Есть', pen: 100, crit: true, note: 'Заражение пищевой молью.' },
+        { v: 'hidden', label: 'Не видно', pen: 0 }
+      ]
+    },
+    {
+      id: 'V9', path: 'look', title: 'Пакет',
+      options: [
+        { v: 'sealed', label: 'Целый, шов держит', pen: 0 },
+        { v: 'puffed', label: 'Вздут', pen: 60, crit: true, note: 'Вздутие означает брожение содержимого.' },
+        { v: 'holed', label: 'Проколот или разошёлся', pen: 35, note: 'Герметичность нарушена: влага и насекомые внутри.' }
+      ]
+    }
+  ];
+
+  var CROSS = [
+    {
+      when: function (a) { return a.L1 === 'single' && a.V2 === 'light'; },
+      pen: 20,
+      text: 'Состав из одного компонента, но плод светлый. Это недекларированный диоксид серы — нарушение маркировки.'
+    },
+    {
+      when: function (a) { return a.L1 === 'single' && a.L3 === 'high'; },
+      pen: 25,
+      text: 'В составе один банан, а жира больше 20 г. Так не бывает: этикетка недостоверна.'
+    },
+    {
+      when: function (a) { return a.V1 === 'chips' && a.L3 === 'low'; },
+      pen: -20,
+      text: 'Ломтики без жира — вакуумная или воздушная сушка, а не фритюр. Штраф за форму снят.'
+    },
+    {
+      when: function (a) { return a.V1 === 'whole' && a.L3 === 'high'; },
+      pen: 10,
+      text: 'Целые плоды при 20+ г жира. Либо плоды обжаривали целиком, либо таблица не от этого продукта.'
+    }
+  ];
+
+  var BRANCHES = {
+    label: { code: 'Ветка L', name: 'Этикетка', desc: 'Состав, пищевая ценность, изготовитель, даты. 5–8 вопросов.' },
+    look: { code: 'Ветка V', name: 'Внешний вид', desc: 'Цвет, поверхность, влажность, упаковка. 6–9 вопросов.' }
+  };
+
+  var answers = {};
+  var doneBranches = [];
+  var path = null;
+  var draft = [];
+
+  function has(arr, v) { return Array.isArray(arr) && arr.indexOf(v) !== -1; }
+
+  function visible(p) {
+    return QUESTIONS.filter(function (q) {
+      return q.path === p && (!q.when || q.when(answers));
+    });
+  }
+
+  function current() {
+    var list = visible(path);
+    for (var i = 0; i < list.length; i++) {
+      if (answers[list[i].id] === undefined) return { q: list[i], i: i, list: list };
+    }
+    return { q: null, i: list.length, list: list };
+  }
+
+  var app = document.getElementById('app');
+
+  function el(html) {
+    var d = document.createElement('div');
+    d.innerHTML = html;
+    return d.firstElementChild;
+  }
+
+  function render() {
+    app.innerHTML = '';
+    if (!path) return renderStart();
+    var st = current();
+    if (!st.q) return renderResult();
+    renderQuestion(st);
+  }
+
+  function renderStart() {
+    var wrap = el('<div class="anim"></div>');
+    wrap.appendChild(el('<p class="lede">Выберите, что вы сейчас держите в руках: упаковку с текстом или сам продукт. Ветки можно пройти обе — тогда включатся перекрёстные проверки.</p>'));
+    var box = el('<div class="branches"></div>');
+    ['label', 'look'].forEach(function (key) {
+      var b = BRANCHES[key];
+      var used = doneBranches.indexOf(key) !== -1;
+      var btn = el('<button class="branch"><span class="code">' + b.code + '</span><span class="name">' + b.name + '</span><span class="desc">' + (used ? 'Пройдена.' : b.desc) + '</span></button>');
+      btn.disabled = used;
+      btn.onclick = function () { path = key; render(); };
+      box.appendChild(btn);
+    });
+    wrap.appendChild(box);
+    if (doneBranches.length) {
+      var foot = el('<div class="foot"></div>');
+      var r = el('<button class="link">К результату</button>');
+      r.onclick = function () { path = doneBranches[doneBranches.length - 1]; render(); };
+      var z = el('<button class="link">Начать заново</button>');
+      z.onclick = reset;
+      foot.appendChild(r);
+      foot.appendChild(z);
+      wrap.appendChild(foot);
+    }
+    app.appendChild(wrap);
+  }
+
+  function renderQuestion(st) {
+    var q = st.q;
+    var wrap = el('<div class="anim"></div>');
+
+    var trail = el('<div class="trail"></div>');
+    for (var i = 0; i < st.list.length; i++) {
+      trail.appendChild(el('<div class="tick ' + (i < st.i ? 'done' : i === st.i ? 'now' : '') + '"></div>'));
+    }
+    wrap.appendChild(trail);
+
+    var head = el('<div class="qhead"></div>');
+    head.appendChild(el('<span class="qcode">' + q.id + '</span>'));
+    head.appendChild(el('<h2 class="qtitle">' + q.title + '</h2>'));
+    wrap.appendChild(head);
+    if (q.hint) wrap.appendChild(el('<p class="qhint">' + q.hint + '</p>'));
+
+    var opts = el('<div class="opts"></div>');
+    q.options.forEach(function (o) {
+      var btn = el('<button class="opt"><span class="box"></span><span>' + o.label + '</span></button>');
+      if (q.type === 'multi') {
+        btn.setAttribute('aria-pressed', draft.indexOf(o.v) !== -1 ? 'true' : 'false');
+        btn.onclick = function () {
+          var k = draft.indexOf(o.v);
+          if (k === -1) draft.push(o.v); else draft.splice(k, 1);
+          render();
+        };
+      } else {
+        btn.onclick = function () { answers[q.id] = o.v; render(); };
+      }
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+
+    if (q.type === 'multi') {
+      var c = el('<button class="confirm">Дальше</button>');
+      c.onclick = function () { answers[q.id] = draft.slice(); draft = []; render(); };
+      wrap.appendChild(c);
+    }
+
+    var foot = el('<div class="foot"></div>');
+    if (st.i > 0) {
+      var back = el('<button class="link">Назад</button>');
+      back.onclick = function () {
+        delete answers[st.list[st.i - 1].id];
+        draft = [];
+        render();
+      };
+      foot.appendChild(back);
+    }
+    var out = el('<button class="link">К выбору ветки</button>');
+    out.onclick = function () {
+      visible(path).forEach(function (x) { if (doneBranches.indexOf(path) === -1) delete answers[x.id]; });
+      path = null; draft = []; render();
+    };
+    foot.appendChild(out);
+    wrap.appendChild(foot);
+
+    app.appendChild(wrap);
+  }
+
+  function collect() {
+    var stops = [], minus = [], oks = [], notes = [], score = 100, crit = false;
+
+    doneBranchList().forEach(function (p) {
+      visible(p).forEach(function (q) {
+        var a = answers[q.id];
+        if (a === undefined) return;
+        var chosen = q.options.filter(function (o) {
+          return q.type === 'multi' ? has(a, o.v) : o.v === a;
+        });
+        chosen.forEach(function (o) {
+          score -= o.pen || 0;
+          if (o.crit) { crit = true; stops.push({ id: q.id, text: o.note }); }
+          else if (o.pen > 0) minus.push({ id: q.id, text: o.note, pen: o.pen });
+          else if (o.ok) oks.push({ id: q.id, text: o.ok });
+          else if (o.note) notes.push({ id: q.id, text: o.note });
+        });
+      });
+    });
+
+    var cross = [];
+    CROSS.forEach(function (c) {
+      if (c.when(answers)) { score -= c.pen; cross.push(c); }
+    });
+
+    score = Math.max(0, Math.min(100, score));
+    return { score: score, crit: crit, stops: stops, minus: minus, oks: oks, notes: notes, cross: cross };
+  }
+
+  function doneBranchList() {
+    var list = doneBranches.slice();
+    if (path && list.indexOf(path) === -1) list.push(path);
+    return list;
+  }
+
+  function renderResult() {
+    if (doneBranches.indexOf(path) === -1) doneBranches.push(path);
+    var r = collect();
+
+    var word, cls;
+    if (r.crit) { word = 'Брак'; cls = 'v-bad'; r.score = 0; }
+    else if (r.score >= 85) { word = 'Чистый продукт'; cls = 'v-good'; }
+    else if (r.score >= 65) { word = 'Годен'; cls = 'v-ok'; }
+    else if (r.score >= 45) { word = 'Сомнительно'; cls = 'v-warn'; }
+    else { word = 'Плохо'; cls = 'v-bad'; }
+
+    var wrap = el('<div class="anim"></div>');
+    var v = el('<div class="verdict ' + cls + '"></div>');
+    v.appendChild(el('<div class="label">Заключение</div>'));
+    v.appendChild(el('<div class="word">' + word + '</div>'));
+    var meter = el('<div class="meter"></div>');
+    var filled = Math.round(r.score / 5);
+    for (var i = 0; i < 20; i++) meter.appendChild(el('<div class="seg ' + (i < filled ? 'on' : '') + '"></div>'));
+    v.appendChild(meter);
+    v.appendChild(el('<div class="score">' + r.score + ' / 100 &nbsp;·&nbsp; проверено: ' + doneBranches.map(function (b) { return BRANCHES[b].name.toLowerCase(); }).join(' и ') + '</div>'));
+    wrap.appendChild(v);
+
+    function block(title, items, tag, tagCls) {
+      if (!items.length) return;
+      wrap.appendChild(el('<div class="sect">' + title + '</div>'));
+      var box = el('<div class="findings"></div>');
+      items.forEach(function (it) {
+        box.appendChild(el('<div class="find"><div class="tag ' + tagCls + '">' + (it.id ? it.id + ' · ' : '') + tag + '</div><div class="text">' + it.text + '</div></div>'));
+      });
+      wrap.appendChild(box);
+    }
+
+    block('Отбраковка', r.stops, 'стоп', 't-stop');
+    block('Замечания', r.minus, 'минус', 't-minus');
+    if (r.cross.length) {
+      wrap.appendChild(el('<div class="sect">Перекрёстные проверки</div>'));
+      var cb = el('<div class="findings"></div>');
+      r.cross.forEach(function (c) {
+        var t = c.pen > 0 ? 'противоречие' : 'снято';
+        cb.appendChild(el('<div class="find"><div class="tag ' + (c.pen > 0 ? 't-stop' : 't-ok') + '">' + t + '</div><div class="text">' + c.text + '</div></div>'));
+      });
+      wrap.appendChild(cb);
+    }
+    block('Подтверждено', r.oks, 'норма', 't-ok');
+    block('Не оценено', r.notes, 'пропуск', 't-note');
+
+    var foot = el('<div class="foot"></div>');
+    var other = doneBranches.indexOf('label') === -1 ? 'label' : (doneBranches.indexOf('look') === -1 ? 'look' : null);
+    if (other) {
+      var b = el('<button class="link">Пройти ветку «' + BRANCHES[other].name + '»</button>');
+      b.onclick = function () { path = other; render(); };
+      foot.appendChild(b);
+    }
+    var z = el('<button class="link">Начать заново</button>');
+    z.onclick = reset;
+    foot.appendChild(z);
+    wrap.appendChild(foot);
+
+    app.appendChild(wrap);
+  }
+
+  function reset() {
+    answers = {}; doneBranches = []; path = null; draft = [];
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>
