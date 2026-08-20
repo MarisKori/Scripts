@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Оценка питьевой воды по этикетке</title>
+<title>Оценка питьевой воды по этикетке и рациону</title>
 <style>
   :root{
     --ink:#0d2027;
@@ -21,66 +21,25 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  body{
-    background:var(--paper);
-    color:var(--ink);
-    font-family:var(--body);
-    font-size:15px;
-    line-height:1.55;
-    padding:24px 16px 64px;
-  }
-  .wrap{max-width:1120px;margin:0 auto}
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;padding:24px 16px 64px}
+  .wrap{max-width:1180px;margin:0 auto}
 
-  header.masthead{
-    border-bottom:2px solid var(--ink);
-    padding-bottom:14px;
-    margin-bottom:22px;
-  }
-  .eyebrow{
-    font-family:var(--mono);
-    font-size:11px;
-    letter-spacing:.16em;
-    text-transform:uppercase;
-    color:var(--muted);
-  }
-  h1{
-    font-family:var(--display);
-    font-weight:normal;
-    font-size:clamp(28px,4.4vw,44px);
-    line-height:1.08;
-    margin:6px 0 8px;
-    letter-spacing:-.01em;
-  }
-  .premise{max-width:64ch;color:var(--muted);font-size:14px;margin:0}
+  header.masthead{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:22px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--display);font-weight:normal;font-size:clamp(28px,4.4vw,44px);line-height:1.08;margin:6px 0 8px;letter-spacing:-.01em}
+  .premise{max-width:70ch;color:var(--muted);font-size:14px;margin:0}
   .premise b{color:var(--ink);font-weight:600}
 
   .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:22px;align-items:start}
-  @media (max-width:900px){.cols{grid-template-columns:1fr}}
+  @media (max-width:940px){.cols{grid-template-columns:1fr}}
 
-  .panel{
-    background:var(--card);
-    border:1px solid var(--line);
-    padding:18px;
-  }
+  .panel{background:var(--card);border:1px solid var(--line);padding:18px}
   .panel + .panel{margin-top:18px}
-  .panel h2{
-    font-family:var(--mono);
-    font-size:11px;
-    letter-spacing:.16em;
-    text-transform:uppercase;
-    color:var(--muted);
-    margin:0 0 14px;
-    font-weight:600;
-  }
+  .panel h2{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:600}
+  .panel h2 span{text-transform:none;letter-spacing:0;font-family:var(--body);font-size:12px;color:var(--muted)}
 
   .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
-  .chip{
-    font-family:var(--body);font-size:12.5px;
-    background:transparent;color:var(--ink);
-    border:1px solid var(--line);
-    padding:4px 9px;cursor:pointer;
-    transition:background .12s,border-color .12s;
-  }
+  .chip{font-family:var(--body);font-size:12.5px;background:transparent;color:var(--ink);border:1px solid var(--line);padding:4px 9px;cursor:pointer;transition:background .12s,border-color .12s}
   .chip:hover{background:#eaf2f3;border-color:var(--good)}
   .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
   .chip.reset{margin-left:auto;color:var(--muted)}
@@ -89,15 +48,24 @@
   @media (max-width:520px){.fields{grid-template-columns:1fr}}
   .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:3px}
   .field label .sym{font-family:var(--mono);color:var(--ink)}
-  .field input{
-    width:100%;font-family:var(--mono);font-size:15px;
-    padding:6px 8px;border:1px solid var(--line);background:#fff;color:var(--ink);
-  }
+  .field input{width:100%;font-family:var(--mono);font-size:15px;padding:6px 8px;border:1px solid var(--line);background:#fff;color:var(--ink)}
   .field input:focus-visible{outline:2px solid var(--good);outline-offset:1px;border-color:var(--good)}
   .field .opt{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;display:block}
   .checks{margin-top:14px;display:grid;gap:7px;font-size:13px}
   .checks label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
-  .checks input{margin-top:3px}
+  .checks input[type=checkbox]{margin-top:3px}
+  .vol{margin-top:12px;font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .vol input{width:74px;font-family:var(--mono);padding:4px 6px;border:1px solid var(--line);background:#fff}
+
+  /* рацион */
+  .foodgroup{margin-bottom:12px}
+  .foodgroup > b{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px;font-weight:600}
+  .food{display:grid;grid-template-columns:1fr 66px;gap:8px;align-items:center;padding:2px 0}
+  .food.on{background:#eef4f5;margin:0 -6px;padding:2px 6px}
+  .food label{font-size:13px;line-height:1.3}
+  .food label i{font-style:normal;color:var(--muted);font-size:11px;font-family:var(--mono);display:block}
+  .food input{width:100%;font-family:var(--mono);font-size:13px;padding:3px 5px;border:1px solid var(--line);background:#fff;text-align:right}
+  .food input:focus-visible{outline:2px solid var(--good);outline-offset:1px}
 
   .verdict{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;border-bottom:1px solid var(--line-soft);padding-bottom:14px;margin-bottom:14px}
   .score{font-family:var(--mono);font-size:64px;line-height:.9;font-weight:600;letter-spacing:-.03em}
@@ -105,10 +73,9 @@
   .verdict-text{flex:1 1 220px;min-width:200px;font-size:14px}
   .verdict-text .cls{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block}
 
-  /* signature: scoring-function strips */
   .rows{display:grid;gap:11px}
-  .row{display:grid;grid-template-columns:112px minmax(0,1fr) 52px;gap:10px;align-items:center}
-  @media (max-width:640px){.row{grid-template-columns:96px minmax(0,1fr) 44px}}
+  .row{display:grid;grid-template-columns:118px minmax(0,1fr) 64px;gap:10px;align-items:center}
+  @media (max-width:640px){.row{grid-template-columns:98px minmax(0,1fr) 56px}}
   .row .name{font-size:12.5px;line-height:1.25}
   .row .name b{font-family:var(--mono);font-weight:600;font-size:12px;display:block}
   .row .name i{font-style:normal;color:var(--muted);font-size:11px}
@@ -117,16 +84,24 @@
   .needle{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);transform:translateX(-1px)}
   .needle::after{content:"";position:absolute;top:-3px;left:-2px;border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid var(--ink)}
   .row .val{font-family:var(--mono);font-size:12.5px;text-align:right}
+  .row .val em{font-style:normal;font-size:10px;color:var(--muted);display:block}
   .row.dim .name,.row.dim .val{opacity:.5}
+
+  table.bal{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px}
+  table.bal th,table.bal td{padding:4px 6px;border-bottom:1px solid var(--line-soft);text-align:right}
+  table.bal th:first-child,table.bal td:first-child{text-align:left}
+  table.bal th{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  table.bal td.n{font-family:var(--mono)}
 
   .notes{margin-top:16px;display:grid;gap:8px}
   .note{border-left:3px solid var(--line);padding:6px 0 6px 10px;font-size:13px}
   .note.warn{border-color:var(--mid)}
   .note.bad{border-color:var(--bad)}
   .note.ok{border-color:var(--good)}
+  .note.stop{border-color:var(--bad);background:#f7e9e6;padding:8px 10px}
   .note b{font-weight:600}
 
-  .derived{margin-top:16px;border-top:1px solid var(--line-soft);padding-top:12px;font-size:13px;display:grid;gap:5px}
+  .derived{margin-top:14px;border-top:1px solid var(--line-soft);padding-top:12px;font-size:13px;display:grid;gap:5px}
   .derived div{display:flex;justify-content:space-between;gap:12px}
   .derived span:last-child{font-family:var(--mono)}
 
@@ -135,13 +110,12 @@
   .riskbar i{position:absolute;left:0;top:0;bottom:0;display:block}
   .risklabel{font-family:var(--mono);font-size:12px;white-space:nowrap}
 
-  table.tiers{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+  table.tiers{width:100%;border-collapse:collapse;font-size:13px}
   table.tiers th,table.tiers td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line-soft)}
   table.tiers th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
   table.tiers td.n{font-family:var(--mono);text-align:right}
-  table.tiers tr.self td{background:#eef4f5}
 
-  footer.fine{margin-top:26px;font-size:12.5px;color:var(--muted);max-width:78ch}
+  footer.fine{margin-top:26px;font-size:12.5px;color:var(--muted);max-width:80ch}
   footer.fine p{margin:0 0 8px}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -150,9 +124,9 @@
 <div class="wrap">
 
 <header class="masthead">
-  <div class="eyebrow">Питьевая вода · оценка по этикетке</div>
-  <h1>Сколько стоит эта вода как единственный источник воды</h1>
-  <p class="premise">Расчёт исходит из того, что <b>эта вода — вся вода, которую вы пьёте</b>: около 2 л в сутки, годами, а еда даёт остальное. Поэтому здесь наказываются не только опасные значения, но и бесполезные: вода, ничего не приносящая, занимает место той, которая приносит. Введите числа с этикетки — незаполненное поле считается неизвестным и слегка снижает оценку.</p>
+  <div class="eyebrow">Питьевая вода · оценка по этикетке и рациону</div>
+  <h1>Сколько стоит эта вода в вашем конкретном рационе</h1>
+  <p class="premise">Вода оценивается как <b>единственный источник воды</b> — столько-то литров в сутки, годами. Пока раздел «Рацион» пуст, считается только сама вода. Как только вы вводите продукты, включается второй слой: калькулятор складывает минералы еды и воды, и ценность воды пересчитывается — то, что рацион уже закрыл, вода закрывать не должна.</p>
 </header>
 
 <div class="cols">
@@ -162,18 +136,31 @@
       <h2>Этикетка</h2>
       <div class="presets" id="presets"></div>
       <div class="fields" id="fields"></div>
+      <div class="vol">
+        <label for="vol">Воды в сутки, л</label>
+        <input type="number" id="vol" value="2" min="0.2" max="6" step="0.1">
+        <span style="color:var(--muted);font-size:12px">кефир, чай и суп сюда не входят — только эта вода</span>
+      </div>
       <div class="checks">
-        <label><input type="checkbox" id="chkRange"> Состав дан широкими диапазонами (кальций «от 0,5 до 130» и подобное) — этикетка описывает норматив, а не бутылку</label>
+        <label><input type="checkbox" id="chkRange"> Состав дан широкими диапазонами — этикетка описывает норматив, а не бутылку</label>
         <label><input type="checkbox" id="chkDry"> Указан «сухой остаток при 180 °C», а не сумма ионов</label>
       </div>
     </section>
 
     <section class="panel">
-      <h2>Ориентиры</h2>
-      <table class="tiers" id="tierTable">
-        <thead><tr><th>Вода</th><th>Тип</th><th class="n" style="text-align:right">Балл</th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <h2>Рацион <span>— граммы в сутки</span></h2>
+      <div class="presets" id="dietPresets"></div>
+      <div id="foods"></div>
+      <div class="foodgroup" style="border-top:1px solid var(--line-soft);padding-top:10px">
+        <b>Прочая еда — фон</b>
+        <div class="fields" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label for="bgca">Кальций фона, мг</label><input type="number" id="bgca" value="450"></div>
+          <div class="field"><label for="bgmg">Магний фона, мг</label><input type="number" id="bgmg" value="250"></div>
+          <div class="field"><label for="bgna">Натрий фона, мг</label><input type="number" id="bgna" value="1600"></div>
+          <div class="field"><label for="bgk">Калий фона, мг</label><input type="number" id="bgk" value="1900"></div>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:6px">Значения по умолчанию — обычный рацион без молочного акцента и без подсчёта соли. Фон участвует в балансе, но пока список продуктов пуст, на балл не влияет.</div>
+      </div>
     </section>
   </div>
 
@@ -188,6 +175,11 @@
 
       <div class="rows" id="rows"></div>
 
+      <table class="bal" id="bal">
+        <thead><tr><th>Суточный баланс</th><th>Еда</th><th>Вода</th><th>Всего</th><th>Норма</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
       <div class="risk">
         <span class="risklabel">Литогенный профиль</span>
         <span class="riskbar"><i id="riskFill"></i></span>
@@ -197,24 +189,29 @@
       <div class="derived" id="derived"></div>
       <div class="notes" id="notes"></div>
     </section>
+
+    <section class="panel">
+      <h2>Ориентиры <span>— при текущем рационе</span></h2>
+      <table class="tiers" id="tierTable">
+        <thead><tr><th>Вода</th><th>Тип</th><th class="n" style="text-align:right">Балл</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </div>
 
 </div>
 
 <footer class="fine">
-  <p>Шкала описывает пригодность воды для постоянного питья, а не её безопасность в отдельном стакане: почти любая из перечисленных вод безвредна разово, и низкий балл означает «не в качестве единственной воды на годы», а не «яд».</p>
-  <p>Литогенный профиль — это оценка вклада именно состава воды в риск камнеобразования. Главный фактор риска — малый объём выпиваемой жидкости, и он от этикетки не зависит: три литра «плохой по баллам» воды защищают лучше, чем литр идеальной.</p>
+  <p>Данные по продуктам — справочные средние (Скурихин, USDA); реальный состав гуляет в пределах ±20% от сорта, жирности и производителя. Точность здесь не нужна: слой рациона отвечает на вопрос «закрыта позиция или нет», а не считает миллиграммы.</p>
+  <p>Кальций из шпината и других оксалатных овощей усваивается плохо — в балансе он завышен. Кальций молочного, наоборот, усваивается хорошо.</p>
   <p>Оценка не заменяет врача. При гипертонии, болезнях почек, беременности и в питании детей до года пороги другие, и решение принимается не по баллу.</p>
 </footer>
 
 </div>
 
 <script id="core">
-/* ---------- модель ---------- */
+/* ================= модель ================= */
 
-/* Кусочно-линейные шкалы: [значение, балл 0..100].
-   Ширина сегмента на полоске одинакова, поэтому полоска —
-   это буквально график функции оценки. */
 var PARAMS = [
   { key:"tds",  sym:"M",     name:"Минерализация", unit:"мг/л", w:20, opt:"250–500",
     pts:[[0,0],[50,0],[150,40],[200,85],[250,100],[500,100],[800,75],[1000,50],[1500,20],[2500,0]] },
@@ -237,21 +234,73 @@ var PARAMS = [
   { key:"ph",   sym:"pH",    name:"Кислотность",   unit:"",     w:3,  opt:"6,5–8,5", step:"0.1",
     pts:[[4,20],[5.5,40],[6,80],[6.5,100],[8.5,100],[9,80],[10,50]], unknown:90 }
 ];
-
-/* Соотношение Ca:Mg — отдельный вклад: магний тормозит кристаллизацию,
-   и вода, где кальций многократно перевешивает магний, для почек хуже. */
 var W_RATIO = 4;
 
+/* Физические границы природной воды. Выход за них — не «плохая вода»,
+   а невозможная: столько соли в растворе просто не держится. */
+var LIMITS = { ca:2000, mg:1500, na:20000, so4:5000, cl:30000, hco3:10000, no3:500, f:20, tds:60000 };
+
+var NORMS = { ca:1000, mg:400, na:2300, k:3000, caUL:2500 };
+
 var CAPS = [
-  { test:function(v){return v.tds>5000},  cap:15, why:"минерализация выше 5 г/л — это лечебная вода, её пьют курсами по назначению врача, а не вместо воды" },
-  { test:function(v){return v.tds>2500},  cap:40, why:"минерализация выше 2,5 г/л — постоянная солевая нагрузка выше любого норматива для столовой воды" },
-  { test:function(v){return v.tds>1500},  cap:55, why:"минерализация выше 1,5 г/л — для единственного источника воды это много" },
-  { test:function(v){return v.tds>1000},  cap:65, why:"минерализация выше 1 г/л выводит воду из класса столовых: такую пьют курсами" },
-  { test:function(v){return v.so4>600},   cap:45, why:"сульфаты выше 600 мг/л дают устойчивый послабляющий эффект" },
-  { test:function(v){return v.no3>45},    cap:25, why:"нитраты выше 45 мг/л — превышение жёсткого норматива безопасности" },
-  { test:function(v){return v.na>500},    cap:20, why:"натрий выше 500 мг/л: два литра дают более грамма натрия, это четверть суточной нормы соли из одной воды" },
-  { test:function(v){return v.f>2},       cap:40, why:"фторид выше 2 мг/л при многолетнем питье ведёт к флюорозу" },
-  { test:function(v){return v.tdsSet && v.tds<50}, cap:40, why:"минерализация ниже 50 мг/л — вода почти дистиллированная: она не вносит ничего и хуже утоляет жажду" }
+  { id:"tds5000", test:function(x){return x.tds>5000}, cap:15, why:"минерализация выше 5 г/л — это лечебная вода, её пьют курсами по назначению врача, а не вместо воды" },
+  { id:"tds2500", test:function(x){return x.tds>2500}, cap:40, why:"минерализация выше 2,5 г/л — постоянная солевая нагрузка выше любого норматива для столовой воды" },
+  { id:"tds1500", test:function(x){return x.tds>1500}, cap:55, why:"минерализация выше 1,5 г/л — для единственного источника воды это много" },
+  { id:"tds1000", test:function(x){return x.tds>1000}, cap:65, why:"минерализация выше 1 г/л выводит воду из класса столовых" },
+  { id:"ca600",   test:function(x){return x.ca>600},   cap:45, why:"кальций выше 600 мг/л не встречается даже у самых жёстких лечебных вод (рекорд рынка — Hépar, 549 мг/л)" },
+  { id:"ca1500",  test:function(x){return x.ca>1500},  cap:20, why:"кальций выше 1500 мг/л физически не удерживается в растворе — это уже взвесь, а не вода" },
+  { id:"hard45",  test:function(x){return x.hard>45},  cap:35, why:"жёсткость выше 45 мг-экв/л не встречается у питьевых вод — это уже рассол или ошибка ввода" },
+  { id:"so4600",  test:function(x){return x.so4>600},  cap:45, why:"сульфаты выше 600 мг/л дают устойчивый послабляющий эффект" },
+  { id:"no345",   test:function(x){return x.no3>45},   cap:25, why:"нитраты выше 45 мг/л — превышение жёсткого норматива безопасности" },
+  { id:"na500",   test:function(x){return x.na>500},   cap:20, why:"натрий выше 500 мг/л: два литра дают более грамма натрия — четверть суточной нормы соли из одной воды" },
+  { id:"f2",      test:function(x){return x.f>2},      cap:40, why:"фторид выше 2 мг/л при многолетнем питье ведёт к флюорозу" },
+  { id:"tdslow",  test:function(x){return x.tdsSet && x.tds<50}, cap:40, why:"минерализация ниже 50 мг/л — вода почти дистиллированная: она не вносит ничего и хуже утоляет жажду" },
+  { id:"caday",   test:function(x){return x.dietOn && x.totCa>3000}, cap:45, why:"суммарный кальций рациона и воды выше 3000 мг в сутки — это уверенно за верхним допустимым уровнем" },
+  { id:"caday25", test:function(x){return x.dietOn && x.totCa>2500}, cap:60, why:"суммарный кальций рациона и воды выше 2500 мг в сутки — верхнего допустимого уровня для взрослого" },
+  { id:"naday",   test:function(x){return x.dietOn && x.totNa>4000}, cap:55, why:"суммарный натрий выше 4000 мг в сутки" }
+];
+
+/* ---- продукты: мг на 100 г ---- */
+var FOODS = [
+  {g:"Молочное", id:"kefir",   n:"Кефир, йогурт 2,5%",        ca:120, mg:14,  na:50,  k:146},
+  {g:"Молочное", id:"milk",    n:"Молоко",                    ca:120, mg:14,  na:50,  k:146},
+  {g:"Молочное", id:"tvorog",  n:"Творог 5%",                 ca:164, mg:23,  na:41,  k:112},
+  {g:"Молочное", id:"cheese",  n:"Сыр твёрдый",               ca:900, mg:45,  na:900, k:100},
+
+  {g:"Орехи и семена", id:"almond", n:"Миндаль",              ca:269, mg:270, na:1,   k:733},
+  {g:"Орехи и семена", id:"cashew", n:"Кешью",                ca:37,  mg:292, na:12,  k:660},
+  {g:"Орехи и семена", id:"hazel",  n:"Фундук",               ca:114, mg:163, na:0,   k:680},
+  {g:"Орехи и семена", id:"walnut", n:"Грецкий орех",         ca:98,  mg:158, na:2,   k:441},
+  {g:"Орехи и семена", id:"pumpkin",n:"Семечки тыквы",        ca:46,  mg:592, na:7,   k:809},
+  {g:"Орехи и семена", id:"sesame", n:"Кунжут",               ca:975, mg:351, na:11,  k:468},
+
+  {g:"Крупы, бобовые, хлеб", id:"buck",  n:"Гречка варёная",  ca:7,   mg:51,  na:4,   k:88},
+  {g:"Крупы, бобовые, хлеб", id:"oat",   n:"Овсянка на воде", ca:9,   mg:27,  na:4,   k:61},
+  {g:"Крупы, бобовые, хлеб", id:"beans", n:"Фасоль варёная",  ca:45,  mg:55,  na:2,   k:400},
+  {g:"Крупы, бобовые, хлеб", id:"lent",  n:"Чечевица варёная",ca:19,  mg:36,  na:2,   k:369},
+  {g:"Крупы, бобовые, хлеб", id:"rye",   n:"Хлеб ржаной",     ca:35,  mg:40,  na:430, k:240},
+
+  {g:"Овощи и фрукты", id:"banana", n:"Банан",                ca:5,   mg:27,  na:1,   k:358},
+  {g:"Овощи и фрукты", id:"spinach",n:"Шпинат",               ca:99,  mg:79,  na:79,  k:558, note:"оксалаты"},
+  {g:"Овощи и фрукты", id:"brocc",  n:"Брокколи",             ca:47,  mg:21,  na:33,  k:316},
+  {g:"Овощи и фрукты", id:"potato", n:"Картофель варёный",    ca:8,   mg:20,  na:5,   k:379},
+  {g:"Овощи и фрукты", id:"avocado",n:"Авокадо",              ca:12,  mg:29,  na:7,   k:485},
+  {g:"Овощи и фрукты", id:"apricot",n:"Курага",               ca:55,  mg:32,  na:10,  k:1160},
+
+  {g:"Рыба и яйца", id:"sardine", n:"Сардины с костями",      ca:380, mg:39,  na:505, k:397},
+  {g:"Рыба и яйца", id:"salmon",  n:"Лосось",                 ca:12,  mg:29,  na:59,  k:363},
+  {g:"Рыба и яйца", id:"egg",     n:"Яйцо",                   ca:56,  mg:12,  na:142, k:138},
+
+  {g:"Прочее", id:"choco", n:"Тёмный шоколад 70%",            ca:73,  mg:228, na:20,  k:715},
+  {g:"Прочее", id:"salt",  n:"Соль поваренная",               ca:0,   mg:0,   na:39300, k:0, note:"1 г = 393 мг натрия"}
+];
+
+var DIET_PRESETS = [
+  {n:"Пусто", set:{}},
+  {n:"Кефир 1,25 л", set:{kefir:1250}},
+  {n:"Кефир 1,5 л", set:{kefir:1500}},
+  {n:"Без молочного", set:{buck:200, banana:120, walnut:30, rye:150}},
+  {n:"Ореховый акцент", set:{almond:40, pumpkin:20, choco:20, banana:120}}
 ];
 
 function lerp(pts, x){
@@ -267,8 +316,6 @@ function lerp(pts, x){
   }
   return last[1];
 }
-
-/* положение значения на полоске: сегменты равной ширины */
 function pos(pts, x){
   var n=pts.length-1;
   if(x<=pts[0][0]) return 0;
@@ -282,23 +329,37 @@ function pos(pts, x){
   }
   return 1;
 }
+function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
 
 function ratioScore(ca, mg){
-  if(mg===null||ca===null) return {s:70, unknown:true};
-  if(mg<1) return {s:20, unknown:false};
+  if(mg===null||ca===null) return 70;
+  if(mg<1) return 20;
   var r=ca/mg;
-  if(r<=2) return {s:100,unknown:false};
-  if(r<=4) return {s:100-25*(r-2)/2,unknown:false};
-  if(r<=8) return {s:75-25*(r-4)/4,unknown:false};
-  return {s:40,unknown:false};
+  if(r<=2) return 100;
+  if(r<=4) return 100-25*(r-2)/2;
+  if(r<=8) return 75-25*(r-4)/4;
+  return 40;
 }
 
-function lithogenic(v){
+function dietTotals(grams, bg){
+  var t={ca:bg.ca||0, mg:bg.mg||0, na:bg.na||0, k:bg.k||0}, any=false;
+  FOODS.forEach(function(f){
+    var g=grams[f.id];
+    if(g && g>0){
+      any=true;
+      t.ca+=f.ca*g/100; t.mg+=f.mg*g/100; t.na+=f.na*g/100; t.k+=f.k*g/100;
+    }
+  });
+  t.any=any;
+  return t;
+}
+
+function lithogenic(v, tot, dietOn){
   var r=0, parts=[];
-  if(v.na!==null && v.na>20){ var p=Math.min(40,(v.na-20)/4.5); r+=p; if(p>=6) parts.push("натрий "+v.na+" мг/л усиливает выведение кальция с мочой"); }
+  if(v.na!==null && v.na>20){ var p=Math.min(40,(v.na-20)/4.5); r+=p; if(p>=6) parts.push("натрий воды усиливает выведение кальция с мочой"); }
   if(v.mg!==null){
-    if(v.mg<3){ r+=18; parts.push("магния практически нет — отсутствует естественный ингибитор кристаллизации"); }
-    else if(v.mg<10){ r+=12; parts.push("магния мало"); }
+    if(v.mg<3){ r+=18; parts.push("в воде нет магния — естественного ингибитора кристаллизации"); }
+    else if(v.mg<10){ r+=12; parts.push("магния в воде мало"); }
   }
   if(v.ca!==null && v.mg!==null && v.mg>=0.1){
     var q=v.ca/v.mg;
@@ -306,37 +367,92 @@ function lithogenic(v){
     else if(q>4){ r+=8; parts.push("кальций перевешивает магний более чем вчетверо"); }
   }
   if(v.so4!==null && v.so4>250){ r+=8; parts.push("высокие сульфаты повышают кислотную нагрузку"); }
-  if(v.ca!==null && v.ca>400){ r+=4; parts.push("очень высокий кальций"); }
   if(v.hco3!==null){
     if(v.hco3>600){ r-=14; parts.push("много гидрокарбонатов — они ощелачивают мочу и работают в защиту"); }
     else if(v.hco3>300){ r-=10; parts.push("гидрокарбонаты работают в защиту"); }
   }
-  r=Math.max(0,Math.min(100,r));
-  return {value:r, parts:parts};
+  if(dietOn){
+    if(tot.mg<250){ r+=10; parts.push("суммарного магния в сутки мало"); }
+    if(tot.k>2500){ r-=8; parts.push("много калия в рационе — он снижает кальциурию"); }
+    if(tot.na>3500){ r+=10; parts.push("суммарный натрий высок"); }
+    if(tot.ca>2500){ r+=8; parts.push("суммарный кальций выше верхнего допустимого уровня"); }
+  }
+  return {value:clamp(r,0,100), parts:parts};
 }
 
-function evaluate(v, flags){
+function evaluate(v, opt){
+  opt=opt||{};
+  var vol = opt.volume===undefined?2:opt.volume;
+  var bg  = opt.bg || {ca:450,mg:250,na:1600,k:1900};
+  var diet= dietTotals(opt.grams||{}, bg);
+  var dietOn = diet.any;
+
+  /* сумма ионов и эффективная минерализация: заявленной цифре
+     не верим больше, чем сумме того, что перечислено */
+  var ionSum=0, haveIons=false;
+  ["ca","mg","na","so4","cl","hco3","no3"].forEach(function(k){ if(v[k]!==null && !isNaN(v[k])){ ionSum+=v[k]; haveIons=true; } });
+  var declared = (v.tds===null||isNaN(v.tds))?null:v.tds;
+  var effTds = Math.max(declared===null?0:declared, ionSum);
+
+  /* веса кальция, магния и натрия зависят от того, что уже закрыл рацион */
+  var wMul={ca:1,mg:1,na:1};
+  if(dietOn){
+    wMul.ca = clamp(1.15 - diet.ca/NORMS.ca, 0.15, 1.15);
+    wMul.mg = clamp(1.35 - diet.mg/NORMS.mg, 0.30, 1.35);
+    wMul.na = clamp(0.70 + diet.na/3000,     0.90, 1.50);
+  }
+
   var rows=[], sum=0, wsum=0, unknowns=[];
   PARAMS.forEach(function(p){
     var x=v[p.key], s, unk=false;
     if(x===null||isNaN(x)){ s=(p.unknown!==undefined?p.unknown:50); unk=true; unknowns.push(p.name.toLowerCase()); }
     else { s=lerp(p.pts,x); }
-    sum+=s*p.w; wsum+=p.w;
-    rows.push({p:p, value:x, score:s, unknown:unk});
+    var w=p.w*(wMul[p.key]||1);
+    sum+=s*w; wsum+=w;
+    rows.push({p:p, value:x, score:s, unknown:unk, w:w});
   });
   var rs=ratioScore(v.ca,v.mg);
-  sum+=rs.s*W_RATIO; wsum+=W_RATIO;
-
+  sum+=rs*W_RATIO; wsum+=W_RATIO;
   var total=sum/wsum;
-  if(flags.range) total-=18;
-  var caps=[];
-  CAPS.forEach(function(c){
-    var vv={tdsSet:v.tds!==null, tds:v.tds===null?0:v.tds, so4:v.so4===null?0:v.so4, no3:v.no3===null?0:v.no3, na:v.na===null?0:v.na, f:v.f===null?0:v.f};
-    if(c.test(vv)){ caps.push(c); total=Math.min(total,c.cap); }
-  });
-  total=Math.max(0,Math.min(100,total));
 
-  return {total:total, rows:rows, ratio:rs, caps:caps, unknowns:unknowns, litho:lithogenic(v)};
+  /* суточный баланс */
+  var wat={ca:(v.ca||0)*vol, mg:(v.mg||0)*vol, na:(v.na||0)*vol, k:0};
+  var tot={ca:diet.ca+wat.ca, mg:diet.mg+wat.mg, na:diet.na+wat.na, k:diet.k};
+
+  var pen=[];
+  if(dietOn){
+    var pCa=clamp((tot.ca-2000)/50, 0, 12);
+    if(pCa>0.5) pen.push({v:pCa, why:"суточный кальций "+Math.round(tot.ca)+" мг — рацион эту позицию уже закрыл, и вода добавляет лишнее"});
+    var pMg=clamp((300-tot.mg)/14, 0, 10);
+    if(pMg>0.5) pen.push({v:pMg, why:"суточный магний "+Math.round(tot.mg)+" мг ниже нормы — эту дыру могла бы закрыть вода, но не закрывает"});
+    var budget=Math.max(NORMS.na-diet.na, 300);
+    var share=wat.na/budget;
+    var pNa=clamp((share-0.15)*25, 0, 12);
+    if(pNa>0.5) pen.push({v:pNa, why:"вода съедает "+Math.round(share*100)+"% оставшегося натриевого бюджета"});
+  }
+  var penSum=0; pen.forEach(function(p){ penSum+=p.v; });
+  total-=penSum;
+  if(opt.range) total-=18;
+
+  /* физика и потолки */
+  var hard=((v.ca||0)/20.04+(v.mg||0)/12.15);
+  var ctx={ tds:effTds, tdsSet:declared!==null||haveIons, ca:v.ca||0, hard:hard,
+            so4:v.so4||0, no3:v.no3||0, na:v.na||0, f:v.f||0,
+            dietOn:dietOn, totCa:tot.ca, totNa:tot.na };
+  var caps=[];
+  CAPS.forEach(function(c){ if(c.test(ctx)){ caps.push(c); total=Math.min(total,c.cap); } });
+
+  /* невозможные значения */
+  var impossible=[];
+  for(var k in LIMITS){ if(v[k]!==null && !isNaN(v[k]) && v[k]>LIMITS[k]) impossible.push(k); }
+  if(haveIons && ionSum>LIMITS.tds) impossible.push("сумма ионов");
+
+  total=clamp(total,0,100);
+
+  return {total:total, rows:rows, ratio:rs, caps:caps, unknowns:unknowns,
+          litho:lithogenic(v,tot,dietOn), diet:diet, water:wat, totals:tot,
+          dietOn:dietOn, ionSum:haveIons?ionSum:null, effTds:effTds, declared:declared,
+          hard:hard, penalties:pen, impossible:impossible, wMul:wMul, volume:vol};
 }
 
 var TIERS=[
@@ -344,13 +460,12 @@ var TIERS=[
   {min:70,letter:"A",text:"Хорошая повседневная вода. Отклонения есть, но ни одно не мешает пить её годами."},
   {min:55,letter:"B",text:"Годится, но с оговоркой: один-два параметра заметно выбиваются, и это лучше чередовать с другой водой."},
   {min:40,letter:"C",text:"Как единственная вода — сомнительно. Либо почти ничего не даёт, либо даёт лишнее."},
-  {min:25,letter:"D",text:"Не для постоянного питья. Разово безвредна, но как основная вода создаёт нагрузку, которая накапливается."},
+  {min:25,letter:"D",text:"Не для постоянного питья. Разово безвредна, но как основная вода создаёт накапливающуюся нагрузку."},
   {min:0, letter:"F",text:"Это не столовая вода. Пить вместо воды нельзя — только курсами и по показаниям."}
 ];
 function tierOf(t){ for(var i=0;i<TIERS.length;i++){ if(t>=TIERS[i].min) return TIERS[i]; } return TIERS[TIERS.length-1]; }
-
 function waterClass(tds){
-  if(tds===null) return "класс не определён";
+  if(tds===null||isNaN(tds)) return "класс не определён";
   if(tds<1000) return "столовая";
   if(tds<10000) return "лечебно-столовая";
   return "лечебная";
@@ -371,12 +486,11 @@ var PRESETS=[
 </script>
 
 <script>
-/* ---------- интерфейс ---------- */
+/* ================= интерфейс ================= */
 var $=function(id){return document.getElementById(id)};
 
 function mixColor(s){
-  var a,b,t;
-  var bad=[163,52,31], mid=[192,130,20], good=[11,114,133];
+  var a,b,t, bad=[163,52,31], mid=[192,130,20], good=[11,114,133];
   if(s<50){ a=bad;b=mid;t=s/50; } else { a=mid;b=good;t=(s-50)/50; }
   return "rgb("+Math.round(a[0]+(b[0]-a[0])*t)+","+Math.round(a[1]+(b[1]-a[1])*t)+","+Math.round(a[2]+(b[2]-a[2])*t)+")";
 }
@@ -387,14 +501,14 @@ function stripGradient(pts){
 }
 function fmt(x,d){ if(x===null||isNaN(x)) return "—"; var s=(Math.round(x*Math.pow(10,d))/Math.pow(10,d)).toString(); return s.replace(".",","); }
 
-/* поля ввода */
+/* поля этикетки */
 var fieldsEl=$("fields");
 PARAMS.forEach(function(p){
   var d=document.createElement("div");
   d.className="field";
   d.innerHTML='<label for="in_'+p.key+'"><span class="sym">'+p.sym+'</span> — '+p.name+(p.unit?", "+p.unit:"")+
     '</label><input type="number" inputmode="decimal" step="'+(p.step||"any")+'" id="in_'+p.key+'" placeholder="—">'+
-    '<span class="opt">оптимум '+p.opt+' · вес '+p.w+'</span>';
+    '<span class="opt" id="opt_'+p.key+'">оптимум '+p.opt+' · вес '+p.w+'</span>';
   fieldsEl.appendChild(d);
 });
 
@@ -409,7 +523,25 @@ PARAMS.forEach(function(p){
   rowsEl.appendChild(r);
 });
 
-/* пресеты */
+/* продукты */
+var foodsEl=$("foods"), lastGroup=null, groupEl=null;
+FOODS.forEach(function(f){
+  if(f.g!==lastGroup){
+    groupEl=document.createElement("div");
+    groupEl.className="foodgroup";
+    groupEl.innerHTML="<b>"+f.g+"</b>";
+    foodsEl.appendChild(groupEl);
+    lastGroup=f.g;
+  }
+  var row=document.createElement("div");
+  row.className="food"; row.id="food_"+f.id;
+  row.innerHTML='<label for="fd_'+f.id+'">'+f.n+
+    '<i>Ca '+f.ca+' · Mg '+f.mg+' · Na '+f.na+' · K '+f.k+(f.note?" · "+f.note:"")+'</i></label>'+
+    '<input type="number" min="0" step="10" id="fd_'+f.id+'" placeholder="0">';
+  groupEl.appendChild(row);
+});
+
+/* пресеты воды */
 var presetsEl=$("presets");
 PRESETS.forEach(function(pr,i){
   var b=document.createElement("button");
@@ -421,6 +553,18 @@ var rb=document.createElement("button");
 rb.className="chip reset"; rb.type="button"; rb.textContent="Очистить";
 rb.onclick=function(){ PARAMS.forEach(function(p){ $("in_"+p.key).value=""; }); $("chkRange").checked=false; $("chkDry").checked=false; markPreset(-1); update(); };
 presetsEl.appendChild(rb);
+
+/* пресеты рациона */
+var dpEl=$("dietPresets");
+DIET_PRESETS.forEach(function(dp){
+  var b=document.createElement("button");
+  b.className="chip"; b.type="button"; b.textContent=dp.n;
+  b.onclick=function(){
+    FOODS.forEach(function(f){ $("fd_"+f.id).value = dp.set[f.id]||""; });
+    update();
+  };
+  dpEl.appendChild(b);
+});
 
 function markPreset(idx){
   var btns=presetsEl.querySelectorAll(".chip");
@@ -437,7 +581,7 @@ function applyPreset(i){
   update();
 }
 
-function readValues(){
+function readWater(){
   var v={};
   PARAMS.forEach(function(p){
     var s=$("in_"+p.key).value.trim().replace(",",".");
@@ -446,18 +590,28 @@ function readValues(){
   });
   return v;
 }
+function readGrams(){
+  var g={};
+  FOODS.forEach(function(f){
+    var s=$("fd_"+f.id).value.trim().replace(",",".");
+    var x=(s==="")?0:parseFloat(s);
+    g[f.id]=isNaN(x)?0:x;
+    $("food_"+f.id).className="food"+(g[f.id]>0?" on":"");
+  });
+  return g;
+}
+function readOpts(){
+  return {
+    volume: Math.max(0.2, parseFloat($("vol").value)||2),
+    grams: readGrams(),
+    bg: {ca:+$("bgca").value||0, mg:+$("bgmg").value||0, na:+$("bgna").value||0, k:+$("bgk").value||0},
+    range: $("chkRange").checked
+  };
+}
 
 function update(){
-  var v=readValues();
-  var flags={range:$("chkRange").checked, dry:$("chkDry").checked};
-
-  /* если минерализация не указана — оцениваем как сумму ионов */
-  var ionSum=0, haveIons=false;
-  ["ca","mg","na","so4","cl","hco3","no3"].forEach(function(k){ if(v[k]!==null){ ionSum+=v[k]; haveIons=true; } });
-  var estimated=false;
-  if(v.tds===null && haveIons){ v.tds=ionSum; estimated=true; }
-
-  var r=evaluate(v,flags);
+  var v=readWater(), opt=readOpts();
+  var r=evaluate(v,opt);
   var t=tierOf(r.total);
 
   $("score").textContent=Math.round(r.total);
@@ -465,36 +619,56 @@ function update(){
   $("tier").textContent=t.letter;
   $("tier").style.color=mixColor(r.total);
   $("verdict").textContent=t.text;
-  $("cls").textContent=(v.tds===null?"":waterClass(v.tds)+" · ")+"вклад в сутки при 2 л";
+  $("cls").textContent=waterClass(r.effTds)+(r.dietOn?" · рацион учтён":" · рацион не задан");
+
+  /* веса в подписях */
+  PARAMS.forEach(function(p){
+    var m=r.wMul[p.key]||1;
+    $("opt_"+p.key).textContent="оптимум "+p.opt+" · вес "+(p.w*m).toFixed(m===1?0:1);
+  });
 
   r.rows.forEach(function(row){
     var el=$("row_"+row.p.key);
-    var needle=el.querySelector(".needle");
-    var val=el.querySelector(".val");
+    var needle=el.querySelector(".needle"), val=el.querySelector(".val");
     if(row.unknown){
-      el.classList.add("dim"); needle.style.display="none"; val.textContent="—";
+      el.classList.add("dim"); needle.style.display="none"; val.innerHTML="—";
     } else {
       el.classList.remove("dim");
       needle.style.display="block";
       needle.style.left=(100*pos(row.p.pts,row.value)).toFixed(2)+"%";
-      val.textContent=Math.round(row.score);
+      var m=r.wMul[row.p.key]||1;
+      val.innerHTML=Math.round(row.score)+(m!==1?"<em>вес ×"+m.toFixed(2)+"</em>":"");
     }
   });
 
-  /* производные величины */
+  /* баланс */
+  var tb=$("bal").querySelector("tbody"); tb.innerHTML="";
+  function balRow(name, food, water, norm, over){
+    var tot=food+water;
+    var col = over ? (tot>over?mixColor(20):(tot<norm*0.7?mixColor(45):mixColor(90)))
+                   : (tot<norm*0.7?mixColor(45):mixColor(90));
+    var tr=document.createElement("tr");
+    tr.innerHTML="<td>"+name+"</td><td class='n'>"+Math.round(food)+"</td><td class='n'>"+Math.round(water)+
+      "</td><td class='n' style='color:"+col+"'>"+Math.round(tot)+"</td><td class='n' style='color:var(--muted)'>"+norm+(over?" / "+over:"")+"</td>";
+    tb.appendChild(tr);
+  }
+  balRow("Кальций, мг", r.diet.ca, r.water.ca, NORMS.ca, NORMS.caUL);
+  balRow("Магний, мг",  r.diet.mg, r.water.mg, NORMS.mg);
+  balRow("Натрий, мг",  r.diet.na, r.water.na, NORMS.na, 3500);
+  balRow("Калий, мг",   r.diet.k,  0,          NORMS.k);
+
+  /* производные */
   var d=$("derived"); d.innerHTML="";
   function line(k,val){ var e=document.createElement("div"); e.innerHTML="<span>"+k+"</span><span>"+val+"</span>"; d.appendChild(e); }
-  var hard=(v.ca!==null||v.mg!==null)?((v.ca||0)/20.04+(v.mg||0)/12.15):null;
-  line("Жёсткость", hard===null?"—":fmt(hard,2)+" мг-экв/л");
-  line("Кальций за сутки (2 л)", v.ca===null?"—":Math.round(v.ca*2)+" мг — "+Math.round(v.ca*2/1000*100)+"% нормы");
-  line("Магний за сутки (2 л)", v.mg===null?"—":Math.round(v.mg*2)+" мг — "+Math.round(v.mg*2/380*100)+"% нормы");
-  line("Натрий за сутки (2 л)", v.na===null?"—":Math.round(v.na*2)+" мг — "+(v.na*2/5000*2.54).toFixed(2).replace(".",",")+" г соли");
-  line("Сумма ионов", haveIons?Math.round(ionSum)+" мг/л":"—");
-  line("Соотношение Ca:Mg", (v.ca!==null&&v.mg!==null&&v.mg>0)?fmt(v.ca/v.mg,1)+" : 1":"—");
+  line("Жёсткость", fmt(r.hard,2)+" мг-экв/л");
+  line("Сумма ионов", r.ionSum===null?"—":Math.round(r.ionSum)+" мг/л");
+  line("Заявленная минерализация", r.declared===null?"—":Math.round(r.declared)+" мг/л");
+  line("Доля воды в суточном кальции", r.totals.ca>0?Math.round(100*r.water.ca/r.totals.ca)+"%":"—");
+  line("Доля воды в суточном натрии", r.totals.na>0?Math.round(100*r.water.na/r.totals.na)+"%":"—");
+  line("Соотношение Ca:Mg в воде", (v.ca!==null&&v.mg!==null&&v.mg>0)?fmt(v.ca/v.mg,1)+" : 1":"—");
 
-  /* литогенный профиль */
-  var L=r.litho;
-  var rf=$("riskFill");
+  /* литогенный */
+  var L=r.litho, rf=$("riskFill");
   rf.style.width=Math.max(4,L.value)+"%";
   rf.style.background=mixColor(100-L.value);
   $("riskText").textContent=(L.value<20?"низкий":(L.value<40?"умеренный":"повышенный"));
@@ -503,36 +677,45 @@ function update(){
   var n=$("notes"); n.innerHTML="";
   function note(cls,html){ var e=document.createElement("div"); e.className="note "+cls; e.innerHTML=html; n.appendChild(e); }
 
+  if(r.impossible.length){
+    note("stop","<b>Такой воды не существует.</b> Значения выходят за пределы растворимости: соли просто не удержатся в растворе, а выпадут в осадок. Практический потолок природных вод — кальций около 600 мг/л (рекорд рынка Hépar, 549), общая минерализация около 40 г/л. Проверьте единицы: на этикетке мг/дм³, то есть мг/л, а не мг на бутылку и не микрограммы.");
+  }
+  if(r.ionSum!==null && r.declared!==null){
+    var gap=r.ionSum-r.declared;
+    if(gap > 0.6*(v.hco3||0)+150) note("warn","<b>Сумма ионов не сходится с минерализацией:</b> перечисленные компоненты дают "+Math.round(r.ionSum)+" мг/л против заявленных "+Math.round(r.declared)+". Для потолков берётся большее из двух — заявленной цифре нет смысла верить больше, чем сумме того, что напечатано рядом.");
+    else if(gap < -300) note("warn","Заявленная минерализация заметно выше суммы перечисленных ионов: часть состава на этикетку не вынесена.");
+  }
   r.caps.forEach(function(c){ note("bad","<b>Потолок оценки:</b> "+c.why+"."); });
-  if(flags.range) note("warn","<b>Минус 18 баллов за диапазоны.</b> Когда состав задан широким интервалом, этикетка описывает не эту бутылку, а границы норматива: под одной маркой разливают воду с разных источников, и проверить конкретную партию по ней нельзя.");
-  if(estimated) note("warn","Минерализация не введена — взята сумма ионов ("+Math.round(ionSum)+" мг/л).");
-  if(flags.dry && v.hco3!==null) note("ok","Сухой остаток занижен относительно суммы ионов примерно на половину гидрокарбонатов, то есть на ~"+Math.round(v.hco3*0.5)+" мг/л: при выпаривании они разлагаются. Сопоставимая с этикетками «сумма ионов» здесь — около "+Math.round((v.tds||0)+v.hco3*0.5)+" мг/л.");
-  if(r.unknowns.length) note("warn","<b>Не указано:</b> "+r.unknowns.join(", ")+". Пропуск оценён консервативно и снижает балл — этикетка, умалчивающая о нитратах или фторе, менее информативна, чем полная.");
-
+  r.penalties.forEach(function(p){ note("warn","<b>−"+p.v.toFixed(1)+":</b> "+p.why+"."); });
+  if(opt.range) note("warn","<b>−18 за диапазоны.</b> Когда состав задан широким интервалом, этикетка описывает не эту бутылку, а границы норматива.");
+  if($("chkDry").checked && v.hco3!==null) note("ok","Сухой остаток занижен относительно суммы ионов примерно на половину гидрокарбонатов (~"+Math.round(v.hco3*0.5)+" мг/л): при выпаривании они разлагаются.");
+  if(r.unknowns.length) note("warn","<b>Не указано:</b> "+r.unknowns.join(", ")+". Пропуск оценён консервативно и снижает балл.");
   if(L.parts.length) note(L.value>=40?"bad":(L.value>=20?"warn":"ok"),"<b>Литогенный профиль:</b> "+L.parts.join("; ")+".");
-  if(v.ca!==null && v.ca<15 && v.mg!==null && v.mg<5) note("warn","Вода не даёт ни кальция, ни магния. Это не опасно, но как единственная вода она годами не вносит ничего, кроме объёма.");
-  if(v.na!==null && v.na>=20 && v.na<=50) note("warn","Натрия достаточно, чтобы такая вода уже не считалась низконатриевой (порог — 20 мг/л). Для здорового человека это несущественно, при назначенном ограничении соли — учитывается.");
-  if(v.so4!==null && v.so4>250) note("warn","Сульфаты выше 250 мг/л дают горьковатый привкус, а при постоянном питье — послабляющий эффект.");
-  if(v.f!==null && v.f>1.5) note("bad","Фторид выше 1,5 мг/л при многолетнем употреблении ведёт к флюорозу зубов; для детей порог критичнее.");
-  if(v.f!==null && v.f<0.3) note("ok","Фтора в воде практически нет: профилактику кариеса обеспечивает зубная паста, а не вода.");
-  if(v.hco3!==null && v.hco3>1000 && v.na!==null && v.na>100) note("warn","Гидрокарбонаты высокие, но идут в паре с натрием: щелочной эффект оплачивается солевой нагрузкой.");
-  if(hard!==null && hard>7) note("warn","Жёсткость выше 7 мг-экв/л — верхней границы норматива; для чайника и кофемашины это накипь.");
-  if(hard!==null && hard<1.5 && v.ca!==null) note("warn","Жёсткость ниже 1,5 мг-экв/л — нижней границы физиологической полноценности. Для техники это плюс, для питания — минус.");
 
-  /* таблица ориентиров */
-  var tb=$("tierTable").querySelector("tbody");
-  tb.innerHTML="";
+  if(r.dietOn){
+    if(r.diet.ca>NORMS.ca) note("ok","Рацион закрывает кальций полностью ("+Math.round(r.diet.ca)+" мг). Вес кальция в оценке воды снижен до ×"+r.wMul.ca.toFixed(2)+": искать кальциевую воду больше незачем.");
+    if(r.diet.mg<NORMS.mg*0.8) note("warn","Рацион недобирает магний ("+Math.round(r.diet.mg)+" из "+NORMS.mg+" мг). Вес магния в оценке воды поднят до ×"+r.wMul.mg.toFixed(2)+": именно магний теперь стоит искать на этикетке.");
+    if(r.diet.na>NORMS.na*0.8) note("warn","Рацион уже съел большую часть натриевого бюджета ("+Math.round(r.diet.na)+" мг). Вес натрия поднят до ×"+r.wMul.na.toFixed(2)+".");
+  }
+  if(v.na!==null && v.na>=20 && v.na<=50) note("warn","Вода уже не считается низконатриевой: европейский порог — 20 мг/л.");
+  if(v.so4!==null && v.so4>250) note("warn","Сульфаты выше 250 мг/л: горьковатый привкус, при постоянном питье — послабляющий эффект.");
+  if(v.f!==null && v.f>1.5) note("bad","Фторид выше 1,5 мг/л при многолетнем употреблении ведёт к флюорозу.");
+  if(r.hard>7) note("warn","Жёсткость выше 7 мг-экв/л — верхней границы норматива; для чайника это накипь.");
+  else if(r.hard<1.5 && v.ca!==null) note("warn","Жёсткость ниже 1,5 мг-экв/л — нижней границы физиологической полноценности.");
+
+  /* ориентиры при текущем рационе */
+  var tt=$("tierTable").querySelector("tbody"); tt.innerHTML="";
   PRESETS.forEach(function(pr){
-    var rr=evaluate(pr.v,{range:!!pr.range});
+    var rr=evaluate(pr.v,{volume:opt.volume,grams:opt.grams,bg:opt.bg,range:!!pr.range});
     var tr=document.createElement("tr");
     tr.innerHTML="<td>"+pr.n+"</td><td>"+waterClass(pr.v.tds)+"</td><td class='n' style='color:"+mixColor(rr.total)+"'>"+Math.round(rr.total)+"</td>";
-    tb.appendChild(tr);
+    tt.appendChild(tr);
   });
 }
 
 PARAMS.forEach(function(p){ $("in_"+p.key).addEventListener("input",function(){ markPreset(-1); update(); }); });
-$("chkRange").addEventListener("change",update);
-$("chkDry").addEventListener("change",update);
+FOODS.forEach(function(f){ $("fd_"+f.id).addEventListener("input",update); });
+["chkRange","chkDry","vol","bgca","bgmg","bgna","bgk"].forEach(function(id){ $(id).addEventListener("input",update); $(id).addEventListener("change",update); });
 
 applyPreset(1);
 </script>
