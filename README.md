@@ -7,3 +7,8 @@
 - https://mariskori.github.io/Scripts/life-days.html
 - https://mariskori.github.io/Scripts/banana-quality-check.html
 - https://mariskori.github.io/Scripts/water-score.html
+- https://mariskori.github.io/Scripts/discord-transform.html
+
+
+
+
