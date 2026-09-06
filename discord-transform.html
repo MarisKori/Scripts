@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discord-трансформер</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;500&display=swap');
+
+    :root {
+      --bg:        #0f0f0f;
+      --surface:   #1a1a1a;
+      --border:    #2e2e2e;
+      --accent:    #e8ff47;
+      --dim:       #555;
+      --text:      #e0e0e0;
+      --text-soft: #888;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ---------- шапка ---------- */
+    header {
+      width: 100%;
+      max-width: 760px;
+      margin-bottom: 2.5rem;
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+    }
+
+    header h1 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    header p {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--text-soft);
+      margin-top: 0.25rem;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* ---------- основной блок ---------- */
+    .workspace {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-direction: column;
+      gap: 0; /* стыкуем панели вплотную — разделитель сделаем сам */
+    }
+
+    /* ---------- панели (INPUT / OUTPUT) ---------- */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel:first-child { border-radius: 6px 6px 0 0; }
+    .panel:last-child  { border-radius: 0 0 6px 6px; border-top: none; }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      background: transparent;
+      border: none;
+      resize: vertical;
+      padding: 1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea::placeholder { color: var(--dim); }
+
+    textarea[readonly] { color: #b0b0b0; cursor: default; }
+
+    /* ---------- разделитель с кнопкой ---------- */
+    .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ---------- кнопка «Преобразовать» ---------- */
+    .btn-transform {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0f0f0f;
+      background: var(--accent);
+      border: none;
+      border-radius: 3px;
+      padding: 0.45rem 1.2rem;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-transform:hover  { opacity: 0.85; }
+    .btn-transform:active { transform: scale(0.97); }
+
+    /* ---------- кнопка «Копировать» ---------- */
+    .btn-copy {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.3rem 0.75rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .btn-copy:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-copy.copied {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* ---------- подсказка о правиле ---------- */
+    .rule-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--dim);
+      background: #1e1e1e;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.2rem 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>discord_transform</h1>
+    <p>// удаление метаданных</p>
+  </header>
+
+  <div class="workspace">
+
+    <!-- Поле ввода -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-label">input</span>
+        <!--span class="rule-badge">, → .</span-->
+      </div>
+      <textarea id="inputText" placeholder="Вставьте текст сюда…"></textarea>
+    </div>
+
+    <!-- Разделитель с кнопкой преобразования -->
+    <div class="divider">
+      <div class="divider-line"></div>
+      <button class="btn-transform" onclick="transform()">▼ преобразовать</button>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- Поле вывода -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-label">output</span>
+        <button class="btn-copy" id="copyBtn" onclick="copyToClipboard()">копировать</button>
+      </div>
+      <textarea id="outputText" placeholder="Результат появится здесь…"></textarea><!-- readonly -->
+    </div>
+
+  </div>
+
+<script>
+
+function processNickname(raw) { //dead for now
+  let s = raw
+    .replace(/[\u{00AD}\u{200B}-\u{200F}\u{202A}-\u{202E}\u{2060}\u{2066}-\u{2069}\u{FE00}-\u{FE0F}\u{FEFF}\u{E0000}-\u{E007F}]/gu, '')
+    .replace(/[\u{2500}-\u{27BF}\u{1F000}-\u{1FAFF}\u{1F1E6}-\u{1F1FF}\u{300C}-\u{3011}]/gu, '')
+    .normalize('NFKC');
+  s = foldSmallCaps(s)
+    .replace(/\s+/g, ' ')
+    .trim();
+  const ok = /^[a-zA-Z0-9 _.-]{3,32}$/.test(s);
+  return { sanitized: s, accepted: ok };
+}
+
+
+function normalizeMathAlphanumerics(text) {
+  return text.replace(/[\u{1D400}-\u{1D7FF}]/gu, (ch) => {
+    const normalized = ch.normalize('NFKC');
+    return normalized !== ch ? normalized : ch;
+  });
+}
+
+
+// Карта никнеймов: точное имя автора -> простое имя
+const NICK_MAP = {
+  'C:\\>_': 'DiskC',
+  'Łapin #🦎': 'Lapin',
+  '🌹Roselyn Cristal💎': 'Rose',
+  '✽ Flibbertigibbeting': 'Flibbertigibbet',
+  'dimethyltryptamine': 'DMT',
+  '0x603': 'SomeNumber',
+  '0xNihiliszt': 'Nihiliszt',
+  'SoMuchForTheHaltingProblem': 'SoMuch',
+  'ID/Error': 'SomeIDGuy',
+  'SSH': 'LoveLinux',
+  'DlMFlRE': 'DimFire',
+  'Maria🧡': 'Maria',
+  '90000000000000000000000000000000': 'NineZero',
+  '𐌌𐌐.𐌁𐌋𐌄𐌁𐌀': 'Mr.Bleba',
+};
+
+function renameAuthors(text) {
+  return text.replace(
+    /^(.+?)( — (?:Вчера, в )?(?:\d{2}-\w{3}-\d{2} )?\d+:\d+)$/gm,
+    (full, name, time) => (NICK_MAP[name.trim()] ?? name.trim()) + time
+  );
+}
+
+const NICKS_BY_LENGTH = Object.keys(NICK_MAP).sort((a, b) => b.length - a.length);
+
+function renameMentions(text) {
+  for (const nick of NICKS_BY_LENGTH) {
+    text = text.split('@' + nick).join('@' + NICK_MAP[nick]);
+  }
+  return text;
+}
+
+  
+  
+    // ─── Логика преобразования ───────────────────────────────────────────────
+
+    /**
+     * Берёт текст из #inputText,
+     * преобразуем,
+     * вставляет результат в #outputText.
+     */
+    function transform() {
+      const input  = document.getElementById('inputText').value;
+      let result = input;
+      
+      // Предварительная замена видео-втавок
+      result = result.replace(
+        /^[^\S\r\n]*https:\/\/\S+[^\S\r\n]*\r?\nYouTube[^\S\r\n]*\r?\n(.+)\r?\n(.+)\r?\nИзображение[^\S\r\n]*$/gm,
+        '[YouTube author="$1" title="$2"]'
+      );
+      
+      // предварительное обнуление роли на отдельной строке
+      result = result.replace(/\n[^\n]+\n( — (?:Вчера, в )?(?:\d{2}-\w{3}-\d{2} )?\d+:\d+)/g, '\n\n$1');
+      
+      //result = result.replaceAll('\n\n( — \d+\:\d+)', '\1'); // простой случай
+      result = result.replace(/\n\n( — (?:Вчера, в )?(?:\d{2}-\w{3}-\d{2} )?\d+:\d+)/g, '$1'); // простой случай
+      result = result.replace(/Значок роли[^\n]*( — (?:Вчера, в )?(?:\d{2}-\w{3}-\d{2} )?\d+:\d+)$/gm, '$1'); // убираем значок роли
+      result = result.replace(/ *\[[^\n\]]+\], *( — (?:Вчера, в )?(?:\d{2}-\w{3}-\d{2} )?\d+:\d+)$/gm, '$1'); // убираем теги
+      
+      //result = result.replace(/ *( — (?:Вчера, в )?(?:\d{2}-\w{3}-\d{2} )?\d+:\d+)$/gm, '$1'); // убираем двойные пробелы
+
+      result = result.replace(/^ *\[[^\n\]]+\], *\n/gm, ''); // убираем ссылку на кого отвечаем
+      result = result.replace(/^(Изображение)$/gm, '[$1]');
+      result = result.replace(/\n(GIF)$/gm, '[$1]');
+      
+      // преобразуем пустые строки
+      result = result.replace(/\n+/g, '\n');
+      result = result.replace(/^([^\n]+ — (?:Вчера, в )?(?:\d{2}-\w{3}-\d{2} )?\d+:\d+)$/gm, '\n$1');
+      
+
+      result = normalizeMathAlphanumerics(result);
+
+      // преобразуем имена
+      result = renameAuthors(result);
+      result = renameMentions(result);
+      
+      // emoji
+      //const EMOJI_RE = /[\p{Extended_Pictographic}\p{Emoji_Modifier}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{20E3}]/gu;
+      //const clean = result.replace(EMOJI_RE, '').replace(/\s{2,}/g, ' ').trim();
+      
+      
+      //result = result.replaceAll('^ — 17:08$', ' — '); // простой случай
+      
+      
+      // Конечный штрих
+      result = '<chat>\n' + result.trim() + '\n</chat>\n';
+      
+      document.getElementById('outputText').value = result;
+      
+    }
+
+    // ─── Копирование в буфер обмена ──────────────────────────────────────────
+
+    async function copyToClipboard() {
+      const output = document.getElementById('outputText').value;
+
+      // Если вывод пуст — ничего не делаем
+      if (!output) return;
+
+      try {
+        await navigator.clipboard.writeText(output);
+        showCopied();
+      } catch (err) {
+        // Fallback для браузеров без Clipboard API
+        fallbackCopy(output);
+      }
+    }
+
+    /**
+     * Резервный метод: создаём временный textarea,
+     * выделяем текст и используем execCommand (устаревший, но широко поддерживаемый).
+     */
+    function fallbackCopy(text) {
+      const tmp = document.createElement('textarea');
+      tmp.value = text;
+      tmp.style.position = 'fixed';   // чтобы не прыгала страница
+      tmp.style.opacity  = '0';
+      document.body.appendChild(tmp);
+      tmp.focus();
+      tmp.select();
+      document.execCommand('copy');
+      document.body.removeChild(tmp);
+      showCopied();
+    }
+
+    /** Визуальная обратная связь: кнопка на секунду меняет текст */
+    function showCopied() {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✓ скопировано';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'копировать';
+        btn.classList.remove('copied');
+      }, 1500);
+    }
+  </script>
+
+</body>
+</html>
