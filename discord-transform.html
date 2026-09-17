@@ -237,11 +237,17 @@ function processNickname(raw) { //dead for now
 }
 
 
+const COMPAT_ALNUM_RE = new RegExp(
+  '[' +
+    '\\u{1D400}-\\u{1D7FF}' + // Mathematical Alphanumeric Symbols
+    '\\u{FF10}-\\u{FF19}' +   // полноширинные цифры ０–９
+    '\\u{FF21}-\\u{FF3A}' +   // полноширинные Ａ–Ｚ
+    '\\u{FF41}-\\u{FF5A}' +   // полноширинные ａ–ｚ
+  ']', 'gu'
+);
+
 function normalizeMathAlphanumerics(text) {
-  return text.replace(/[\u{1D400}-\u{1D7FF}]/gu, (ch) => {
-    const normalized = ch.normalize('NFKC');
-    return normalized !== ch ? normalized : ch;
-  });
+  return text.replace(COMPAT_ALNUM_RE, (ch) => ch.normalize('NFKC'));
 }
 
 
