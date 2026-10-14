@@ -1,0 +1,493 @@
+<title>Хронокарта 23:00–07:00</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: one lab-chart sheet. Shared 24 h axis (noon → noon, night centred), four stacked panels in a single SVG, live time-cursor readout below. */
+:root {
+  --bg: #F3F5F8;
+  --surface: #FFFFFF;
+  --ink: #18202E;
+  --muted: #5A6476;
+  --line: #CDD3DE;
+  --grid: #E4E8EF;
+  --night: #3B4290;
+  --sun: #D99500;
+  --temp: #CC3B48;
+  --mel: #6A47D3;
+  --cort: #1C8378;
+  --press: #6B7385;
+  --good: #2C7A55;
+  --warn: #BF4A0C;
+  --f-display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --f-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --night-a: .09;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1016; --surface: #141922; --ink: #E5E9F1; --muted: #9AA3B6; --line: #2C3442; --grid: #1D2430;
+    --night: #8E96FF; --sun: #F4B731; --temp: #FF6F78; --mel: #A88EFF; --cort: #46C1B3; --press: #9AA3B6;
+    --good: #4CC48B; --warn: #FB9545; --night-a: .10; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1016; --surface: #141922; --ink: #E5E9F1; --muted: #9AA3B6; --line: #2C3442; --grid: #1D2430;
+  --night: #8E96FF; --sun: #F4B731; --temp: #FF6F78; --mel: #A88EFF; --cort: #46C1B3; --press: #9AA3B6;
+  --good: #4CC48B; --warn: #FB9545; --night-a: .10; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 22px; }
+header { display: grid; gap: 10px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.45rem, 3.4vw, 2.1rem); letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+.lede { margin: 0; max-width: 68ch; color: var(--muted); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
+.facts li { font-family: var(--f-data); font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-variant-numeric: tabular-nums; }
+.facts b { font-weight: 600; }
+.k-sleep { color: var(--night); } .k-mel { color: var(--mel); } .k-temp { color: var(--temp); } .k-warn { color: var(--warn); }
+
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding-block: 14px; padding-inline: 10px; display: grid; gap: 12px; min-width: 0; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+svg.chart { display: block; width: 100%; min-width: 860px; height: auto; touch-action: pan-y; cursor: crosshair; user-select: none; }
+.hint { font-size: 12.5px; color: var(--muted); margin: 0 6px; }
+
+.cursor-ctl { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding-inline: 6px; }
+.cursor-ctl label { font-family: var(--f-data); font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+input[type=range] { width: 100%; accent-color: var(--mel); }
+
+.readout { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 18px; padding: 14px 6px 4px; border-top: 1px solid var(--grid); }
+@media (max-width: 720px) { .readout { grid-template-columns: minmax(0, 1fr); } }
+.clock { font-family: var(--f-display); font-size: 2.2rem; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.vals { display: grid; gap: 4px; margin-top: 12px; font-family: var(--f-data); font-size: 13px; font-variant-numeric: tabular-nums; }
+.vals div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dotted var(--grid); padding-bottom: 3px; }
+.vals span:first-child { color: var(--muted); }
+.now { display: grid; gap: 10px; min-width: 0; }
+.now h3 { margin: 0; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.phase { display: grid; gap: 6px; }
+.phase p { margin: 0; }
+.tag { display: inline-block; font-family: var(--f-data); font-size: 11.5px; padding: 1px 7px; border-radius: 4px; margin-right: 6px; border: 1px solid currentColor; white-space: nowrap; }
+.tag.adv { color: var(--good); } .tag.del { color: var(--warn); } .tag.neu { color: var(--muted); }
+.todo { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+.todo li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.todo i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; font-style: normal; }
+.i-do { background: var(--good); } .i-avoid { background: var(--warn); } .i-opt { border: 1.5px dashed var(--mel); } .i-sun { background: var(--sun); } .i-dark { background: var(--night); }
+
+section.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 18px 28px; }
+.notes h2 { font-family: var(--f-display); font-size: 1rem; font-weight: 500; margin: 0 0 6px; }
+.notes p, .notes li { margin: 0; color: var(--ink); font-size: 14px; max-width: 65ch; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.notes .muted { color: var(--muted); }
+.notes a { color: var(--mel); }
+.notes a:focus-visible, input:focus-visible { outline: 2px solid var(--mel); outline-offset: 2px; }
+
+/* SVG styling through tokens */
+.chart text { font-family: var(--f-body); fill: var(--ink); }
+.chart .mono { font-family: var(--f-data); }
+.chart .tick { font-family: var(--f-data); font-size: 11px; fill: var(--muted); }
+.chart .ptitle { font-size: 12.5px; font-weight: 600; }
+.chart .psub { font-size: 11px; fill: var(--muted); }
+.chart .grid { stroke: var(--grid); stroke-width: 1; }
+.chart .axis { stroke: var(--line); stroke-width: 1; }
+.chart .sleepband { fill: var(--night); fill-opacity: var(--night-a); }
+.chart .wmz { fill: url(#hatchMuted); }
+.chart .l-temp { stroke: var(--temp); }
+.chart .l-mel { stroke: var(--mel); }
+.chart .a-mel { fill: var(--mel); fill-opacity: .10; }
+.chart .l-press { stroke: var(--press); stroke-dasharray: 5 4; }
+.chart .l-cort { stroke: var(--cort); }
+.chart .l-sun { stroke: var(--sun); }
+.chart .curve { fill: none; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.chart .gap { stroke-dasharray: 2 5; stroke-width: 1.6; opacity: .7; }
+.chart .zero { stroke: var(--muted); stroke-width: 1; }
+.chart .vline-temp { stroke: var(--temp); stroke-dasharray: 3 3; }
+.chart .vline-mel { stroke: var(--mel); stroke-dasharray: 3 3; }
+.chart .c-temp { fill: var(--temp); } .chart .c-mel { fill: var(--mel); } .chart .c-sun { fill: var(--sun); }
+.chart .c-muted { fill: var(--muted); } .chart .c-warn { fill: var(--warn); } .chart .c-good { fill: var(--good); } .chart .c-cort { fill: var(--cort); } .chart .c-press { fill: var(--press); } .chart .c-night { fill: var(--night); }
+.chart .seg-do { fill: var(--good); }
+.chart .seg-sun { fill: var(--sun); }
+.chart .seg-dark { fill: var(--night); fill-opacity: .38; }
+.chart .seg-avoid { fill: url(#hatchWarn); stroke: var(--warn); stroke-width: 1; }
+.chart .seg-opt { fill: var(--mel); fill-opacity: .13; stroke: var(--mel); stroke-width: 1.3; stroke-dasharray: 4 3; }
+.chart .seglabel { font-size: 11px; font-weight: 500; }
+.chart .seglabel.avoid { fill: var(--warn); }
+.chart .seglabel.side { fill: var(--muted); }
+.chart .lname { font-size: 12.5px; font-weight: 600; }
+.chart .limp { font-family: var(--f-data); font-size: 11px; fill: var(--muted); }
+.chart .lane-sep { stroke: var(--grid); }
+.chart .h-warn { stroke: var(--warn); stroke-width: 1.2; }
+.chart .h-muted { stroke: var(--muted); stroke-width: 1; opacity: .45; }
+.chart .cursor { stroke: var(--ink); stroke-width: 1.2; opacity: .55; }
+.chart .dot-temp { fill: var(--temp); stroke: var(--surface); stroke-width: 2; }
+.chart .dot-mel { fill: var(--mel); stroke: var(--surface); stroke-width: 2; }
+.chart .dot-sun { fill: var(--sun); stroke: var(--surface); stroke-width: 2; }
+.chart .star { font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { .chart .cursor-g { transition: transform .08s linear; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Хронокарта 23:00–07:00</h1>
+    <p class="lede">Сутки человека, который спит с 23:00 до 07:00, и стимулы, которые удерживают внутренние часы ровно на этом месте. Ось идёт от полудня до полудня, чтобы ночь была в центре. Наведите курсор на график или подвиньте ползунок под ним, чтобы увидеть состояние организма и рекомендации на любой момент.</p>
+    <ul class="facts" aria-label="Опорные точки">
+      <li class="k-sleep"><b>Сон</b> 23:00–07:00</li>
+      <li class="k-warn"><b>Запретная зона сна</b> ≈19–21</li>
+      <li class="k-mel"><b>DLMO</b> ≈21:00</li>
+      <li class="k-mel"><b>Пик мелатонина</b> ≈02:00–03:00</li>
+      <li class="k-temp"><b>Tmin</b> ≈04:00</li>
+    </ul>
+  </header>
+
+  <div class="sheet">
+    <div class="scroll"><svg class="chart" id="chart" viewBox="0 0 1000 1090" role="img" aria-label="Суточные кривые температуры, мелатонина, давления сна, кортизола, кривые фазового ответа на свет и мелатонин и дорожки условий"></svg></div>
+    <p class="hint">На телефоне график прокручивается вбок. Часы показаны для среднего хронотипа; индивидуальный разброс ±1–2 часа.</p>
+    <div class="cursor-ctl">
+      <label for="t">Время</label>
+      <input type="range" id="t" min="12" max="35.75" step="0.25" value="31.5">
+    </div>
+    <div class="readout" aria-live="polite">
+      <div>
+        <div class="clock" id="clock">07:30</div>
+        <div class="vals" id="vals"></div>
+      </div>
+      <div class="now">
+        <div class="phase" id="phase"></div>
+        <h3>Что делать в это время</h3>
+        <ul class="todo" id="todo"></ul>
+      </div>
+    </div>
+  </div>
+
+  <section class="notes">
+    <div>
+      <h2>Главная логика</h2>
+      <ul>
+        <li>У большинства людей собственный период часов чуть длиннее 24 часов, поэтому без подстройки ритм каждый день сползает позже. Утренний свет после Tmin даёт небольшой ежедневный сдвиг раньше и гасит этот дрейф. Это главный рычаг удержания режима.</li>
+        <li>Вечерний и ночной свет до Tmin делает обратное и сдвигает часы позже. Поэтому за 3 часа до сна нужен тусклый тёплый свет, а ночью темнота. Ночью часы чувствительны и к комнатному свету: около 100 лк дают примерно половину эффекта яркого света.</li>
+        <li>Мелатонин для удержания здорового режима не нужен. Он имеет смысл, если ритм упрямо уползает позже. Тогда принимают 0,5 мг примерно за 3 часа до DLMO, то есть около 18:00. Утренний приём, наоборот, сдвигает часы позже.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Как читать важность</h2>
+      <ul>
+        <li><b>●●●●●</b> — шкала моя: это экспертная оценка того, насколько условие влияет на удержание фазы или качество сна у здорового взрослого. Общепринятой ранжировки нет.</li>
+        <li><b>фаза</b> — условие двигает центральные часы. <b>сон</b> — условие влияет на засыпание и качество сна, но фазу почти не трогает. <b>периферия</b> — условие смещает часы органов, например ритм глюкозы, а не главные часы мозга.</li>
+        <li>Зелёный цвет обозначает «делать», штриховка — «избегать», пунктир — «по желанию».</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Допущения и точность</h2>
+      <ul>
+        <li>Привязки взяты типичные: DLMO примерно за 2 часа до засыпания, Tmin ≈ DLMO + 7 часов. Точно свою фазу можно узнать только измерением DLMO по слюне.</li>
+        <li>Кривые температуры, мелатонина, кортизола и давления сна показывают типичную форму, амплитуды ориентировочные. Кривая температуры включает эффект маскировки сном.</li>
+        <li>Кривая фазового ответа на свет построена для 6,7-часового импульса около 10 000 лк. Короткий или слабый свет даёт меньшие сдвиги той же формы.</li>
+        <li>Кривая для мелатонина построена для 0,5 мг в течение 3 дней. Во время сна данных нет, этот участок показан пунктиром.</li>
+        <li>Слабее всего доказательства у правил «ужин за 3 часа до сна» и «спальня 16–19 °C»: это практические рекомендации, а не результаты строгих экспериментов.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Источники</h2>
+      <ul class="muted">
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2342968" target="_blank" rel="noopener">Khalsa et al., 2003</a> — кривая фазового ответа на яркий свет.</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2928909" target="_blank" rel="noopener">Burgess et al., 2010</a> — кривые фазового ответа на 0,5 и 3 мг мелатонина.</li>
+        <li><a href="https://blog.policy.manchester.ac.uk/sci-tech/2022/06/making-light-work-recommendations-for-healthy-lighting/" target="_blank" rel="noopener">Brown et al., 2022</a> — консенсус по освещению днём, вечером и ночью.</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6462487" target="_blank" rel="noopener">Youngstedt et al., 2019</a> — кривая фазового ответа на физическую нагрузку.</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3805807/" target="_blank" rel="noopener">Drake et al., 2013</a> и <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4657156" target="_blank" rel="noopener">Burke et al., 2015</a> — кофеин, сон и фаза.</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5483233/" target="_blank" rel="noopener">Wehrens et al., 2017</a> — время еды и периферические часы.</li>
+        <li><a href="https://neurosciencenews.com/sleep-bath-14533/" target="_blank" rel="noopener">Haghayegh et al., 2019</a> — тёплый душ или ванна перед сном.</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6054682/" target="_blank" rel="noopener">Maire et al., 2018</a> — запретная зона сна (wake maintenance zone).</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('chart');
+  const X0 = 210, X1 = 955, T0 = 12, T1 = 36;
+  const xOf = t => X0 + (t - T0) / (T1 - T0) * (X1 - X0);
+  const tOfX = x => T0 + (x - X0) / (X1 - X0) * (T1 - T0);
+  const hhmm = t => {
+    let m = Math.round((((t % 24) + 24) % 24) * 60) % 1440;
+    return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  };
+
+  function el(name, attrs = {}, parent = svg, text) {
+    const e = document.createElementNS(NS, name);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    parent.appendChild(e);
+    return e;
+  }
+
+  // Monotone cubic (Fritsch–Carlson): no overshoot, extrema stay at keypoints
+  function mono(pts) {
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), n = xs.length;
+    const d = [], m = new Array(n);
+    for (let i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
+    m[0] = d[0]; m[n - 1] = d[n - 2];
+    for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+    for (let i = 0; i < n - 1; i++) {
+      if (d[i] === 0) { m[i] = m[i + 1] = 0; continue; }
+      const a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
+      if (s > 9) { const k = 3 / Math.sqrt(s); m[i] = k * a * d[i]; m[i + 1] = k * b * d[i]; }
+    }
+    return x => {
+      if (x <= xs[0]) return ys[0];
+      if (x >= xs[n - 1]) return ys[n - 1];
+      let i = 0; while (x > xs[i + 1]) i++;
+      const h = xs[i + 1] - xs[i], u = (x - xs[i]) / h;
+      const h00 = 2*u*u*u - 3*u*u + 1, h10 = u*u*u - 2*u*u + u, h01 = -2*u*u*u + 3*u*u, h11 = u*u*u - u*u;
+      return h00*ys[i] + h10*h*m[i] + h01*ys[i+1] + h11*h*m[i+1];
+    };
+  }
+
+  // ---------- Physiology (axis hours: 12 … 36 = noon … next noon)
+  const temp = mono([[12,36.95],[14,37.05],[16,37.13],[18,37.17],[19,37.15],[20,37.08],[21,36.98],[22,36.87],[23,36.76],[24,36.62],[25,36.52],[26,36.45],[27,36.40],[28,36.38],[29,36.42],[30,36.52],[31,36.65],[32,36.78],[33,36.86],[34,36.91],[35,36.94],[36,36.95]]);
+  const mel = mono([[12,2],[19,2],[20,4],[21,10],[22,24],[23,40],[24,54],[25,64],[26,70],[27,71],[28,66],[29,54],[30,38],[31,20],[32,8],[33,3],[34,2],[36,2]]);
+  const cort = mono([[12,.45],[14,.38],[16,.30],[18,.22],[20,.15],[22,.08],[24,.05],[25,.06],[26,.10],[27,.18],[28,.30],[29,.45],[30,.62],[31,.80],[31.75,1],[33,.80],[34,.68],[35,.57],[36,.45]]);
+
+  // Process S (two-process model), steady state for wake 07:00 / sleep 23:00
+  const TR = 18.2, TD = 4.2;
+  let Sw = 0.2;
+  for (let i = 0; i < 60; i++) { const A = 1 - (1 - Sw) * Math.exp(-16 / TR); Sw = A * Math.exp(-8 / TD); }
+  const SA = 1 - (1 - Sw) * Math.exp(-16 / TR);
+  const Sraw = t => {
+    if (t >= 23 && t < 31) return SA * Math.exp(-(t - 23) / TD);
+    const since = t >= 31 ? t - 31 : t + 24 - 31;
+    return 1 - (1 - Sw) * Math.exp(-since / TR);
+  };
+  const press = t => (Sraw(t) - Sw) / (SA - Sw);
+
+  // ---------- Phase response curves (hours of shift; + = earlier, − = later)
+  const prcLight = mono([[12,.40],[14,.20],[16,0],[18,-.40],[20,-1.0],[22,-1.8],[24,-2.6],[25,-2.9],[26,-2.4],[27,-1.4],[28,0],[29,1.0],[30,1.7],[31,2.0],[32,2.1],[33,1.8],[34,1.3],[35,.9],[36,.4]]);
+  const melPts1 = [[12,-.6],[13,-.2],[14,.3],[15,.8],[16,1.2],[17,1.45],[18,1.5],[19,1.3],[20,.9],[21,.5],[22,.2],[23,0]];
+  const melPts2 = [[31,-.3],[32,-.8],[33,-1.1],[34,-1.3],[34.6,-1.32],[35,-1.25],[36,-.6]];
+  const prcMelA = mono(melPts1), prcMelB = mono(melPts2);
+  const prcMel = t => (t <= 23 ? prcMelA(t) : t >= 31 ? prcMelB(t) : null);
+
+  // ---------- Layout constants
+  const AX_Y = 34;
+  const P = {
+    A: { y0: 62, y1: 282 },
+    B: { y0: 322, y1: 412 },
+    C: { y0: 452, y1: 642 },
+    D: { y0: 682 }
+  };
+  const LANE_H = 48;
+
+  // ---------- Patterns
+  const defs = el('defs');
+  const pw = el('pattern', { id: 'hatchWarn', width: 7, height: 7, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, defs);
+  el('line', { x1: 0, y1: 0, x2: 0, y2: 7, class: 'h-warn' }, pw);
+  const pm = el('pattern', { id: 'hatchMuted', width: 8, height: 8, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(-45)' }, defs);
+  el('line', { x1: 0, y1: 0, x2: 0, y2: 8, class: 'h-muted' }, pm);
+
+  // ---------- Lanes data
+  const lanes = [
+    { name: 'Свет (mEDI, лк)', imp: 5, eff: 'фаза', segs: [
+      { a: 12, b: 20, k: 'sun', s: .55, t: '≥ 250 лк, лучше дневной', d: 'Днём не меньше 250 лк mEDI на уровне глаз. Это примерно хорошо освещённый офис у окна; на улице в пасмурный день около 1000 лк.' },
+      { a: 20, b: 23, k: 'sun', s: .14, t: '≤ 10 лк', d: 'С 20:00 (за 3 ч до сна) не больше 10 лк mEDI: тёплый тусклый свет, ночной режим экранов, без верхнего холодного света.' },
+      { a: 23, b: 31, k: 'dark', t: '≤ 1 лк · темнота', d: 'Ночью максимально темно, не больше 1 лк mEDI. Если нужно встать, включайте самый тусклый тёплый свет: часы в это время очень чувствительны.' },
+      { a: 31, b: 33, k: 'sun', s: 1, t: 'улица', d: 'Главный стимул удержания режима: яркий свет сразу после подъёма, лучше на улице (от 1000 лк даже в пасмурный день), 20–60 минут.' },
+      { a: 33, b: 36, k: 'sun', s: .55, t: '≥ 250 лк', d: 'Днём не меньше 250 лк mEDI на уровне глаз.' }
+    ]},
+    { name: 'Режим подъёма', imp: 5, eff: 'фаза', segs: [
+      { a: 30.5, b: 31.5, k: 'do', s: .9, t: 'подъём 07:00 ±30 мин', side: 'left', d: 'Подъём в одно и то же время каждый день, включая выходные. Время подъёма задаёт момент утреннего света, поэтому оно важнее времени отбоя.' },
+      { a: 22.5, b: 23.5, k: 'do', s: .55, t: 'отбой 23:00', side: 'left', d: 'Ложиться около 23:00. Раньше 21:00 лечь бесполезно: это запретная зона сна, уснуть будет трудно.' }
+    ]},
+    { name: 'Кофеин', imp: 3, eff: 'сон, фаза', segs: [
+      { a: 12, b: 17, k: 'do', s: .35, t: 'можно', d: 'Кофеин допустим. Последняя заметная доза не позже 17:00.' },
+      { a: 17, b: 23, k: 'avoid', t: 'нет · ≥ 6 ч до сна', d: 'Без кофеина за 6 часов до сна: 400 мг даже за 6 ч до сна сокращали сон больше чем на час. Кофеин за 3 ч до сна сдвигает мелатониновый ритм позже примерно на 40 мин.' },
+      { a: 31, b: 36, k: 'do', s: .35, t: 'можно', d: 'Кофеин допустим.' }
+    ]},
+    { name: 'Холодная спальня', imp: 3, eff: 'сон', segs: [
+      { a: 23, b: 31, k: 'do', s: .35, t: '≈ 16–19 °C · тихо · темно', d: 'Чаще всего рекомендуют 15,6–19,4 °C в спальне при тёплом одеяле. Оптимум индивидуален; данные в основном наблюдательные.' }
+    ]},
+    { name: 'Еда', imp: 2, eff: 'периферия', segs: [
+      { a: 31.5, b: 32.5, k: 'do', s: .7, t: 'завтрак', side: 'right', d: 'Завтрак примерно через 30–60 минут после подъёма и в одно и то же время. Время еды подстраивает часы органов (ритм глюкозы), но не главные часы мозга.' },
+      { a: 13, b: 14, k: 'do', s: .55, t: 'обед', side: 'right', d: 'Регулярное время обеда.' },
+      { a: 18.5, b: 19.5, k: 'do', s: .55, t: 'ужин', side: 'left', d: 'Ужин не позже, чем примерно за 3 часа до сна. Это практическое правило, а не результат строгих экспериментов.' },
+      { a: 20, b: 23, k: 'avoid', t: 'без еды', d: 'Без плотной еды в последние 3 часа перед сном.' }
+    ]},
+    { name: 'Физнагрузка', imp: 2, eff: 'фаза', segs: [
+      { a: 31, b: 32, k: 'do', s: .6, t: 'сдвиг раньше', side: 'right', d: 'Нагрузка около 7:00 сдвигает часы раньше (в исследовании — 1 час умеренной нагрузки).' },
+      { a: 13, b: 16, k: 'do', s: .6, t: 'сдвиг раньше', d: 'Нагрузка с 13:00 до 16:00 тоже сдвигает часы раньше.' },
+      { a: 19, b: 22, k: 'avoid', t: 'сдвиг позже', d: 'Интенсивная нагрузка с 19:00 до 22:00 сдвигает часы позже.' }
+    ]},
+    { name: 'Тёплый душ / ванна', imp: 2, eff: 'сон', segs: [
+      { a: 21, b: 22, k: 'do', s: .7, t: '40–42,5 °C, ≥ 10 мин', side: 'left', d: 'Тёплая вода 40–42,5 °C в течение 10 минут и больше за 1–2 часа до сна ускоряет засыпание. Механизм: последующий отвод тепла через кожу снижает температуру ядра тела.' }
+    ]},
+    { name: 'Мелатонин 0,5 мг', imp: 1, eff: 'фаза', segs: [
+      { a: 17, b: 19, k: 'opt', t: 'по желанию', d: 'Для удержания здорового режима не нужен. Если ритм упорно уползает позже: 0,5 мг около 18:00 (за 2–4 ч до DLMO). Может вызывать сонливость.' },
+      { a: 31, b: 35, k: 'avoid', t: 'утром → сдвиг позже', d: 'Утренний мелатонин сдвигает часы позже. Для этого режима его утром не принимают.' }
+    ]}
+  ];
+
+  // ---------- Background: sleep band + grid
+  const bottom = P.D.y0 + lanes.length * LANE_H;
+  el('rect', { x: xOf(23), y: AX_Y + 6, width: xOf(31) - xOf(23), height: bottom - AX_Y - 6, class: 'sleepband' });
+  for (let h = 12; h <= 36; h += 1) {
+    const major = h % 2 === 0;
+    el('line', { x1: xOf(h), x2: xOf(h), y1: AX_Y + 8, y2: bottom, class: 'grid', 'stroke-opacity': major ? 1 : .45 });
+    if (major) {
+      el('text', { x: xOf(h), y: AX_Y, 'text-anchor': 'middle', class: 'tick' }, svg, hhmm(h));
+      el('text', { x: xOf(h), y: bottom + 22, 'text-anchor': 'middle', class: 'tick' }, svg, hhmm(h));
+    }
+  }
+  el('text', { x: (xOf(23) + xOf(31)) / 2, y: AX_Y - 16, 'text-anchor': 'middle', class: 'mono c-night', 'font-size': 11.5, 'font-weight': 600 }, svg, 'СОН 23:00 → 07:00');
+
+  const panelTitle = (y, title, sub) => {
+    el('text', { x: 14, y: y + 14, class: 'ptitle' }, svg, title);
+    if (sub) sub.forEach((s, i) => el('text', { x: 14, y: y + 30 + i * 14, class: 'psub' }, svg, s));
+  };
+  const pathFrom = (fn, yOf, a = T0, b = T1, step = .05) => {
+    let d = '';
+    for (let t = a; t <= b + 1e-9; t += step) { const v = fn(t); d += (d ? 'L' : 'M') + xOf(t).toFixed(1) + ' ' + yOf(v).toFixed(1); }
+    return d;
+  };
+
+  // ---------- Panel A: temperature + melatonin
+  const A = P.A;
+  const yT = v => A.y1 - (v - 36.3) / (37.3 - 36.3) * (A.y1 - A.y0);
+  const yM = v => A.y1 - v / 80 * (A.y1 - A.y0);
+  panelTitle(A.y0, 'Физиология', ['температура ядра тела, °C', 'мелатонин в плазме, пг/мл']);
+  el('rect', { x: xOf(19), y: A.y0, width: xOf(21) - xOf(19), height: A.y1 - A.y0, class: 'wmz' });
+  el('text', { x: xOf(20), y: A.y0 + 12, 'text-anchor': 'middle', class: 'psub' }, svg, 'запретная');
+  el('text', { x: xOf(20), y: A.y0 + 25, 'text-anchor': 'middle', class: 'psub' }, svg, 'зона сна');
+  [36.4, 36.6, 36.8, 37.0, 37.2].forEach(v => el('text', { x: X0 - 8, y: yT(v) + 4, 'text-anchor': 'end', class: 'tick' }, svg, v.toFixed(1)));
+  [0, 20, 40, 60, 80].forEach(v => el('text', { x: X1 + 8, y: yM(v) + 4, class: 'tick' }, svg, v));
+  el('line', { x1: X0, x2: X1, y1: A.y1, y2: A.y1, class: 'axis' });
+  el('path', { d: pathFrom(mel, yM) + `L${xOf(36)} ${yM(0)}L${xOf(12)} ${yM(0)}Z`, class: 'a-mel' });
+  el('path', { d: pathFrom(mel, yM), class: 'curve l-mel' });
+  el('path', { d: pathFrom(temp, yT), class: 'curve l-temp' });
+  el('line', { x1: xOf(21), x2: xOf(21), y1: A.y0 + 30, y2: A.y1, class: 'vline-mel' });
+  el('text', { x: xOf(21) + 5, y: yM(10) - 8, class: 'mono c-mel', 'font-size': 11 }, svg, 'DLMO');
+  el('line', { x1: xOf(28), x2: xOf(28), y1: A.y0, y2: A.y1, class: 'vline-temp' });
+  el('text', { x: xOf(28) + 5, y: yT(36.38) + 16, class: 'mono c-temp', 'font-size': 11 }, svg, 'Tmin 04:00');
+  el('text', { x: xOf(17.6), y: yT(37.17) - 8, 'text-anchor': 'middle', class: 'mono c-temp', 'font-size': 11 }, svg, 'Tmax ≈ 18:00');
+  el('text', { x: xOf(14.6), y: yT(37.08) - 10, class: 'c-temp', 'font-size': 12, 'font-weight': 600 }, svg, 'температура');
+  el('text', { x: xOf(26.2), y: yM(71) - 10, 'text-anchor': 'middle', class: 'c-mel', 'font-size': 12, 'font-weight': 600 }, svg, 'мелатонин');
+
+  // ---------- Panel B: sleep pressure + cortisol
+  const B = P.B;
+  const yB = v => B.y1 - v * (B.y1 - B.y0);
+  panelTitle(B.y0 - 6, 'Давление сна и кортизол', ['относительные единицы']);
+  el('line', { x1: X0, x2: X1, y1: B.y1, y2: B.y1, class: 'axis' });
+  el('path', { d: pathFrom(cort, yB), class: 'curve l-cort' });
+  el('path', { d: pathFrom(press, yB, T0, T1, .02), class: 'curve l-press' });
+  el('text', { x: xOf(21.4), y: yB(press(21.4)) - 8, 'text-anchor': 'end', class: 'c-press', 'font-size': 12, 'font-weight': 600 }, svg, 'давление сна (процесс S)');
+  el('text', { x: xOf(31.75) - 10, y: yB(1) + 4, 'text-anchor': 'end', class: 'c-cort', 'font-size': 12, 'font-weight': 600 }, svg, 'кортизол: пик через 30–45 мин после подъёма');
+
+  // ---------- Panel C: PRCs
+  const C = P.C;
+  const yC = v => C.y0 + (2.5 - v) / (2.5 + 3.2) * (C.y1 - C.y0);
+  panelTitle(C.y0 - 6, 'Ответ часов на стимул', ['сдвиг фазы, ч', '↑ раньше · ↓ позже']);
+  [-3, -2, -1, 0, 1, 2].forEach(v => el('text', { x: X0 - 8, y: yC(v) + 4, 'text-anchor': 'end', class: 'tick' }, svg, (v > 0 ? '+' : '') + v));
+  el('line', { x1: X0, x2: X1, y1: yC(0), y2: yC(0), class: 'zero' });
+  el('path', { d: pathFrom(prcLight, yC), class: 'curve l-sun' });
+  el('path', { d: pathFrom(prcMelA, yC, 12, 23), class: 'curve l-mel' });
+  el('path', { d: pathFrom(prcMelB, yC, 31, 36), class: 'curve l-mel' });
+  el('path', { d: `M${xOf(23)} ${yC(0)}L${xOf(31)} ${yC(-0.3)}`, class: 'curve l-mel gap' });
+  el('text', { x: xOf(27), y: yC(-0.15) + 18, 'text-anchor': 'middle', class: 'psub' }, svg, 'мелатонин во сне не изучен');
+  el('text', { x: xOf(24.9), y: yC(-2.9) + 18, 'text-anchor': 'middle', class: 'c-sun', 'font-size': 12, 'font-weight': 600 }, svg, 'свет → позже');
+  el('text', { x: xOf(35.9), y: yC(1.0) - 10, 'text-anchor': 'end', class: 'c-sun', 'font-size': 12, 'font-weight': 600 }, svg, 'свет → раньше');
+  el('text', { x: xOf(18), y: yC(1.5) - 12, 'text-anchor': 'middle', class: 'c-mel', 'font-size': 12, 'font-weight': 600 }, svg, 'мелатонин → раньше');
+  el('text', { x: xOf(34.2), y: yC(-1.32) + 20, 'text-anchor': 'middle', class: 'c-mel', 'font-size': 12, 'font-weight': 600 }, svg, 'мелатонин → позже');
+  el('line', { x1: xOf(28), x2: xOf(28), y1: C.y0, y2: C.y1, class: 'vline-temp' });
+  el('text', { x: xOf(28) + 5, y: C.y1 - 6, class: 'mono c-temp', 'font-size': 11 }, svg, 'Tmin: точка переключения для света');
+  // application points
+  el('rect', { x: xOf(31), y: yC(2.5) - 2, width: xOf(33) - xOf(31), height: 6, rx: 3, class: 'c-sun' });
+  el('text', { x: xOf(31) - 4, y: yC(2.5) + 5, 'text-anchor': 'end', class: 'mono c-sun', 'font-size': 11, 'font-weight': 600 }, svg, '★ свет 07–09');
+  el('circle', { cx: xOf(18), cy: yC(1.5), r: 5, class: 'dot-mel' });
+  el('text', { x: xOf(18) + 9, y: yC(1.5) + 18, class: 'mono c-mel', 'font-size': 11 }, svg, '★ 18:00 (опц.)');
+  el('rect', { x: xOf(20), y: C.y1 - 22, width: xOf(23) - xOf(20), height: 4, class: 'c-warn' });
+  el('text', { x: xOf(21.5), y: C.y1 - 28, 'text-anchor': 'middle', class: 'mono c-warn', 'font-size': 11 }, svg, 'приглушить свет');
+
+  // ---------- Panel D: lanes
+  const D = P.D;
+  el('text', { x: 14, y: D.y0 - 14, class: 'ptitle' }, svg, 'Условия');
+  el('text', { x: 116, y: D.y0 - 14, class: 'psub' }, svg, 'важность · на что влияет');
+  lanes.forEach((ln, i) => {
+    const y = D.y0 + i * LANE_H;
+    el('line', { x1: 10, x2: X1, y1: y, y2: y, class: 'lane-sep' });
+    el('text', { x: 14, y: y + 20, class: 'lname' }, svg, ln.name);
+    el('text', { x: 14, y: y + 36, class: 'limp' }, svg, '●'.repeat(ln.imp) + '○'.repeat(5 - ln.imp) + '  ' + ln.eff);
+    const sy = y + 12, sh = 24;
+    ln.segs.forEach(s => {
+      const x = xOf(s.a), w = xOf(s.b) - xOf(s.a);
+      const r = el('rect', { x, y: sy, width: w, height: sh, rx: 3, class: 'seg-' + s.k });
+      if (s.k === 'do' || s.k === 'sun') r.setAttribute('fill-opacity', s.k === 'sun' ? (.15 + s.s * .75).toFixed(2) : (.12 + s.s * .45).toFixed(2));
+      let tx, anchor, cls = 'seglabel';
+      if (s.side === 'left') { tx = x - 6; anchor = 'end'; cls += ' side'; }
+      else if (s.side === 'right') { tx = x + w + 6; anchor = 'start'; cls += ' side'; }
+      else { tx = x + w / 2; anchor = 'middle'; }
+      if (s.k === 'avoid') cls += ' avoid';
+      el('text', { x: tx, y: sy + sh / 2 + 4, 'text-anchor': anchor, class: cls }, svg, s.t);
+    });
+  });
+  el('line', { x1: 10, x2: X1, y1: bottom, y2: bottom, class: 'lane-sep' });
+
+  // ---------- Cursor
+  const cg = el('g', { class: 'cursor-g' });
+  el('line', { x1: 0, x2: 0, y1: AX_Y + 8, y2: bottom, class: 'cursor' }, cg);
+  const dT = el('circle', { r: 4.5, class: 'dot-temp' });
+  const dM = el('circle', { r: 4.5, class: 'dot-mel' });
+  const dL = el('circle', { r: 4.5, class: 'dot-sun' });
+
+  const range = document.getElementById('t');
+  const $clock = document.getElementById('clock'), $vals = document.getElementById('vals'), $phase = document.getElementById('phase'), $todo = document.getElementById('todo');
+
+  const shiftTag = v => {
+    if (v == null) return '<span class="tag neu">нет данных</span>';
+    const a = Math.abs(v);
+    if (a < .3) return '<span class="tag neu">слабый эффект</span>';
+    const word = a > 1.6 ? 'сильный' : a > .8 ? 'заметный' : 'небольшой';
+    return v > 0 ? `<span class="tag adv">${word} сдвиг раньше</span>` : `<span class="tag del">${word} сдвиг позже</span>`;
+  };
+
+  function update(t) {
+    t = Math.min(Math.max(t, T0), T1 - 0.01);
+    cg.setAttribute('transform', `translate(${xOf(t).toFixed(1)},0)`);
+    dT.setAttribute('cx', xOf(t)); dT.setAttribute('cy', yT(temp(t)));
+    dM.setAttribute('cx', xOf(t)); dM.setAttribute('cy', yM(mel(t)));
+    dL.setAttribute('cx', xOf(t)); dL.setAttribute('cy', yC(prcLight(t)));
+    $clock.textContent = hhmm(t);
+    const asleep = t >= 23 && t < 31;
+    $vals.innerHTML = [
+      ['состояние', asleep ? 'сон' : (t >= 19 && t < 21 ? 'запретная зона сна' : 'бодрствование')],
+      ['температура', temp(t).toFixed(2) + ' °C'],
+      ['мелатонин', Math.round(mel(t)) + ' пг/мл'],
+      ['давление сна', Math.round(press(t) * 100) + ' %'],
+      ['кортизол', Math.round(cort(t) * 100) + ' %']
+    ].map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join('');
+    const lightNote = asleep ? ' Вы спите, но свет ночью (ванная, телефон) действует именно так.' : '';
+    const pm = prcMel(t);
+    $phase.innerHTML =
+      `<p>${shiftTag(prcLight(t))}<b>Яркий свет сейчас.</b>${lightNote}</p>` +
+      `<p>${shiftTag(pm)}<b>Мелатонин 0,5 мг сейчас.</b>${pm == null ? ' Во время сна не изучался.' : ''}</p>`;
+    const items = [];
+    lanes.forEach(ln => ln.segs.forEach(s => {
+      if (t >= s.a && t < s.b) {
+        const ic = s.k === 'avoid' ? 'i-avoid' : s.k === 'opt' ? 'i-opt' : s.k === 'sun' ? 'i-sun' : s.k === 'dark' ? 'i-dark' : 'i-do';
+        items.push(`<li><i class="${ic}"></i><span><b>${ln.name}.</b> ${s.d}</span></li>`);
+      }
+    }));
+    $todo.innerHTML = items.length ? items.join('') : '<li><i class="i-do"></i><span>Особых требований нет, кроме обычного дневного света.</span></li>';
+  }
+
+  const fromPointer = e => {
+    const r = svg.getBoundingClientRect();
+    const vx = (e.clientX - r.left) / r.width * 1000;
+    if (vx < X0 || vx > X1) return;
+    const t = Math.round(tOfX(vx) * 4) / 4;
+    range.value = Math.min(t, 35.75);
+    update(t);
+  };
+  svg.addEventListener('pointermove', fromPointer);
+  svg.addEventListener('pointerdown', fromPointer);
+  range.addEventListener('input', () => update(+range.value));
+  update(+range.value);
+})();
+</script>
