@@ -10,7 +10,7 @@
 - https://mariskori.github.io/Scripts/discord-transform.html
 - https://mariskori.github.io/Scripts/bg3-calc-stats.html
 - https://mariskori.github.io/Scripts/chronomap.html
-
+- https://mariskori.github.io/Scripts/circadian-simulator.html
 
 
 
