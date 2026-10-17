@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Внутренние часы — симулятор</title>
+<style>
+  :root {
+    --bg: #0c1016;
+    --panel: #141a22;
+    --panel2: #19212b;
+    --line: #26303d;
+    --text: #e6edf3;
+    --muted: #8a97a8;
+    --accent: #ffcc4d;
+    --sleep: #5a6eff;
+    --pill: #ff7ad9;
+    --danger: #ff6b6b;
+    --ok: #59d98e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 14px/1.45 "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding: 18px 16px 60px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  header h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: .2px; }
+  header h1 span { color: var(--muted); font-weight: 400; }
+  header p { margin: 0 0 14px; color: var(--muted); max-width: 900px; }
+  h2 { font-size: 14px; margin: 0; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 600; }
+  .controls { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 920px) { .controls { grid-template-columns: 1fr; } }
+  .block { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+  .col > .block:last-child { margin-bottom: 0; }
+  .block-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; margin-bottom: 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, select, input {
+    font: inherit; color: var(--text); background: var(--panel2);
+    border: 1px solid var(--line); border-radius: 7px; padding: 4px 8px;
+  }
+  input[type="time"] { width: 100px; color-scheme: dark; }
+  input[type="number"] { width: 84px; }
+  button { cursor: pointer; }
+  button:hover, select:hover { border-color: #3a4757; }
+  button.primary { border-color: #6b5a22; background: #2a2412; color: var(--accent); }
+  button.pill-on { background: #3a1532; border-color: var(--pill); color: var(--pill); }
+  button.icon { padding: 2px 8px; color: var(--muted); }
+  button.icon:hover { color: var(--danger); }
+  table { border-collapse: collapse; width: 100%; }
+  th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 3px 4px; border-bottom: 1px solid var(--line); }
+  td { padding: 3px 4px; border-bottom: 1px solid #1d2530; vertical-align: middle; }
+  tr.sel td { background: #1f2a19; }
+  .hint { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+  .empty { color: var(--muted); font-size: 13px; padding: 6px 4px; }
+  label.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
+  label.ctl > span:first-child { min-width: 170px; color: var(--muted); }
+  output { font-variant-numeric: tabular-nums; min-width: 60px; }
+  #summary td, #summary th { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13px; }
+  #summary td.late { color: #ff9a76; }
+  #summary td.early { color: #7fd4ff; }
+  .tag { font-size: 11px; padding: 0 5px; border-radius: 4px; background: #2a2412; color: var(--accent); margin-left: 4px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--panel); cursor: pointer; user-select: none; font-size: 12.5px;
+  }
+  .chip i { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
+  .chip.off { opacity: .4; }
+  .day { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px 4px; margin-bottom: 10px; }
+  .day.editable { border-color: #4a4120; }
+  .day-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0 2px 4px; }
+  .day-head h3 { margin: 0; font-size: 15px; }
+  .day-head h3 small { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 6px; }
+  .day-chips { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .day-chips b { color: var(--text); font-weight: 600; }
+  .cv-wrap { width: 100%; position: relative; }
+  canvas { display: block; touch-action: none; }
+  #tip {
+    position: fixed; pointer-events: none; z-index: 10; display: none;
+    background: rgba(12, 16, 22, .96); border: 1px solid #344152; border-radius: 8px;
+    padding: 8px 10px; font-size: 12.5px; line-height: 1.5; min-width: 230px;
+    font-variant-numeric: tabular-nums; box-shadow: 0 6px 24px rgba(0,0,0,.4);
+  }
+  #tip .t { font-weight: 600; margin-bottom: 3px; }
+  #tip .k { color: var(--muted); }
+  #tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+  .docs { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px 14px; margin-top: 14px; }
+  .docs summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
+  .docs p, .docs li { color: #c9d3de; max-width: 980px; }
+  .docs h4 { margin: 14px 0 4px; }
+  .docs a { color: #8cc8ff; }
+  .docs code { background: var(--panel2); padding: 0 4px; border-radius: 4px; }
+  .est { color: var(--accent); font-size: 11px; border: 1px solid #6b5a22; border-radius: 4px; padding: 0 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Внутренние часы <span>· симулятор</span></h1>
+    <p>Свет и мелатонин сдвигают внутренний осциллятор; сон и пробуждение получаются из взаимодействия часов с давлением сна. Старт — часы человека, который спал 23:00–07:00. Ось каждого графика — сутки с 12:00 до 12:00, чтобы ночь была целиком.</p>
+  </header>
+
+  <section class="controls">
+    <div class="col">
+      <div class="block">
+        <div class="block-head">
+          <h2>Интервалы света (каждый день)</h2>
+          <div class="row">
+            <select id="scenario" title="Готовые сценарии">
+              <option value="">Сценарий…</option>
+            </select>
+            <button id="addInt" class="primary">+ интервал</button>
+          </div>
+        </div>
+        <table id="intTable">
+          <thead><tr><th>Начало</th><th>Конец</th><th>Длительность</th><th>Яркость, лк</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="hint">На графике «День 1» протяните прямоугольник: ширина — время, высота — яркость (шкала логарифмическая). Края тянут длительность, верхняя кромка — яркость, середина двигает интервал. Двойной клик или правая кнопка — удалить. Нет интервалов — вечная ночь.</p>
+      </div>
+      <div class="block">
+        <div class="block-head">
+          <h2>Мелатонин 0,5 мг</h2>
+          <div class="row">
+            <label class="row" style="gap:4px"><input type="checkbox" id="pillRepeat" checked> каждый день</label>
+            <button id="pillBtn">💊 Поставить таблетку</button>
+          </div>
+        </div>
+        <table id="pillTable">
+          <thead><tr><th>Время</th><th>Дни</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="hint">Нажмите кнопку, затем кликните по любому графику — таблетка встанет в это время, режим выключится.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="block">
+        <h2 style="margin-bottom:6px">Параметры</h2>
+        <label class="ctl"><span>Свет и сон</span>
+          <select id="mode">
+            <option value="A">Свет ≥ 10 лк = я не сплю (будит, не даёт уснуть)</option>
+            <option value="B">Сплю, когда клонит; свет идёт сквозь веки</option>
+          </select>
+        </label>
+        <label class="ctl"><span>Собственный период часов τ</span>
+          <input type="range" id="tau" min="23.8" max="24.8" step="0.05">
+          <output id="tauOut"></output>
+        </label>
+        <label class="ctl"><span>Пропускание закрытых век</span>
+          <select id="eyelid">
+            <option value="0.01">1 %</option>
+            <option value="0.03">3 %</option>
+            <option value="0.1">10 %</option>
+          </select>
+        </label>
+      </div>
+      <div class="block">
+        <h2 style="margin-bottom:6px">Итоги по дням</h2>
+        <table id="summary">
+          <thead><tr><th>День</th><th>Клонит</th><th>Уснул</th><th>Проснулся</th><th>Сон</th><th>Tmin</th><th>DLMO</th><th>Сдвиг часов</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="hint">Tmin — минимум температуры ядра тела, главный маркер фазы (исходно 04:30). DLMO — начало выработки мелатонина в темноте (исходно ≈21:05). Сдвиг — насколько часы ушли от исходного положения.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="legend" id="legend"></div>
+  <section id="days"></section>
+
+  <section class="docs">
+    <details>
+      <summary>Как читать графики</summary>
+      <ul>
+        <li><b>Жёлтые прямоугольники</b> — свет, левая шкала в люксах (1 → 100 000, логарифмическая).</li>
+        <li><b>Синяя заливка и полоса снизу</b> — сон по модели. Пунктирная рамка в полосе — исходный сон 23:00–07:00.</li>
+        <li><b>Верхняя полоса «вн. время»</b> — который час «думают» часы: внутреннее время = 04:30 + время, прошедшее после внутреннего минимума температуры. Если цифры полосы отстают от оси, часы сдвинуты позже.</li>
+        <li><b>Полоса «фаза»</b> под графиком — мгновенная скорость сдвига часов от света и мелатонина: зелёное вверх — сдвиг раньше, оранжевое вниз — позже (сжатая шкала, точное значение — в подсказке).</li>
+        <li><b>Давление сна S</b> (белая линия) растёт во время бодрствования и падает во сне. Верхний пунктир — порог засыпания, нижний — порог пробуждения; оба колеблются вместе с часами. Пересечение S с верхним порогом — «клонит в сон», с нижним — самостоятельное пробуждение.</li>
+        <li><b>Мелатонин</b> — корневая шкала до 300 пг/мл, чтобы и свой (~70), и таблеточный (~250) были видны.</li>
+        <li>Наведите курсор на любой график — подсказка покажет все значения в этот момент.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Модель, источники и где начинаются оценки</summary>
+      <h4>1. Свет → часы: Forger–Jewett–Kronauer (Форджер–Джуэтт–Кронауэр), 1999</h4>
+      <p>Осциллятор ван дер Поля с «Process L» — фоторецепторным блоком, который истощается на свету и восстанавливается в темноте. Параметры взяты из статьи без изменений: μ = 0,23; k = 0,55; G = 33,75; α₀ = 0,05; β = 0,0075; p = 0,5; I₀ = 9500 лк. Именно этот блок даёт эффекты из прошлого разговора: насыщение по яркости, непропорциональную силу первых минут света и фазозависимость (свет вечером сдвигает позже, утром — раньше). <a href="https://doi.org/10.1177/074873099129000867" target="_blank" rel="noopener">DOI</a></p>
+      <p>Проверочный ориентир: Gronfier et al. (Гронфье и соавт.), 2004 — шесть 15-минутных импульсов (23 % времени) сдвинули часы сопоставимо с 6,5 ч непрерывного яркого света. <a href="https://doi.org/10.1152/ajpendo.00385.2003" target="_blank" rel="noopener">DOI</a></p>
+      <h4>2. Собственный период τ</h4>
+      <p>По умолчанию 24,2 ч — среднее у людей по Czeisler et al. (Цейслер и соавт.), 1999. Ползунок позволяет проверить «сов» (длинный τ) и «жаворонков» (короткий). <a href="https://doi.org/10.1126/science.284.5423.2177" target="_blank" rel="noopener">DOI</a></p>
+      <h4>3. Сон: двухпроцессная модель — Daan, Beersma, Borbély (Даан, Бирсма, Борбели), 1984</h4>
+      <p>Давление сна: рост с постоянной 18,2 ч, спад во сне — 4,2 ч. Пороги засыпания и пробуждения — косинус от фазы часов с пиком «запретной зоны для сна» за 7,5 ч до Tmin. Средние уровни порогов откалиброваны так, чтобы исходные часы давали сон 23:00–07:00. <a href="https://doi.org/10.1152/ajpregu.1984.246.2.R161" target="_blank" rel="noopener">DOI</a></p>
+      <h4>4. Мелатонин свой</h4>
+      <p>Подавление светом: ED50 ≈ 25 лк — Phillips et al. (Филлипс и соавт.), 2019. Там же: разброс между людьми больше чем на порядок, от 6 до 350 лк. <a href="https://doi.org/10.1073/pnas.1901824116" target="_blank" rel="noopener">DOI</a> Окно синтеза — от ~7 ч до ~2 ч относительно Tmin, плато ~70 пг/мл, период полувыведения ~45 мин <span class="est">типичные значения</span>.</p>
+      <h4>5. Таблетка 0,5 мг</h4>
+      <p>Кривая фазового ответа — Burgess et al. (Бёрджесс и соавт.), 2010: максимальный сдвиг раньше — при приёме за 2–4 ч до DLMO, сдвиг позже — вскоре после пробуждения. <a href="https://doi.org/10.1210/jc.2009-2590" target="_blank" rel="noopener">DOI</a> В модели амплитуды ≈ 0,5 ч/сут раньше и ≈ 0,43 ч/сут позже <span class="est">оценка по опубликованной кривой</span>. Фармакокинетика (пик ~45 мин, пик ~250 пг/мл, полувыведение ~45 мин) <span class="est">оценка</span>. Лёгкий снотворный эффект — понижение порога засыпания на 0,02 на пике <span class="est">оценка</span>.</p>
+      <h4>6. Температура и кортизол</h4>
+      <p>Формы кривых — типичные из литературы: минимум температуры в Tmin, пик ~14,5 ч спустя, во сне ещё −0,2 °C (маскировка). Кортизол: минимум ~5 ч до Tmin, пик ~3,5 ч после, плюс утренний подъём после пробуждения (пик через ~35 мин) <span class="est">описательная модель, не механистическая</span>.</p>
+      <h4>Чего в модели нет</h4>
+      <ul>
+        <li>Спектра: яркость в люксах для обычного белого света. Холодный свет экранов действует на часы сильнее, тёплый слабее.</li>
+        <li>Несветовых сигналов: еда, нагрузка, социальный режим немного двигают часы (в основном периферические).</li>
+        <li>Индивидуальной чувствительности: у вас эффект вечернего света может быть в разы сильнее или слабее среднего.</li>
+        <li>Сонной инерции, будильника без света, адаптации к световой истории за недели.</li>
+      </ul>
+      <p>Это инструмент для мысленных экспериментов: направление и порядок эффектов модель передаёт хорошо, минуты — нет.</p>
+    </details>
+  </section>
+</div>
+<div id="tip"></div>
+
+<script>
+'use strict';
+// ===== MODEL-START =====
+const TWO_PI = Math.PI * 2;
+const DT = 1 / 60;          // шаг 1 минута (в часах)
+const SPD = 1440;           // шагов в сутках
+const DAYS = 6;
+const AXIS0 = 12;           // ось начинается в 12:00
+const BASE_TMIN = 4.5;      // исходный минимум температуры, 04:30
+const WAKE_LUX = 10;        // режим A: свет от 10 лк не даёт спать
+const MIN_DUR = 5 / 60;
+
+function mod(a, n) { return ((a % n) + n) % n; }
+function wrap12(v) { return mod(v + 12, 24) - 12; }
+function sig(z) { return 1 / (1 + Math.exp(-z)); }
+function gauss(d, s) { return Math.exp(-0.5 * d * d / (s * s)); }
+
+// --- Forger, Jewett, Kronauer 1999 ---
+const FJK = { mu: 0.23, k: 0.55, G: 33.75, a0: 0.05, beta: 0.0075, p: 0.5, I0: 9500 };
+function alphaL(I) { return I > 0 ? FJK.a0 * Math.pow(I / FJK.I0, FJK.p) : 0; }
+function deriv(x, xc, n, I, tau, out) {
+  const a = alphaL(I);
+  const B = FJK.G * (1 - n) * a * (1 - 0.4 * x) * (1 - 0.4 * xc);
+  const w = Math.PI / 12;
+  const om = 24 / (0.99669 * tau);
+  out[0] = w * (xc + B);
+  out[1] = w * (FJK.mu * (xc - (4 / 3) * xc * xc * xc) - x * (om * om + FJK.k * B));
+  out[2] = 60 * (a * (1 - n) - FJK.beta * n);
+}
+const K1 = [0, 0, 0], K2 = [0, 0, 0], K3 = [0, 0, 0], K4 = [0, 0, 0];
+function rk4(s, I, tau, h) {
+  deriv(s[0], s[1], s[2], I, tau, K1);
+  deriv(s[0] + h / 2 * K1[0], s[1] + h / 2 * K1[1], s[2] + h / 2 * K1[2], I, tau, K2);
+  deriv(s[0] + h / 2 * K2[0], s[1] + h / 2 * K2[1], s[2] + h / 2 * K2[2], I, tau, K3);
+  deriv(s[0] + h * K3[0], s[1] + h * K3[1], s[2] + h * K3[2], I, tau, K4);
+  for (let j = 0; j < 3; j++) s[j] += h / 6 * (K1[j] + 2 * K2[j] + 2 * K3[j] + K4[j]);
+}
+function thetaOf(x, xc) { return Math.atan2(-xc, x); }
+
+function luxAt(list, clk) {
+  let v = 0;
+  for (const it of list) if (it.dur > 0 && mod(clk - it.start, 24) < it.dur - 1e-9) v = Math.max(v, it.lux);
+  return v;
+}
+
+// Исходный режим, к которому привязаны часы: сон 23–7
+const BASELINE = [
+  { start: 7, dur: 1, lux: 200 },
+  { start: 8, dur: 10, lux: 600 },
+  { start: 18, dur: 5, lux: 100 },
+];
+
+function entrain(tau) {
+  const s = [1, 0, 0];
+  const N = 60 * SPD;
+  let th = 0;
+  for (let i = 0; i < N; i++) {
+    const t = (i - N) * DT;
+    if (i === N - 450) th = thetaOf(s[0], s[1]);     // 04:30 последней исходной ночи
+    rk4(s, luxAt(BASELINE, mod(AXIS0 + t, 24)), tau, DT);
+  }
+  return { s, th };
+}
+const THETA_TMIN = entrain(24.2).th;                 // фаза, соответствующая Tmin
+const initCache = new Map();
+function getInit(tau) {
+  const key = tau.toFixed(3);
+  if (!initCache.has(key)) initCache.set(key, entrain(tau).s.slice());
+  return initCache.get(key);
+}
+function hOf(x, xc) { return wrap12((thetaOf(x, xc) - THETA_TMIN) * 24 / TWO_PI); }
+
+// --- Двухпроцессная модель (Daan, Beersma, Borbély 1984) ---
+const TP = { tw: 18.2, ts: 4.2, A: 0.10, hPeak: -7.5 };
+const circC = h => Math.cos(TWO_PI * (h - TP.hPeak) / 24);
+(function calibrateThresholds() {
+  const Dw = Math.exp(-16 / TP.tw), Ds = Math.exp(-8 / TP.ts);
+  const Smax = (1 - Dw) / (1 - Dw * Ds), Smin = Smax * Ds;
+  TP.H0 = Smax - TP.A * circC(23 - 24 - BASE_TMIN);   // 23:00 → h = −5.5
+  TP.L0 = Smin - TP.A * circC(7 - BASE_TMIN);         // 07:00 → h = +2.5
+  TP.Snoon = 1 - (1 - Smin) * Math.exp(-5 / TP.tw);
+})();
+const EXP_W = Math.exp(-DT / TP.tw), EXP_S = Math.exp(-DT / TP.ts);
+
+// --- Мелатонин ---
+const KEL = Math.LN2 / 0.75;              // полувыведение 45 мин
+const EXP_K = Math.exp(-KEL * DT);
+const MEL = { plateau: 70, on: -6.9, off: 2.0, w: 0.45, ed50: 25, hill: 1.2 };
+const MEL_PMAX = MEL.plateau * KEL;
+function melGate(h) { return sig((h - MEL.on) / MEL.w) * sig((MEL.off - h) / MEL.w); }
+function melSupp(I) { if (I <= 0) return 0; const a = Math.pow(I, MEL.hill); return a / (a + Math.pow(MEL.ed50, MEL.hill)); }
+
+const KA = 2.0, DOSE = 0.5, MREF = 250, MEL_SLEEP = 0.02;
+const KCONC = (function () {
+  const tmax = Math.log(KA / KEL) / (KA - KEL);
+  const c = KA / (KA - KEL) * (Math.exp(-KEL * tmax) - Math.exp(-KA * tmax));
+  return MREF / (DOSE * c);
+})();
+function pillConc(tt) { return tt < 0 ? 0 : DOSE * KCONC * KA / (KA - KEL) * (Math.exp(-KEL * tt) - Math.exp(-KA * tt)); }
+const MPRC = { advC: -1.8, advS: 2.2, delC: 11.2, delS: 3.0, advT: 0.5, delT: 0.43 };
+function melIntegral(doseHD, c, s) {
+  let sum = 0;
+  for (let tt = 0; tt < 14; tt += 0.01) sum += pillConc(tt) / MREF * gauss(wrap12(doseHD + tt - c), s) * 0.01;
+  return sum;
+}
+const A_ADV = MPRC.advT * (TWO_PI / 24) / melIntegral(-3, MPRC.advC, MPRC.advS);
+const A_DEL = MPRC.delT * (TWO_PI / 24) / melIntegral(10, MPRC.delC, MPRC.delS);
+
+// --- Описательные кривые ---
+function fCBT(h) {
+  const hh = mod(h, 24);
+  return hh < 14.5 ? (1 - Math.cos(Math.PI * hh / 14.5)) / 2 : (1 + Math.cos(Math.PI * (hh - 14.5) / 9.5)) / 2;
+}
+function fCort(h) {
+  const hh = mod(h + 5, 24);
+  return hh < 8.5 ? (1 - Math.cos(Math.PI * hh / 8.5)) / 2 : (1 + Math.cos(Math.PI * (hh - 8.5) / 15.5)) / 2;
+}
+
+function projectWake(i0, S0, h0) {
+  let S = S0, h = h0;
+  for (let k = 1; k <= 20 * 60; k++) {
+    S *= EXP_S; h += DT;
+    if (S <= TP.L0 + TP.A * circC(h)) return i0 + k;
+  }
+  return null;
+}
+
+function simulate(cfg) {
+  const N = DAYS * SPD;
+  const s = getInit(cfg.tau).slice();
+  const F = () => new Float32Array(N);
+  const o = {
+    N, env: F(), eff: F(), sleep: new Uint8Array(N), h: F(), S: F(), H: F(), L: F(), C: F(),
+    melE: F(), melX: F(), cbt: F(), cort: F(), v: F(), sens: F(), events: [],
+  };
+  const pills = new Map();
+  for (let d = 0; d < DAYS; d++) for (const p of cfg.pills) {
+    if (p.day !== 0 && p.day !== d + 1) continue;
+    const idx = d * SPD + Math.round(mod(p.time - AXIS0, 24) * 60);
+    if (idx < N) pills.set(idx, (pills.get(idx) || 0) + 1);
+  }
+  let asleep = false, gate = false, S = TP.Snoon, melE = 0, melX = 0, gut = 0, mask = 0, lastWake = -1e9, prevH = null;
+  const MASK_K = 1 - Math.exp(-DT / 0.7);
+  const dA = [0, 0, 0], d0 = [0, 0, 0];
+  for (let i = 0; i < N; i++) {
+    const t = i * DT;
+    const env = luxAt(cfg.intervals, mod(AXIS0 + t, 24));
+    if (pills.has(i)) { gut += DOSE * pills.get(i); o.events.push({ i, type: 'pill' }); }
+    const x = s[0], xc = s[1], r2 = x * x + xc * xc;
+    const h = hOf(x, xc);
+    const Cv = circC(h);
+    const mx = melX / MREF;
+    const H = TP.H0 + TP.A * Cv - MEL_SLEEP * Math.min(1, mx);
+    const L = TP.L0 + TP.A * Cv;
+
+    if (!asleep) {
+      if (S >= H) {
+        if (!gate) { gate = true; o.events.push({ i, type: 'gate' }); }
+        if (cfg.mode === 'B' || env < WAKE_LUX) { asleep = true; o.events.push({ i, type: 'sleep' }); }
+      } else gate = false;
+    } else {
+      if (S <= L) {
+        asleep = false; gate = false; lastWake = t; o.events.push({ i, type: 'wake', forced: false });
+      } else if (cfg.mode === 'A' && env >= WAKE_LUX) {
+        asleep = false; gate = false; lastWake = t;
+        o.events.push({ i, type: 'wake', forced: true, would: projectWake(i, S, h) });
+      }
+    }
+
+    const I = asleep ? env * cfg.eyelid : env;
+    deriv(x, xc, s[2], I, cfg.tau, dA);
+    deriv(x, xc, s[2], 0, cfg.tau, d0);
+    const dthL = ((xc * dA[0] - x * dA[1]) - (xc * d0[0] - x * d0[1])) / r2;
+    const hD = h + 7;
+    const melRate = mx > 1e-4
+      ? (A_ADV * gauss(wrap12(hD - MPRC.advC), MPRC.advS) - A_DEL * gauss(wrap12(hD - MPRC.delC), MPRC.delS)) * mx
+      : 0;
+
+    if (prevH !== null && h - prevH > -1 && h - prevH < 1) {
+      if (prevH < 0 && h >= 0) o.events.push({ i: i - 1 + (-prevH) / (h - prevH), type: 'tmin' });
+      if (prevH < -7 && h >= -7) o.events.push({ i: i - 1 + (-7 - prevH) / (h - prevH), type: 'dlmo' });
+    }
+    prevH = h;
+
+    mask += ((asleep ? -0.2 : 0) - mask) * MASK_K;
+    const tw = t - lastWake;
+    const car = tw >= 0 && tw < 3 ? 160 * (tw / 0.6) * Math.exp(1 - tw / 0.6) : 0;
+
+    o.env[i] = env; o.eff[i] = I; o.sleep[i] = asleep ? 1 : 0; o.h[i] = h;
+    o.S[i] = S; o.H[i] = H; o.L[i] = L; o.C[i] = Cv;
+    o.melE[i] = melE; o.melX[i] = melX;
+    o.cbt[i] = 36.6 + 0.6 * fCBT(h) + mask - 0.1 * Math.min(1, mx);
+    o.cort[i] = 70 + 330 * fCort(h) + car;
+    o.v[i] = (dthL + melRate) * 24 / TWO_PI;
+    o.sens[i] = 1 - s[2];
+
+    rk4(s, I, cfg.tau, DT);
+    if (melRate !== 0) {
+      const r = Math.hypot(s[0], s[1]), a = thetaOf(s[0], s[1]) + melRate * DT;
+      s[0] = r * Math.cos(a); s[1] = -r * Math.sin(a);
+    }
+    S = asleep ? S * EXP_S : 1 - (1 - S) * EXP_W;
+    melE = melE * EXP_K + MEL_PMAX * melGate(h) * (1 - melSupp(I)) / KEL * (1 - EXP_K);
+    melX += (KA * gut * KCONC - KEL * melX) * DT;
+    gut -= KA * gut * DT;
+  }
+  // эпизоды сна
+  const eps = [];
+  let cur = null, lastGate = null;
+  for (const e of o.events) {
+    if (e.type === 'gate') lastGate = e.i;
+    else if (e.type === 'sleep') { cur = { on: e.i, gate: lastGate }; lastGate = null; }
+    else if (e.type === 'wake' && cur) { cur.off = e.i; cur.forced = e.forced; cur.would = e.would; eps.push(cur); cur = null; }
+  }
+  if (cur) { cur.off = null; eps.push(cur); }
+  o.episodes = eps;
+  return o;
+}
+// ===== MODEL-END =====
+
+// ================= UI =================
+const $ = s => document.querySelector(s);
+const LUX_PRESETS = [
+  [5, 'ночник'], [30, 'экран в тёмной комнате'], [100, 'комната вечером'], [300, 'светлая комната'],
+  [1000, 'у окна днём'], [3000, 'пасмурно на улице'], [10000, 'лампа для светотерапии'],
+  [50000, 'солнечный день'], [100000, 'прямое солнце'],
+];
+const SCENARIOS = {
+  base: { name: 'Обычный режим 7:00–23:00', intervals: BASELINE.map(o => ({ ...o })), pills: [] },
+  night: { name: 'Пусто: вечная ночь', intervals: [], pills: [] },
+  now: { name: 'Экраны до 4:30, подъём 12:30', intervals: [
+    { start: 12.5, dur: 5.5, lux: 300 }, { start: 18, dur: 10.5, lux: 120 }], pills: [] },
+  goal: { name: 'Подъём 10:30 + прогулка, тусклый вечер', intervals: [
+    { start: 10.5, dur: 1, lux: 250 }, { start: 11.5, dur: 0.5, lux: 5000 },
+    { start: 12, dur: 6, lux: 400 }, { start: 18, dur: 7, lux: 60 }], pills: [] },
+  lamp: { name: 'То же + лампа 10 000 лк за завтраком', intervals: [
+    { start: 10.5, dur: 0.5, lux: 10000 }, { start: 11, dur: 0.5, lux: 250 }, { start: 11.5, dur: 0.5, lux: 5000 },
+    { start: 12, dur: 6, lux: 400 }, { start: 18, dur: 7, lux: 60 }], pills: [] },
+  mel: { name: 'Обычный режим + мелатонин в 18:30', intervals: BASELINE.map(o => ({ ...o })), pills: [{ time: 18.5, day: 0 }] },
+};
+const LAYERS = [
+  { key: 'melE', name: 'Мелатонин свой', color: '#b48cff', on: true },
+  { key: 'melX', name: 'Мелатонин из таблетки', color: '#ff7ad9', on: true },
+  { key: 'cbt', name: 'Температура ядра тела', color: '#ff8a5c', on: true },
+  { key: 'cort', name: 'Кортизол', color: '#45d6b0', on: false },
+  { key: 'S', name: 'Давление сна и пороги', color: '#e9edf2', on: true },
+  { key: 'C', name: 'Циркадный сигнал бодрости', color: '#6ab8ff', on: false },
+  { key: 'sens', name: 'Чувствительность к свету', color: '#cde26b', on: false },
+  { key: 'v', name: 'Полоса сдвига фазы', color: '#59d98e', on: true },
+  { key: 'it', name: 'Внутреннее время', color: '#7d93c9', on: true },
+  { key: 'mk', name: 'Метки Tmin / DLMO / «клонит»', color: '#c9d3de', on: true },
+];
+
+let uidN = 1;
+const uid = () => uidN++;
+const state = {
+  intervals: [], pills: [], mode: 'A', tau: 24.2, eyelid: 0.03,
+  layers: Object.fromEntries(LAYERS.map(l => [l.key, l.on])),
+  pillMode: false, pillRepeat: true, selected: null,
+};
+let sim = null, dpr = 1, drag = null, hover = null, rafPending = false;
+const charts = [];
+
+function fmtHM(h) {
+  let m = Math.round(mod(h, 24) * 60);
+  if (m >= 1440) m -= 1440;
+  return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+}
+function fmtDur(h) {
+  const m = Math.round(Math.abs(h) * 60);
+  return Math.floor(m / 60) + ' ч ' + String(m % 60).padStart(2, '0') + ' мин';
+}
+function fmtShift(h) {
+  const m = Math.round(Math.abs(h) * 60);
+  if (m === 0) return '±0';
+  const s = Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+  return (h > 0 ? 'позже на ' : 'раньше на ') + s;
+}
+function parseHM(s) {
+  const m = /^(\d{1,2}):(\d{2})/.exec(s || '');
+  return m ? (+m[1]) + (+m[2]) / 60 : null;
+}
+const clock = i => mod(AXIS0 + i * DT, 24);
+const snap = a => Math.round(a * 12) / 12;
+function roundLux(v) {
+  v = Math.max(1, Math.min(100000, v));
+  const p = Math.pow(10, Math.floor(Math.log10(v)) - 1);
+  return Math.round(v / p) * p;
+}
+
+// ----- persistence -----
+const LS = 'circadian-sim-v1';
+function save() {
+  try {
+    localStorage.setItem(LS, JSON.stringify({
+      intervals: state.intervals.map(({ start, dur, lux }) => ({ start, dur, lux })),
+      pills: state.pills.map(({ time, day }) => ({ time, day })),
+      mode: state.mode, tau: state.tau, eyelid: state.eyelid, layers: state.layers,
+    }));
+  } catch (e) { /* хранилище недоступно — работаем без него */ }
+}
+function load() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { d = null; }
+  if (!d) { applyScenario('base', false); return; }
+  const num = (v, a, b, def) => (typeof v === 'number' && isFinite(v) ? Math.min(b, Math.max(a, v)) : def);
+  state.intervals = (Array.isArray(d.intervals) ? d.intervals : []).map(o => ({
+    id: uid(), start: mod(num(o.start, -48, 48, 0), 24), dur: num(o.dur, MIN_DUR, 24, 1), lux: num(o.lux, 1, 100000, 100),
+  }));
+  state.pills = (Array.isArray(d.pills) ? d.pills : []).map(o => ({
+    id: uid(), time: mod(num(o.time, -48, 48, 18), 24), day: Math.round(num(o.day, 0, DAYS, 0)),
+  }));
+  state.mode = d.mode === 'B' ? 'B' : 'A';
+  state.tau = num(d.tau, 23.8, 24.8, 24.2);
+  state.eyelid = [0.01, 0.03, 0.1].includes(d.eyelid) ? d.eyelid : 0.03;
+  if (d.layers) for (const l of LAYERS) if (typeof d.layers[l.key] === 'boolean') state.layers[l.key] = d.layers[l.key];
+}
+function applyScenario(key, doCommit = true) {
+  const sc = SCENARIOS[key];
+  if (!sc) return;
+  state.intervals = sc.intervals.map(o => ({ id: uid(), ...o }));
+  state.pills = sc.pills.map(o => ({ id: uid(), ...o }));
+  state.selected = null;
+  if (doCommit) commit();
+}
+
+// ----- geometry -----
+function geom(ch) {
+  const l = 62, r = 12, top = 48, bot = ch.h - 74;
+  return { l, r, top, bot, pw: ch.w - l - r, ph: bot - top, itY: 4, itH: 14, lblY: 30,
+    vY: bot + 4, vH: 26, slY: bot + 36, slH: 12, axY: bot + 62 };
+}
+const X = (g, a) => g.l + a / 24 * g.pw;
+const axisFromX = (g, x) => (x - g.l) / g.pw * 24;
+const yLux = (g, lux) => g.bot - Math.log10(Math.max(1, lux)) / 5 * g.ph;
+const luxFromY = (g, y) => Math.pow(10, Math.min(1, Math.max(0, (g.bot - y) / g.ph)) * 5);
+function pieces(it) {
+  const a0 = mod(it.start - AXIS0, 24), a1 = a0 + it.dur;
+  if (a1 <= 24 + 1e-9) return [{ a: a0, b: Math.min(24, a1), L: true, R: true, second: false }];
+  return [{ a: a0, b: 24, L: true, R: false, second: false }, { a: 0, b: a1 - 24, L: false, R: true, second: true }];
+}
+
+// ----- simulation & render -----
+function commit(live = false) {
+  sim = simulate({ intervals: state.intervals, pills: state.pills, mode: state.mode, tau: state.tau, eyelid: state.eyelid });
+  renderTables();
+  renderSummary();
+  scheduleDraw();
+  if (!live) save();
+}
+function scheduleDraw() {
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => { rafPending = false; for (const ch of charts) drawChart(ch); });
+}
+
+function renderTables() {
+  const tb = $('#intTable tbody');
+  const list = state.intervals.slice().sort((p, q) => mod(p.start - AXIS0, 24) - mod(q.start - AXIS0, 24));
+  const presetOpts = '<option value="">пресет…</option>' + LUX_PRESETS.map(([v, n]) => `<option value="${v}">${v.toLocaleString('ru-RU')} — ${n}</option>`).join('');
+  const focusedId = document.activeElement && document.activeElement.closest && document.activeElement.closest('#intTable tr');
+  if (focusedId && !drag) return;   // не перерисовывать под курсором ввода
+  tb.innerHTML = list.length ? list.map(it => `
+    <tr data-id="${it.id}" class="${it.id === state.selected ? 'sel' : ''}">
+      <td><input type="time" class="f-start" step="300" value="${fmtHM(it.start)}"></td>
+      <td><input type="time" class="f-end" step="300" value="${fmtHM(it.start + it.dur)}"></td>
+      <td><input type="time" class="f-dur" step="300" value="${fmtHM(Math.min(it.dur, 24 - 1 / 60))}" title="ч:мм"></td>
+      <td class="row" style="gap:4px;flex-wrap:nowrap"><input type="number" class="f-lux" min="1" max="100000" value="${it.lux}">
+        <select class="f-pre" style="width:34px" title="Типичные уровни">${presetOpts}</select></td>
+      <td><button class="icon f-del" title="Удалить">✕</button></td>
+    </tr>`).join('') : '<tr><td colspan="5" class="empty">Света нет — вечная ночь. Часы идут в свободном ходе.</td></tr>';
+
+  const pb = $('#pillTable tbody');
+  const dayOpts = sel => `<option value="0"${sel === 0 ? ' selected' : ''}>каждый день</option>` +
+    Array.from({ length: DAYS }, (_, k) => `<option value="${k + 1}"${sel === k + 1 ? ' selected' : ''}>только день ${k + 1}</option>`).join('');
+  pb.innerHTML = state.pills.length ? state.pills.map(p => `
+    <tr data-id="${p.id}">
+      <td><input type="time" class="p-time" step="300" value="${fmtHM(p.time)}"></td>
+      <td><select class="p-day">${dayOpts(p.day)}</select></td>
+      <td><button class="icon p-del" title="Удалить">✕</button></td>
+    </tr>`).join('') : '<tr><td colspan="3" class="empty">Таблеток нет.</td></tr>';
+}
+
+function dayInfo(d) {
+  const lo = d * SPD, hi = (d + 1) * SPD;
+  const inDay = e => e.i >= lo && e.i < hi;
+  const eps = sim.episodes.filter(e => e.on >= lo && e.on < hi);
+  let main = null;
+  for (const e of eps) {
+    const len = (e.off === null ? sim.N : e.off) - e.on;
+    if (!main || len > (main.off === null ? sim.N : main.off) - main.on) main = e;
+  }
+  const tmin = sim.events.find(e => e.type === 'tmin' && inDay(e));
+  const dlmo = sim.events.find(e => e.type === 'dlmo' && inDay(e));
+  const shift = tmin ? wrap12(tmin.i * DT - (d * 24 + mod(BASE_TMIN - AXIS0, 24))) : null;
+  return { main, naps: eps.length - (main ? 1 : 0), tmin, dlmo, shift };
+}
+
+function renderSummary() {
+  const rows = [];
+  for (let d = 0; d < DAYS; d++) {
+    const s = dayInfo(d), m = s.main;
+    const cell = v => `<td>${v}</td>`;
+    const gate = m && m.gate !== null ? fmtHM(clock(m.gate)) : '—';
+    const on = m ? fmtHM(clock(m.on)) : '—';
+    let off = '—', dur = '—';
+    if (m && m.off !== null) {
+      off = fmtHM(clock(m.off)) + (m.forced ? `<span class="tag" title="Разбудил свет">свет</span>` : '');
+      if (m.forced && m.would) off += ` <span style="color:var(--muted)">(сам ≈${fmtHM(clock(m.would))})</span>`;
+      dur = fmtDur((m.off - m.on) * DT);
+    } else if (m) { off = 'за краем'; }
+    if (s.naps > 0) dur += ` <span style="color:var(--muted)">+${s.naps} дрем.</span>`;
+    const cls = s.shift === null ? '' : s.shift > 1 / 60 ? 'late' : s.shift < -1 / 60 ? 'early' : '';
+    rows.push(`<tr>${cell(d + 1)}${cell(gate)}${cell(on)}${cell(off)}${cell(dur)}${cell(s.tmin ? fmtHM(clock(s.tmin.i)) : '—')}${cell(s.dlmo ? fmtHM(clock(s.dlmo.i)) : '—')}<td class="${cls}">${s.shift === null ? '—' : fmtShift(s.shift)}</td></tr>`);
+
+    const ch = charts[d];
+    if (ch) {
+      const parts = [];
+      if (m) {
+        if (m.gate !== null && m.gate !== m.on) parts.push(`клонит <b>${gate}</b>`);
+        parts.push(`сон <b>${on}–${m.off !== null ? fmtHM(clock(m.off)) : '…'}</b>` + (m.off !== null ? ` (${fmtDur((m.off - m.on) * DT)}${m.forced ? ', разбудил свет' + (m.would ? `, сам ≈${fmtHM(clock(m.would))}` : '') : ''})` : ''));
+      } else parts.push('сна в этом окне нет');
+      if (s.tmin) parts.push(`Tmin <b>${fmtHM(clock(s.tmin.i))}</b>`);
+      if (s.dlmo) parts.push(`DLMO <b>${fmtHM(clock(s.dlmo.i))}</b>`);
+      if (s.shift !== null) parts.push(`часы ${fmtShift(s.shift)}`);
+      ch.chips.innerHTML = parts.join(' · ');
+    }
+  }
+  $('#summary tbody').innerHTML = rows.join('');
+}
+
+// ----- drawing -----
+function drawChart(ch) {
+  const ctx = ch.ctx, W = ch.w, Hh = ch.h, d = ch.d, g = geom(ch);
+  if (!sim || W <= 0) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, Hh);
+  const lo = d * SPD;
+  const xi = k => g.l + k / SPD * g.pw;          // k — минута внутри окна
+  const L = state.layers;
+
+  // фон
+  ctx.fillStyle = '#10151c';
+  ctx.fillRect(g.l, g.top, g.pw, g.ph);
+
+  // сон: заливка
+  ctx.fillStyle = 'rgba(90,110,255,0.13)';
+  forRuns(lo, k => sim.sleep[lo + k] === 1, (a, b) => ctx.fillRect(xi(a), g.top, xi(b) - xi(a), g.ph));
+
+  // сетка
+  ctx.lineWidth = 1;
+  for (let hh = 0; hh <= 24; hh++) {
+    const x = Math.round(X(g, hh)) + 0.5;
+    ctx.strokeStyle = hh % 6 === 0 ? '#2b3644' : '#1b2330';
+    ctx.beginPath(); ctx.moveTo(x, g.top); ctx.lineTo(x, g.bot); ctx.stroke();
+  }
+  ctx.font = '11px Segoe UI, system-ui, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'right';
+  ['1', '10', '100', '1k', '10k', '100k'].forEach((t, k) => {
+    const y = Math.round(g.bot - k / 5 * g.ph) + 0.5;
+    ctx.strokeStyle = '#1b2330';
+    ctx.beginPath(); ctx.moveTo(g.l, y); ctx.lineTo(g.l + g.pw, y); ctx.stroke();
+    ctx.fillStyle = '#6f7d8f'; ctx.fillText(t, g.l - 6, y);
+  });
+  ctx.save(); ctx.translate(12, (g.top + g.bot) / 2); ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center'; ctx.fillStyle = '#6f7d8f'; ctx.fillText('свет, лк', 0, 0); ctx.restore();
+
+  // свет
+  for (const it of state.intervals) {
+    const sel = it.id === state.selected && d === 0;
+    for (const pc of pieces(it)) {
+      const x1 = X(g, pc.a), x2 = X(g, pc.b), yt = yLux(g, it.lux);
+      ctx.fillStyle = d === 0 ? 'rgba(255,204,77,0.24)' : 'rgba(255,204,77,0.15)';
+      ctx.fillRect(x1, yt, x2 - x1, g.bot - yt);
+      ctx.strokeStyle = sel ? '#fff3c4' : d === 0 ? 'rgba(255,204,77,0.9)' : 'rgba(255,204,77,0.5)';
+      ctx.lineWidth = sel ? 2 : 1;
+      ctx.strokeRect(x1 + 0.5, yt + 0.5, x2 - x1 - 1, g.bot - yt - 1);
+      if (x2 - x1 > 46) {
+        ctx.fillStyle = 'rgba(255,220,130,0.95)'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText(it.lux.toLocaleString('ru-RU') + ' лк', x1 + 4, yt - 2 < g.top + 12 ? yt + 14 : yt - 2);
+      }
+    }
+  }
+  if (!state.intervals.length && d === 0) {
+    ctx.fillStyle = '#6f7d8f'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '13px Segoe UI, system-ui, sans-serif';
+    ctx.fillText('Света нет — вечная ночь. Протяните мышью прямоугольник, чтобы добавить свет.', g.l + g.pw / 2, g.top + 18);
+    ctx.font = '11px Segoe UI, system-ui, sans-serif';
+  }
+
+  // кривые
+  ctx.save();
+  ctx.beginPath(); ctx.rect(g.l, g.top, g.pw, g.ph); ctx.clip();
+  const yF = f => g.bot - f * g.ph;
+  const line = (arr, fn, color, width, dash) => {
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    const step = Math.max(1, Math.floor(SPD / (g.pw * 1.5)));
+    for (let k = 0; k <= SPD; k += step) {
+      const idx = Math.min(sim.N - 1, lo + k);
+      const y = yF(fn(arr[idx]));
+      k === 0 ? ctx.moveTo(xi(k), y) : ctx.lineTo(xi(k), y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  };
+  const melF = v => Math.sqrt(Math.max(0, v) / 300);
+  if (L.sens) line(sim.sens, v => v, '#cde26b', 1.3, [2, 3]);
+  if (L.C) line(sim.C, v => (v + 1.2) / 2.4, '#6ab8ff', 1.3, [6, 3]);
+  if (L.cort) line(sim.cort, v => v / 700, '#45d6b0', 1.6);
+  if (L.cbt) line(sim.cbt, v => (v - 36.2) / 1.2, '#ff8a5c', 1.8);
+  if (L.melE) line(sim.melE, melF, '#b48cff', 2);
+  if (L.melX && sim.events.some(e => e.type === 'pill')) line(sim.melX, melF, '#ff7ad9', 1.8);
+  if (L.S) {
+    line(sim.H, v => v, 'rgba(233,237,242,0.55)', 1, [5, 4]);
+    line(sim.L, v => v, 'rgba(233,237,242,0.35)', 1, [2, 4]);
+    line(sim.S, v => v, '#e9edf2', 1.8);
+  }
+  ctx.restore();
+
+  // метки
+  const labels = [];
+  const evIn = e => e.i >= lo && e.i < lo + SPD;
+  for (const e of sim.events) {
+    if (!evIn(e)) continue;
+    const x = xi(e.i - lo);
+    if (e.type === 'pill') labels.push({ x, text: '💊 0,5 мг', color: '#ff7ad9' });
+    else if (!L.mk) continue;
+    else if (e.type === 'tmin') labels.push({ x, text: 'Tmin', color: '#ff8a5c' });
+    else if (e.type === 'dlmo') labels.push({ x, text: 'DLMO', color: '#b48cff' });
+    else if (e.type === 'gate') labels.push({ x, text: 'клонит в сон', color: '#e9edf2' });
+  }
+  labels.sort((p, q) => p.x - q.x);
+  ctx.font = '11px Segoe UI, system-ui, sans-serif';
+  ctx.textBaseline = 'middle';
+  const rowEnd = [-1e9, -1e9];
+  for (const lb of labels) {
+    ctx.strokeStyle = lb.color; ctx.globalAlpha = 0.55; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(Math.round(lb.x) + 0.5, g.top); ctx.lineTo(Math.round(lb.x) + 0.5, g.bot); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const tw = ctx.measureText(lb.text).width + 8;
+    let x0 = Math.min(Math.max(lb.x - tw / 2, g.l), g.l + g.pw - tw);
+    const r = x0 > rowEnd[0] + 2 ? 0 : 1;
+    rowEnd[r] = x0 + tw;
+    const y = r === 0 ? g.lblY + 6 : g.lblY - 2;
+    if (r === 1) { x0 = Math.min(lb.x + 3, g.l + g.pw - tw); }
+    ctx.fillStyle = '#0c1016'; ctx.fillRect(x0, y - 7, tw, 14);
+    ctx.fillStyle = lb.color; ctx.textAlign = 'left'; ctx.fillText(lb.text, x0 + 4, y);
+  }
+
+  // внутреннее время
+  if (L.it) {
+    for (let px = 0; px < g.pw; px += 2) {
+      const k = Math.floor(px / g.pw * SPD), it = mod(BASE_TMIN + sim.h[lo + k], 24);
+      const day = (1 - Math.cos(TWO_PI * (it - 3) / 24)) / 2;   // 0 в 03:00, 1 в 15:00
+      const c0 = [24, 31, 66], c1 = [86, 120, 176];
+      ctx.fillStyle = `rgb(${c0.map((c, j) => Math.round(c + (c1[j] - c) * day)).join(',')})`;
+      ctx.fillRect(g.l + px, g.itY, 2, g.itH);
+    }
+    ctx.fillStyle = '#c9d3de'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let k = 1; k < SPD; k++) {
+      const a = mod(BASE_TMIN + sim.h[lo + k - 1], 24), b = mod(BASE_TMIN + sim.h[lo + k], 24);
+      for (let m = 0; m < 24; m += 3) {
+        const crossed = (a < m && b >= m && b - a < 1) || (m === 0 && a > 23 && b < 1);
+        if (crossed) {
+          const x = xi(k);
+          ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(Math.round(x), g.itY, 1, g.itH);
+          ctx.fillStyle = '#e6edf3'; ctx.textAlign = 'left';
+          ctx.fillText(String(m).padStart(2, '0') + ':00', x + 3, g.itY + g.itH / 2);
+        }
+      }
+    }
+    ctx.fillStyle = '#6f7d8f'; ctx.textAlign = 'right';
+    ctx.fillText('вн. время', g.l - 6, g.itY + g.itH / 2);
+  }
+
+  // полоса сдвига фазы
+  if (L.v) {
+    const mid = g.vY + g.vH / 2, half = g.vH / 2 - 1;
+    ctx.fillStyle = '#10151c'; ctx.fillRect(g.l, g.vY, g.pw, g.vH);
+    for (let px = 0; px < g.pw; px++) {
+      const k = Math.floor(px / g.pw * SPD), v = sim.v[lo + k];
+      if (Math.abs(v) < 0.002) continue;
+      const hgt = Math.sqrt(Math.min(1, Math.abs(v) / 0.5)) * half;
+      ctx.fillStyle = v > 0 ? 'rgba(89,217,142,0.9)' : 'rgba(255,138,92,0.9)';
+      v > 0 ? ctx.fillRect(g.l + px, mid - hgt, 1, hgt) : ctx.fillRect(g.l + px, mid, 1, hgt);
+    }
+    ctx.strokeStyle = '#2b3644'; ctx.beginPath(); ctx.moveTo(g.l, mid + 0.5); ctx.lineTo(g.l + g.pw, mid + 0.5); ctx.stroke();
+    ctx.fillStyle = '#6f7d8f'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText('фаза', g.l - 6, mid);
+    ctx.font = '10px Segoe UI, system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(89,217,142,0.8)'; ctx.fillText('раньше', g.l - 6, g.vY + 3);
+    ctx.fillStyle = 'rgba(255,138,92,0.8)'; ctx.fillText('позже', g.l - 6, g.vY + g.vH - 3);
+    ctx.font = '11px Segoe UI, system-ui, sans-serif';
+  }
+
+  // полоса сна
+  ctx.fillStyle = '#10151c'; ctx.fillRect(g.l, g.slY, g.pw, g.slH);
+  ctx.fillStyle = '#5a6eff';
+  forRuns(lo, k => sim.sleep[lo + k] === 1, (a, b) => ctx.fillRect(xi(a), g.slY, xi(b) - xi(a), g.slH));
+  ctx.strokeStyle = 'rgba(200,210,255,0.6)'; ctx.setLineDash([4, 3]);
+  ctx.strokeRect(X(g, 11) + 0.5, g.slY - 1.5, X(g, 19) - X(g, 11), g.slH + 3);
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#6f7d8f'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.fillText('сон', g.l - 6, g.slY + g.slH / 2);
+
+  // ось времени
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#8a97a8';
+  for (let hh = 0; hh <= 24; hh += 2) ctx.fillText(String(mod(AXIS0 + hh, 24)).padStart(2, '0') + ':00', X(g, hh), g.axY);
+
+  // перекрестие
+  if (hover && hover.ch === ch) {
+    const x = Math.round(xi(hover.k)) + 0.5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, g.itY); ctx.lineTo(x, g.slY + g.slH); ctx.stroke();
+  }
+}
+function forRuns(lo, pred, cb) {
+  let start = -1;
+  for (let k = 0; k <= SPD; k++) {
+    const on = k < SPD && lo + k < sim.N && pred(k);
+    if (on && start < 0) start = k;
+    if (!on && start >= 0) { cb(start, k); start = -1; }
+  }
+}
+
+// ----- tooltip -----
+function showTip(ch, k, cx, cy) {
+  const i = ch.d * SPD + k;
+  if (i < 0 || i >= sim.N) return hideTip();
+  const tip = $('#tip');
+  const v = sim.v[i];
+  const sw = (c) => `<i style="background:${c}"></i>`;
+  const env = sim.env[i], eff = sim.eff[i];
+  tip.innerHTML = `
+    <div class="t">День ${ch.d + 1} · ${fmtHM(clock(i))} <span class="k">(внутреннее ${fmtHM(BASE_TMIN + sim.h[i])})</span></div>
+    <div><span class="k">Состояние:</span> ${sim.sleep[i] ? 'сон' : 'бодрствование'}</div>
+    <div>${sw('#ffcc4d')}<span class="k">Свет:</span> ${env.toLocaleString('ru-RU')} лк${sim.sleep[i] && env > 0 ? ` (сквозь веки ${eff.toFixed(eff < 10 ? 1 : 0)} лк)` : ''}</div>
+    <div>${sw(v >= 0 ? '#59d98e' : '#ff8a5c')}<span class="k">Сдвиг фазы:</span> ${v >= 0 ? '+' : '−'}${Math.abs(v * 60).toFixed(1)} мин/ч ${Math.abs(v) < 0.002 ? '' : v > 0 ? '(раньше)' : '(позже)'}</div>
+    <div>${sw('#b48cff')}<span class="k">Мелатонин свой:</span> ${sim.melE[i].toFixed(0)} пг/мл</div>
+    <div>${sw('#ff7ad9')}<span class="k">Мелатонин из таблетки:</span> ${sim.melX[i].toFixed(0)} пг/мл</div>
+    <div>${sw('#ff8a5c')}<span class="k">Температура ядра:</span> ${sim.cbt[i].toFixed(2)} °C</div>
+    <div>${sw('#45d6b0')}<span class="k">Кортизол:</span> ${sim.cort[i].toFixed(0)} нмоль/л</div>
+    <div>${sw('#e9edf2')}<span class="k">Давление сна S:</span> ${sim.S[i].toFixed(3)} <span class="k">(усну при ${sim.H[i].toFixed(3)}, проснусь при ${sim.L[i].toFixed(3)})</span></div>
+    <div>${sw('#cde26b')}<span class="k">Чувствительность к свету:</span> ${(sim.sens[i] * 100).toFixed(0)} %</div>`;
+  tip.style.display = 'block';
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = cx + 16, y = cy + 16;
+  if (x + tw > window.innerWidth - 8) x = cx - tw - 16;
+  if (y + th > window.innerHeight - 8) y = cy - th - 16;
+  tip.style.left = Math.max(8, x) + 'px';
+  tip.style.top = Math.max(8, y) + 'px';
+}
+function hideTip() { $('#tip').style.display = 'none'; }
+
+// ----- pointer -----
+function pos(ch, e) { const r = ch.canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+function hitTest(ch, p) {
+  const g = geom(ch);
+  for (let k = state.intervals.length - 1; k >= 0; k--) {
+    const it = state.intervals[k];
+    for (const pc of pieces(it)) {
+      const x1 = X(g, pc.a), x2 = X(g, pc.b), yt = yLux(g, it.lux);
+      if (p.x < x1 - 6 || p.x > x2 + 6 || p.y < yt - 6 || p.y > g.bot + 2) continue;
+      if (pc.L && Math.abs(p.x - x1) <= 6) return { it, kind: 'resizeL' };
+      if (pc.R && Math.abs(p.x - x2) <= 6) return { it, kind: 'resizeR', second: pc.second };
+      if (Math.abs(p.y - yt) <= 6) return { it, kind: 'level' };
+      if (p.x >= x1 && p.x <= x2) return { it, kind: 'move' };
+    }
+  }
+  return null;
+}
+const clampA = a => Math.min(24, Math.max(0, a));
+function onDown(ch, e) {
+  if (e.button !== 0) return;
+  const p = pos(ch, e), g = geom(ch), a = axisFromX(g, p.x);
+  if (state.pillMode) {
+    if (a < 0 || a > 24) return;
+    state.pills.push({ id: uid(), time: mod(AXIS0 + snap(a), 24), day: state.pillRepeat ? 0 : ch.d + 1 });
+    setPillMode(false);
+    commit();
+    return;
+  }
+  if (ch.d !== 0 || p.y < g.top || p.y > g.bot || a < 0 || a > 24) return;
+  const hit = hitTest(ch, p);
+  if (hit) {
+    state.selected = hit.it.id;
+    drag = { ch, kind: hit.kind, id: hit.it.id, orig: { ...hit.it }, a0: a, second: !!hit.second };
+  } else {
+    const a0 = snap(clampA(a));
+    const it = { id: uid(), start: mod(AXIS0 + a0, 24), dur: 0, lux: roundLux(luxFromY(g, p.y)) };
+    state.intervals.push(it);
+    state.selected = it.id;
+    drag = { ch, kind: 'new', id: it.id, a0 };
+  }
+  ch.canvas.setPointerCapture(e.pointerId);
+  e.preventDefault();
+  hideTip();
+  commit(true);
+}
+function onMove(ch, e) {
+  const p = pos(ch, e), g = geom(ch);
+  if (drag && drag.ch === ch) {
+    const it = state.intervals.find(o => o.id === drag.id);
+    if (!it) return;
+    const a = clampA(axisFromX(g, p.x));
+    const s0 = drag.orig ? mod(drag.orig.start - AXIS0, 24) : 0;
+    switch (drag.kind) {
+      case 'new': {
+        const a1 = snap(a), lo = Math.min(drag.a0, a1), hi = Math.max(drag.a0, a1);
+        it.start = mod(AXIS0 + lo, 24); it.dur = hi - lo; it.lux = roundLux(luxFromY(g, p.y));
+        break;
+      }
+      case 'move': it.start = mod(drag.orig.start + snap(a - drag.a0), 24); break;
+      case 'resizeL': {
+        const end = s0 + drag.orig.dur;
+        let ns = snap(a);
+        ns = Math.max(end - 24, Math.min(ns, end - MIN_DUR));
+        it.start = mod(AXIS0 + ns, 24); it.dur = end - ns;
+        break;
+      }
+      case 'resizeR': {
+        let ne = snap(a) + (drag.second ? 24 : 0);
+        ne = Math.min(s0 + 24, Math.max(ne, s0 + MIN_DUR));
+        it.dur = ne - s0;
+        break;
+      }
+      case 'level': it.lux = roundLux(luxFromY(g, p.y)); break;
+    }
+    commit(true);
+    return;
+  }
+  // наведение
+  const a = axisFromX(g, p.x);
+  if (a >= 0 && a <= 24 && p.y >= 0 && p.y <= ch.h) {
+    hover = { ch, k: Math.min(SPD - 1, Math.max(0, Math.round(a * 60))) };
+    showTip(ch, hover.k, e.clientX, e.clientY);
+  } else { hover = null; hideTip(); }
+  let cur = 'default';
+  if (state.pillMode) cur = 'copy';
+  else if (ch.d === 0 && p.y >= g.top - 6 && p.y <= g.bot) {
+    const hit = hitTest(ch, p);
+    cur = !hit ? (p.y >= g.top ? 'crosshair' : 'default')
+      : hit.kind === 'move' ? 'grab' : hit.kind === 'level' ? 'ns-resize' : 'ew-resize';
+  }
+  ch.canvas.style.cursor = cur;
+  scheduleDraw();
+}
+function onUp(ch, e) {
+  if (!drag) return;
+  const it = state.intervals.find(o => o.id === drag.id);
+  if (drag.kind === 'new' && it && it.dur < MIN_DUR - 1e-9) {
+    state.intervals = state.intervals.filter(o => o !== it);
+    state.selected = null;
+  }
+  drag = null;
+  try { ch.canvas.releasePointerCapture(e.pointerId); } catch (_) { /* уже отпущен */ }
+  commit();
+}
+function removeInterval(id) {
+  state.intervals = state.intervals.filter(o => o.id !== id);
+  if (state.selected === id) state.selected = null;
+  commit();
+}
+function setPillMode(on) {
+  state.pillMode = on;
+  const b = $('#pillBtn');
+  b.classList.toggle('pill-on', on);
+  b.textContent = on ? '💊 Кликните по графику…' : '💊 Поставить таблетку';
+}
+
+// ----- build -----
+function buildCharts() {
+  const wrap = $('#days');
+  for (let d = 0; d < DAYS; d++) {
+    const el = document.createElement('div');
+    el.className = 'day' + (d === 0 ? ' editable' : '');
+    el.innerHTML = `<div class="day-head"><h3>День ${d + 1}<small>${d === 0 ? 'рисуйте свет здесь' : 'тот же свет'}</small></h3><div class="day-chips"></div></div><div class="cv-wrap"><canvas></canvas></div>`;
+    wrap.appendChild(el);
+    const canvas = el.querySelector('canvas');
+    const ch = { d, el, canvas, ctx: canvas.getContext('2d'), chips: el.querySelector('.day-chips'), w: 0, h: d === 0 ? 340 : 290 };
+    charts.push(ch);
+    canvas.addEventListener('pointerdown', e => onDown(ch, e));
+    canvas.addEventListener('pointermove', e => onMove(ch, e));
+    canvas.addEventListener('pointerup', e => onUp(ch, e));
+    canvas.addEventListener('pointercancel', e => onUp(ch, e));
+    canvas.addEventListener('pointerleave', () => { if (!drag) { hover = null; hideTip(); scheduleDraw(); } });
+    canvas.addEventListener('dblclick', e => {
+      if (ch.d !== 0) return;
+      const hit = hitTest(ch, pos(ch, e));
+      if (hit) removeInterval(hit.it.id);
+    });
+    canvas.addEventListener('contextmenu', e => {
+      if (ch.d !== 0) return;
+      const hit = hitTest(ch, pos(ch, e));
+      if (hit) { e.preventDefault(); removeInterval(hit.it.id); }
+    });
+  }
+  const resize = () => {
+    dpr = window.devicePixelRatio || 1;
+    for (const ch of charts) {
+      const w = ch.canvas.parentElement.clientWidth;
+      ch.w = w;
+      ch.canvas.style.width = w + 'px';
+      ch.canvas.style.height = ch.h + 'px';
+      ch.canvas.width = Math.round(w * dpr);
+      ch.canvas.height = Math.round(ch.h * dpr);
+    }
+    scheduleDraw();
+  };
+  new ResizeObserver(resize).observe(wrap);
+  resize();
+}
+
+function buildLegend() {
+  const lg = $('#legend');
+  lg.innerHTML = LAYERS.map(l => `<span class="chip${state.layers[l.key] ? '' : ' off'}" data-k="${l.key}"><i style="background:${l.color}"></i>${l.name}</span>`).join('');
+  lg.onclick = e => {
+    const c = e.target.closest('.chip');
+    if (!c) return;
+    const k = c.dataset.k;
+    state.layers[k] = !state.layers[k];
+    c.classList.toggle('off', !state.layers[k]);
+    save();
+    scheduleDraw();
+  };
+}
+
+function bindControls() {
+  const sc = $('#scenario');
+  for (const [k, v] of Object.entries(SCENARIOS)) sc.insertAdjacentHTML('beforeend', `<option value="${k}">${v.name}</option>`);
+  sc.onchange = () => { if (sc.value) applyScenario(sc.value); sc.value = ''; };
+
+  $('#addInt').onclick = () => {
+    const it = { id: uid(), start: 19, dur: 1, lux: 100 };
+    state.intervals.push(it); state.selected = it.id; commit();
+  };
+
+  const tb = $('#intTable tbody');
+  tb.addEventListener('change', e => {
+    const tr = e.target.closest('tr'); if (!tr) return;
+    const it = state.intervals.find(o => o.id === +tr.dataset.id); if (!it) return;
+    const t = e.target;
+    if (t.classList.contains('f-start')) { const v = parseHM(t.value); if (v !== null) it.start = v; }
+    else if (t.classList.contains('f-end')) { const v = parseHM(t.value); if (v !== null) { let dd = mod(v - it.start, 24); if (dd < MIN_DUR) dd = 24; it.dur = dd; } }
+    else if (t.classList.contains('f-dur')) { const v = parseHM(t.value); if (v !== null) it.dur = Math.max(MIN_DUR, v); }
+    else if (t.classList.contains('f-lux')) { const v = +t.value; if (isFinite(v) && v > 0) it.lux = Math.min(100000, Math.max(1, v)); }
+    else if (t.classList.contains('f-pre')) { if (t.value) it.lux = +t.value; }
+    state.selected = it.id;
+    t.blur();
+    commit();
+  });
+  tb.addEventListener('click', e => {
+    const tr = e.target.closest('tr'); if (!tr || !tr.dataset.id) return;
+    if (e.target.closest('.f-del')) { removeInterval(+tr.dataset.id); return; }
+    if (state.selected !== +tr.dataset.id) { state.selected = +tr.dataset.id; tb.querySelectorAll('tr').forEach(r => r.classList.toggle('sel', r === tr)); scheduleDraw(); }
+  });
+
+  const pb = $('#pillTable tbody');
+  pb.addEventListener('change', e => {
+    const tr = e.target.closest('tr'); if (!tr) return;
+    const p = state.pills.find(o => o.id === +tr.dataset.id); if (!p) return;
+    if (e.target.classList.contains('p-time')) { const v = parseHM(e.target.value); if (v !== null) p.time = v; }
+    if (e.target.classList.contains('p-day')) p.day = +e.target.value;
+    e.target.blur();
+    commit();
+  });
+  pb.addEventListener('click', e => {
+    if (!e.target.closest('.p-del')) return;
+    const id = +e.target.closest('tr').dataset.id;
+    state.pills = state.pills.filter(o => o.id !== id);
+    commit();
+  });
+
+  $('#pillBtn').onclick = () => setPillMode(!state.pillMode);
+  const rep = $('#pillRepeat');
+  rep.checked = state.pillRepeat;
+  rep.onchange = () => { state.pillRepeat = rep.checked; };
+
+  const mode = $('#mode'); mode.value = state.mode;
+  mode.onchange = () => { state.mode = mode.value; commit(); };
+  const tau = $('#tau'), tauOut = $('#tauOut');
+  tau.value = state.tau; tauOut.textContent = state.tau.toFixed(2) + ' ч';
+  tau.oninput = () => { state.tau = +tau.value; tauOut.textContent = state.tau.toFixed(2) + ' ч'; commit(true); };
+  tau.onchange = () => commit();
+  const eye = $('#eyelid'); eye.value = String(state.eyelid);
+  eye.onchange = () => { state.eyelid = +eye.value; commit(); };
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && state.pillMode) setPillMode(false);
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if ((e.key === 'Delete' || e.key === 'Backspace') && state.selected && !['INPUT', 'SELECT', 'TEXTAREA'].includes(tag)) {
+      e.preventDefault();
+      removeInterval(state.selected);
+    }
+  });
+}
+
+load();
+buildLegend();
+bindControls();
+buildCharts();
+commit();
+</script>
+</body>
+</html>
