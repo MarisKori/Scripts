@@ -32,6 +32,12 @@
   @media (max-width: 920px) { .controls { grid-template-columns: 1fr; } }
   .block { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
   .col > .block:last-child { margin-bottom: 0; }
+  .block-head h2 { cursor: pointer; user-select: none; }
+  .block-head h2::before { content: '▾'; display: inline-block; width: 1em; color: var(--muted); }
+  .block.collapsed .block-head h2::before { content: '▸'; }
+  .block.collapsed > :not(.block-head) { display: none; }
+  .block.collapsed .block-head { margin-bottom: 0; }
+  .block.collapsed .block-head .row { display: none; }
   .block-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; margin-bottom: 8px; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   button, select, input {
@@ -39,6 +45,8 @@
     border: 1px solid var(--line); border-radius: 7px; padding: 4px 8px;
   }
   input[type="time"] { width: 100px; color-scheme: dark; }
+  select { max-width: 100%; }
+  label.ctl > select { flex: 1 1 240px; min-width: 0; }
   input[type="number"] { width: 84px; }
   button { cursor: pointer; }
   button:hover, select:hover { border-color: #3a4757; }
@@ -114,7 +122,7 @@
 
   <section class="controls">
     <div class="col">
-      <div class="block">
+      <div class="block" data-block="base">
         <div class="block-head">
           <h2>Исходный режим сна (до дня 1)</h2>
           <div class="row">
@@ -140,7 +148,7 @@
         <div id="baseWarn" class="warn" style="display:none"></div>
         <p class="hint">Куски могут лежать в любое время суток, в том числе днём. В исходном режиме сон проходит в темноте, бодрствование — при указанном свете. Пока свет дней 1–6 не менялся вручную, он следует за исходным режимом.</p>
       </div>
-      <div class="block">
+      <div class="block" data-block="light">
         <div class="block-head">
           <h2>Интервалы света</h2>
           <div class="row">
@@ -157,7 +165,7 @@
         </table>
         <p class="hint">Набор света дня 1 действует на все дни. Галочка «свой свет» в заголовке любого другого дня копирует текущий свет в отдельный набор, который действует с этого дня и далее, до следующего дня с собственным набором. Прямоугольник рисуется на редактируемом графике протягиванием мыши (инструмент «Свет»): ширина — время, высота — яркость (шкала логарифмическая). Края меняют длительность, верхняя кромка — яркость, середина сдвигает интервал. Двойной клик или правая кнопка мыши удаляют. Без интервалов — вечная ночь.</p>
       </div>
-      <div class="block">
+      <div class="block" data-block="pill">
         <div class="block-head">
           <h2>Мелатонин 0,5 мг</h2>
           <div class="row">
@@ -173,8 +181,8 @@
       </div>
     </div>
     <div class="col">
-      <div class="block">
-        <h2 style="margin-bottom:6px">Параметры</h2>
+      <div class="block" data-block="params">
+        <div class="block-head"><h2>Параметры</h2></div>
         <label class="ctl"><span>Сон в днях 1–6 (вне зон)</span>
           <select id="mode">
             <option value="A">Свет ≥ 10 лк = бодрствование; в темноте — сон, когда клонит; при сильной сонливости — сон и при свете</option>
@@ -194,7 +202,7 @@
           </select>
         </label>
       </div>
-      <div class="block">
+      <div class="block" data-block="zones">
         <div class="block-head">
           <h2>Зоны сна (все дни)</h2>
           <div class="row"><button id="addZone" class="blue">+ зона</button></div>
@@ -203,10 +211,10 @@
           <thead><tr><th>Тип</th><th>Начало</th><th>Конец</th><th>Длительность</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
-        <p class="hint"><span style="color:#59d98e">Можно спать</span> — сон, если сильно клонит (сонливость ≥ ~65 %), даже при свете: человек ложится. <span style="color:#a594ff">Нужно спать</span> — постель с выключенным светом: сон, как только получается заснуть; конец зоны — подъём. <span style="color:#ff6b6b">Нельзя спать</span> — работа: будит и не даёт уснуть; уснуть можно только против воли при очень сильной сонливости. Зоны рисуются на любом графике инструментами над графиками; перекрытия решает приоритет «нельзя» → «нужно» → «можно». Вне зон действует выбранный режим сна.</p>
+        <p class="hint"><span style="color:#59d98e">Можно спать</span> — сон, если сильно клонит (сонливость ≥ ~65 %), даже при свете: человек ложится. <span style="color:#a594ff">Нужно спать</span> — постель с выключенным светом: сон, как только получается заснуть; конец зоны — подъём. <span style="color:#ff6b6b">Нельзя спать</span> — работа: будит и не даёт уснуть; уснуть можно только против воли при очень сильной сонливости. Зоны рисуются на любом графике инструментами над графиками; зоны не перекрываются: одинаковые сливаются, а из разных остаётся та, что важнее — «нельзя», затем «нужно», затем «можно». Граница с вплотную примыкающей зоной двигается вместе с ней. Вне зон действует выбранный режим сна.</p>
       </div>
-      <div class="block">
-        <h2 style="margin-bottom:6px">Итоги по дням</h2>
+      <div class="block" data-block="summary">
+        <div class="block-head"><h2>Итоги по дням</h2></div>
         <div class="tscroll"><table id="summary">
           <thead><tr><th>День</th><th>Эпизоды сна <span style="font-weight:400">(клонит → сон)</span></th><th>Всего</th><th style="color:#ff6b6b">Интеллект</th><th>Tmin</th><th>DLMO</th><th>Сдвиг часов</th></tr></thead>
           <tbody></tbody>
@@ -708,6 +716,7 @@ const state = {
   base: { pieces: [], day: 600, eve: 100 },
   layers: Object.fromEntries(LAYERS.map(l => [l.key, l.on])),
   pillMode: false, pillRepeat: true, selected: null,
+  collapsed: { summary: true },
 };
 // state.intervals — редактируемый сейчас набор света
 Object.defineProperty(state, 'intervals', {
@@ -771,7 +780,7 @@ function save() {
       zones: state.zones.map(({ type, start, dur }) => ({ type, start, dur })),
       pills: state.pills.map(({ time, day }) => ({ time, day })),
       base: { pieces: state.base.pieces.map(({ start, dur }) => ({ start, dur })), day: state.base.day, eve: state.base.eve },
-      mode: state.mode, tau: state.tau, eyelid: state.eyelid, layers: state.layers,
+      mode: state.mode, tau: state.tau, eyelid: state.eyelid, layers: state.layers, collapsed: state.collapsed,
     }));
   } catch (e) { /* хранилище недоступно — работа без сохранения */ }
 }
@@ -796,6 +805,7 @@ function load() {
   state.zones = (Array.isArray(d.zones) ? d.zones : []).filter(z => ZONE_PRI[z.type]).map(z => ({
     id: uid(), type: z.type, start: mod(num(z.start, -48, 48, 0), 24), dur: num(z.dur, MIN_DUR, 24, 1),
   }));
+  normalizeZones();
   state.pills = (Array.isArray(d.pills) ? d.pills : []).map(o => ({
     id: uid(), time: mod(num(o.time, -48, 48, 18), 24), day: Math.round(num(o.day, 0, DAYS, 0)),
   }));
@@ -809,6 +819,7 @@ function load() {
   state.mode = ['A', 'B', 'C'].includes(d.mode) ? d.mode : 'A';
   state.tau = num(d.tau, 23.8, 24.8, 24.2);
   state.eyelid = [0.01, 0.03, 0.1].includes(d.eyelid) ? d.eyelid : 0.03;
+  if (d.collapsed && typeof d.collapsed === 'object') for (const [k, v] of Object.entries(d.collapsed)) if (typeof v === 'boolean') state.collapsed[k] = v;
   if (d.layers) for (const l of LAYERS) if (typeof d.layers[l.key] === 'boolean') state.layers[l.key] = d.layers[l.key];
 }
 function lightFollowsBase() {
@@ -1354,7 +1365,7 @@ function onDown(ch, e) {
   if (a < 0 || a > 24) return;
   const zh = hitZone(ch, p);
   if (zh) {
-    drag = { ch, zone: true, kind: zh.kind, id: zh.it.id, orig: { ...zh.it }, a0: a, second: !!zh.second };
+    drag = { ch, zone: true, kind: zh.kind, id: zh.it.id, orig: { ...zh.it }, a0: a, second: !!zh.second, nb: snapNeighbors(zh.it) };
   } else if (state.tool !== 'light') {
     if (p.y < g.top || p.y > g.znY + g.znH) return;
     const a0 = snap(clampA(a));
@@ -1411,6 +1422,11 @@ function onMove(ch, e) {
       }
       case 'level': it.lux = roundLux(luxFromY(g, p.y)); break;
     }
+    if (drag.zone && drag.nb) {
+      const ns = it.start, nd = it.dur;
+      it.start = drag.orig.start; it.dur = drag.orig.dur;
+      editZone(it, drag.orig, ns, nd, drag.nb);
+    }
     commit(true);
     return;
   }
@@ -1439,8 +1455,10 @@ function onUp(ch, e) {
     if (drag.zone) state.zones = state.zones.filter(o => o !== it);
     else { state.intervals = state.intervals.filter(o => o !== it); state.selected = null; }
   }
+  const wasZone = drag.zone;
   drag = null;
   try { ch.canvas.releasePointerCapture(e.pointerId); } catch (_) { /* захват уже снят */ }
+  if (wasZone) normalizeZones();
   commit();
 }
 function removeInterval(id) {
@@ -1448,8 +1466,62 @@ function removeInterval(id) {
   if (state.selected === id) state.selected = null;
   commit();
 }
+// Зоны не перекрываются: одинаковые сливаются, разные вытесняются по приоритету (нельзя → нужно → можно)
+function normalizeZones() {
+  const old = state.zones;
+  const slot = new Array(SPD);
+  for (let k = 0; k < SPD; k++) slot[k] = zoneAt(old, (k + 0.5) / 60);
+  let st = -1;
+  for (let k = 0; k < SPD; k++) if (slot[k] !== slot[(k - 1 + SPD) % SPD]) { st = k; break; }
+  const runs = [];
+  if (st < 0) { if (slot[0]) runs.push({ type: slot[0], start: 0, dur: 24 }); }
+  else {
+    let k0 = st;
+    for (let n = 1; n <= SPD; n++) {
+      const k = (st + n) % SPD;
+      if (n === SPD || slot[k] !== slot[k0]) {
+        if (slot[k0]) runs.push({ type: slot[k0], start: k0 / 60, dur: ((k - k0 + SPD) % SPD || SPD) / 60 });
+        k0 = k;
+      }
+    }
+  }
+  const used = new Set();
+  const overlap = (a, b) => { let n = 0; for (let k = 0; k < SPD; k += 5) { const c = (k + 0.5) / 60; if (covers([a], c) && covers([b], c)) n++; } return n; };
+  state.zones = runs.filter(r => r.dur >= MIN_DUR - 1e-9).map(r => {
+    let best = null, bo = 0;
+    for (const z of old) if (z.type === r.type && !used.has(z.id)) { const o = overlap(z, r); if (o > bo) { bo = o; best = z; } }
+    const id = best ? best.id : uid();
+    used.add(id);
+    return { id, ...r };
+  });
+}
+const ZEPS = 1 / 120;
+function zoneNeighbors(z) {
+  const end = z.start + z.dur;
+  let left = null, right = null;
+  for (const o of state.zones) {
+    if (o === z) continue;
+    if (Math.abs(wrap12(o.start + o.dur - z.start)) < ZEPS) left = o;
+    if (Math.abs(wrap12(o.start - end)) < ZEPS) right = o;
+  }
+  return { left, right };
+}
+// Изменить зону, протянув вплотную примыкающих соседей; orig — снимок до правки
+function editZone(z, orig, newStart, newDur, nb) {
+  const dS = wrap12(newStart - orig.start), dE = wrap12(newStart + newDur - (orig.start + orig.dur));
+  if (nb.left) { nb.left.dur = Math.max(MIN_DUR, nb.left.origDur + dS); }
+  if (nb.right) { nb.right.start = mod(nb.right.origStart + dE, 24); nb.right.dur = Math.max(MIN_DUR, nb.right.origDur - dE); }
+  z.start = mod(newStart, 24); z.dur = newDur;
+}
+function snapNeighbors(z) {
+  const n = zoneNeighbors(z);
+  if (n.left) { n.left.origStart = n.left.start; n.left.origDur = n.left.dur; }
+  if (n.right) { n.right.origStart = n.right.start; n.right.origDur = n.right.dur; }
+  return n;
+}
 function removeZone(id) {
   state.zones = state.zones.filter(o => o.id !== id);
+  normalizeZones();
   commit();
 }
 function setTool(t) {
@@ -1506,6 +1578,18 @@ function buildCharts() {
   resize();
 }
 
+function bindCollapse() {
+  document.querySelectorAll('.block[data-block]').forEach(bl => {
+    const key = bl.dataset.block, h = bl.querySelector('.block-head h2');
+    bl.classList.toggle('collapsed', !!state.collapsed[key]);
+    h.title = 'Свернуть / развернуть';
+    h.onclick = () => {
+      state.collapsed[key] = !state.collapsed[key];
+      bl.classList.toggle('collapsed', state.collapsed[key]);
+      save();
+    };
+  });
+}
 function buildLegend() {
   const lg = $('#legend');
   lg.innerHTML = LAYERS.map(l => `<span class="chip${state.layers[l.key] ? '' : ' off'}" data-k="${l.key}"><i style="background:${l.color}"></i>${l.name}</span>`).join('');
@@ -1577,13 +1661,23 @@ function bindControls() {
   });
 
   $('#setSel').onchange = e => { state.activeSet = +e.target.value; state.selected = null; commit(); };
-  $('#addZone').onclick = () => { state.zones.push({ id: uid(), type: state.tool === 'light' ? 'no' : state.tool, start: 9, dur: 9 }); commit(); };
+  $('#addZone').onclick = () => { state.zones.push({ id: uid(), type: state.tool === 'light' ? 'no' : state.tool, start: 9, dur: 9 }); normalizeZones(); commit(); };
   const zb = $('#zoneTable tbody');
   zb.addEventListener('change', e => {
     const tr = e.target.closest('tr'); if (!tr) return;
     const z = state.zones.find(o => o.id === +tr.dataset.id); if (!z) return;
-    if (e.target.classList.contains('z-type')) { z.type = e.target.value; e.target.blur(); commit(); return; }
-    timeRowHandler(() => state.zones, 'z')(e);
+    if (e.target.classList.contains('z-type')) { z.type = e.target.value; e.target.blur(); normalizeZones(); commit(); return; }
+    const t = e.target, v = parseHM(t.value);
+    t.blur();
+    if (v === null) return;
+    const orig = { start: z.start, dur: z.dur }, nb = snapNeighbors(z);
+    let ns = z.start, nd = z.dur;
+    if (t.classList.contains('z-start')) ns = v;                                  // сдвиг зоны
+    else if (t.classList.contains('z-end')) { nd = mod(v - z.start, 24); if (nd < MIN_DUR) nd = 24; }
+    else if (t.classList.contains('z-dur')) nd = Math.max(MIN_DUR, v);
+    editZone(z, orig, ns, nd, nb);
+    normalizeZones();
+    commit();
   });
   zb.addEventListener('click', e => {
     if (!e.target.closest('.z-del')) return;
@@ -1651,6 +1745,7 @@ function bindControls() {
 }
 
 load();
+bindCollapse();
 buildLegend();
 bindControls();
 syncControls();
