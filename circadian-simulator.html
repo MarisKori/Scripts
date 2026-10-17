@@ -190,7 +190,7 @@
       <div class="block">
         <h2 style="margin-bottom:6px">Итоги по дням</h2>
         <div class="tscroll"><table id="summary">
-          <thead><tr><th>День</th><th>Эпизоды сна <span style="font-weight:400">(клонит → сон)</span></th><th>Всего</th><th>Tmin</th><th>DLMO</th><th>Сдвиг часов</th></tr></thead>
+          <thead><tr><th>День</th><th>Эпизоды сна <span style="font-weight:400">(клонит → сон)</span></th><th>Всего</th><th style="color:#ff6b6b">Интеллект</th><th>Tmin</th><th>DLMO</th><th>Сдвиг часов</th></tr></thead>
           <tbody></tbody>
         </table></div>
         <p class="hint" id="summaryHint"></p>
@@ -205,6 +205,7 @@
     <details>
       <summary>Как читать графики</summary>
       <ul>
+        <li><b>Красная линия «Интеллект»</b> — оценка выраженности сложных когнитивных функций в процентах от потенциала (правая шкала). Во сне не рисуется. Подробности — в разделе ниже.</li>
         <li><b>Жёлтые прямоугольники</b> — свет, левая шкала в люксах (1 → 100 000, логарифмическая).</li>
         <li><b>Синяя заливка и полоса «сон»</b> — сон по модели. Бледно-синяя штриховка — время в постели без сна (режим «постель по исходному режиму»). Пунктирные рамки в полосе — куски исходного режима.</li>
         <li><b>Верхняя полоса «вн. время»</b> — биологическое время: который час по часам организма в шкале типичного человека со сном 23:00–07:00 (у него минимум температуры приходится на 04:30). Если цифры полосы отстают от оси, часы сдвинуты позже.</li>
@@ -223,6 +224,26 @@
       <p><b>Бывает ли настоящее расщепление.</b> У хомяков при постоянном свете активность разделяется на две части с интервалом около 12 ч, и левое и правое SCN колеблются в противофазе — de la Iglesia et al. (Де ла Иглесиа и соавт.), 2000. <a href="https://doi.org/10.1126/science.290.5492.799" target="_blank" rel="noopener">DOI</a> У людей такого не показано.</p>
       <p><b>Длинная ночь делит сон сама.</b> Wehr (Вер), 1992: при 14 ч темноты в сутки сон людей распадался на два куска по несколько часов с бодрствованием 1–3 ч между ними, а окно мелатонина расширялось. Цикл при этом один, только «ночь» у него длиннее. <a href="https://doi.org/10.1111/j.1365-2869.1992.tb00019.x" target="_blank" rel="noopener">DOI</a></p>
       <p><b>Ночной сон + дневной кусок в экспериментах.</b> Lo et al. (Ло и соавт.): у подростков 5 ч ночью + 1,5 ч днём против 6,5 ч подряд дали меньше провалов внимания, но хуже переносимость глюкозы (2019). <a href="https://doi.org/10.1093/sleep/zsz037" target="_blank" rel="noopener">DOI</a> При сумме 8 ч дробный и непрерывный режимы оказались сопоставимы по основным когнитивным показателям (2020). <a href="https://doi.org/10.1093/sleep/zsaa129" target="_blank" rel="noopener">DOI</a></p>
+    </details>
+    <details>
+      <summary>Интеллект: что показывает красная линия и насколько ей можно верить</summary>
+      <p><b>Определение.</b> 100 % — уровень сложной умственной работы (рабочая память, сложное внимание, скорость обработки, рассуждение) у выспавшегося человека в лучшее для его часов время. Ниже 100 % — суммарные потери. Это не IQ: способности не меняются, меняется доля, которую удаётся реализовать.</p>
+      <p><b>Насколько изучено.</b> Лучше всего изучены простое внимание и скорость реакции (тест PVT): для них есть модели, проверенные на десятках режимов, — например, Unified Model of Performance (Ramakrishnan et al., 2016), ошибка прогноза группового среднего 7–36 %. <a href="https://doi.org/10.5665/sleep.5358" target="_blank" rel="noopener">DOI</a> Сложное мышление изучено хуже и страдает меньше: в метаанализе Lim &amp; Dinges (2010) эффект бессонной ночи — от крупного для простого внимания (g ≈ −0,78) до малого и незначимого для точности рассуждений (g ≈ −0,13). <a href="https://doi.org/10.1037/a0018883" target="_blank" rel="noopener">DOI</a> Чувствительность к недосыпу — устойчивая индивидуальная черта, разброс между людьми большой (Ramakrishnan et al., 2015). <a href="https://doi.org/10.1111/jsr.12272" target="_blank" rel="noopener">DOI</a></p>
+      <p>Итог: <b>форма линии</b> (когда подъём, когда провал, как действует ночь, долг и пробуждение) опирается на данные; <b>абсолютные проценты</b> — калиброванная оценка для «среднего» человека <span class="est">оценка</span>.</p>
+      <h4>Из чего складывается (потери перемножаются)</h4>
+      <ul>
+        <li><b>Инерция сна:</b> сразу после пробуждения до −25 %, рассеивается экспоненциально с постоянной 1,17 ч — Jewett et al. (1999), до плато 2–4 ч. <a href="https://doi.org/10.1111/j.1365-2869.1999.00128.x" target="_blank" rel="noopener">DOI</a> Wertz et al. (2006): в первые минуты после пробуждения познавательные функции хуже, чем после суток без сна. <a href="https://doi.org/10.1001/jama.295.2.163" target="_blank" rel="noopener">DOI</a> После коротких (&lt; 45 мин) эпизодов сна инерция пропорционально меньше <span class="est">оценка</span>.</li>
+        <li><b>Острый недосып:</b> давление сна S сверх уровня обычного вечера; ночью около минимума температуры штраф усиливается в 1,4 раза, днём на пике ослабляется до 0,6 — циркадная модуляция растёт вместе с недосыпом, как в моделях производительности.</li>
+        <li><b>Накопленный долг:</b> Van Dongen et al. (2003) показали, что провалы внимания почти линейно растут с суммой бодрствования сверх ~15,8 ч в сутки, при любом способе недосыпа; 14 суток по 4–6 ч дали дефицит, равный 1–2 ночам полного недосыпа. <a href="https://doi.org/10.1093/sleep/26.2.117" target="_blank" rel="noopener">DOI</a> В модели долг растёт на 0,5 ч за час бодрствования и гасится сном (потребность 8 ч), а при хроническом недосыпе мозг частично адаптируется с постоянной ~10 суток: Belenky et al. (2003) наблюдали стабилизацию на сниженном уровне и неполное восстановление после 3 ночей по 8 ч. <a href="https://doi.org/10.1046/j.1365-2869.2003.00337.x" target="_blank" rel="noopener">DOI</a></li>
+        <li><b>Циркадная фаза:</b> даже выспавшийся человек думает хуже около минимума температуры (до −6 %). Wright et al. (2002): рабочая память и внимание лучше при более высокой температуре тела, независимо от времени бодрствования. <a href="https://doi.org/10.1152/ajpregu.00205.2002" target="_blank" rel="noopener">DOI</a></li>
+      </ul>
+      <h4>Калибровка <span class="est">оценка</span></h4>
+      <ul>
+        <li>Обычный режим 23:00–07:00: ~72 % сразу после подъёма, ~90 % к 9:00, 98–100 % днём и вечером.</li>
+        <li>Ночь без сна: ~70 % около 04:30, ~65 % утром, ~70 % днём; вторая ночь — ~30 %.</li>
+        <li>Режим 6 ч сна: днём ~83–90 %; 4 ч: ~70–78 %. Восстановление после хронического недосыпа — по 1–2 п.п. в сутки.</li>
+      </ul>
+      <p>Не учтены кофеин, мотивация, длительность и монотонность задачи, тип задачи (творческие задачи страдают иначе) и хронотип сверх того, что задаёт фаза часов.</p>
     </details>
     <details>
       <summary>Модель, источники и где начинаются оценки</summary>
@@ -381,6 +402,35 @@ function fCort(h) {
 }
 const MASK_K = 1 - Math.exp(-DT / 0.7);
 
+// --- Интеллект: выраженность сложных когнитивных функций, % от потенциала ---
+// Долг D (ч): +0,5 ч за час бодрствования, −1 ч за час сна (потребность 8 ч на 16 ч бодрствования),
+// медленная адаптация с постоянной 10 сут. Z — «лишнее бодрствование» в шкале Van Dongen 2003.
+const COG = {
+  wakeRate: 0.5, adaptTau: 240, scaleVD: 1.5, normalWake: 16,
+  sThr: 0.58, sK: 1.0,                 // острый штраф от давления сна
+  zMax: 0.976, z0: 97,                 // накопленный штраф (насыщение)
+  circ: 0.06,                          // штраф за циркадную фазу у выспавшегося
+  inert: 0.25, inertTau: 1.17, inertFull: 0.75,   // инерция сна (Jewett 1999: τ = 1,17 ч)
+};
+const EXP_ADAPT = Math.exp(-DT / COG.adaptTau);
+function newDebt() { return { D: 0, Dws: 0, W: 0, sleepStart: -1e9, lastDur: 8 }; }
+function debtStep(db, asleep) {
+  if (asleep) db.D = Math.max(0, db.D - DT); else { db.D += COG.wakeRate * DT; db.W += DT; }
+  db.D *= EXP_ADAPT;
+}
+function debtSleep(db, t) { db.sleepStart = t; }
+function debtWake(db, t) { db.lastDur = Math.max(0, t - db.sleepStart); db.Dws = db.D; db.W = 0; }
+function cognition(S, h, db, sinceWake) {
+  const c = fCBT(h);
+  const m = 0.6 + 0.8 * (1 - c);
+  const Z = db.Dws / COG.scaleVD + Math.max(0, db.W - COG.normalWake);
+  const pS = Math.min(1, Math.max(0, S - COG.sThr) * COG.sK * m);
+  const pZ = Math.min(1, COG.zMax * (1 - Math.exp(-Z / COG.z0)) * m);
+  const pC = COG.circ * (1 - c);
+  const pI = sinceWake >= 0 ? COG.inert * Math.min(1, db.lastDur / COG.inertFull) * Math.exp(-sinceWake / COG.inertTau) : 0;
+  return { iq: 100 * (1 - pS) * (1 - pZ) * (1 - pC) * (1 - pI), pS, pZ, pC, pI, Z };
+}
+
 // Прогон исходного режима: сон строго по кускам, свет по правилу 08–18 / остальное
 const entrainCache = new Map();
 function entrain(tau, base) {
@@ -388,10 +438,12 @@ function entrain(tau, base) {
   if (entrainCache.has(key)) return entrainCache.get(key);
   const s = [1, 0, 0], N = ENTRAIN_DAYS * SPD;
   let S = 0.3, melE = 0, mask = 0, asleep = false, lastWake = -1e9, prevH = null, tminT = null;
+  const db = newDebt();
   for (let i = 0; i < N; i++) {
     const t = (i - N) * DT, clk = mod(AXIS0 + t, 24);
     const sl = covers(base.pieces, clk);
-    if (asleep && !sl) lastWake = t;
+    if (asleep && !sl) { lastWake = t; debtWake(db, t); }
+    if (!asleep && sl) debtSleep(db, t);
     asleep = sl;
     const I = sl ? 0 : baseLux(base, clk);
     const h = hOf(s[0], s[1]);
@@ -401,8 +453,9 @@ function entrain(tau, base) {
     S = asleep ? S * EXP_S : 1 - (1 - S) * EXP_W;
     melE = melE * EXP_K + MEL_PMAX * melGate(h) * (1 - melSupp(I)) / KEL * (1 - EXP_K);
     mask += ((asleep ? -0.2 : 0) - mask) * MASK_K;
+    debtStep(db, asleep);
   }
-  const r = { s: s.slice(), S, melE, mask, asleep: covers(base.pieces, AXIS0), lastWake, tminClock: tminT === null ? null : mod(AXIS0 + tminT, 24) };
+  const r = { s: s.slice(), S, melE, mask, db: { ...db }, asleep: covers(base.pieces, AXIS0), lastWake, tminClock: tminT === null ? null : mod(AXIS0 + tminT, 24) };
   if (entrainCache.size > 40) entrainCache.clear();
   entrainCache.set(key, r);
   return r;
@@ -424,7 +477,7 @@ function simulate(cfg) {
   const F = () => new Float32Array(N);
   const o = {
     N, env: F(), eff: F(), sleep: new Uint8Array(N), h: F(), S: F(), H: F(), L: F(), C: F(),
-    melE: F(), melX: F(), cbt: F(), cort: F(), v: F(), sens: F(), events: [], baseTmin: init.tminClock,
+    melE: F(), melX: F(), cbt: F(), cort: F(), v: F(), sens: F(), iq: F(), pS: F(), pZ: F(), pC: F(), pI: F(), Z: F(), events: [], baseTmin: init.tminClock,
   };
   const pills = new Map();
   for (let d = 0; d < DAYS; d++) for (const p of cfg.pills) {
@@ -434,6 +487,7 @@ function simulate(cfg) {
   }
   let asleep = init.asleep, gate = false, S = init.S, melE = init.melE, melX = 0, gut = 0, mask = init.mask;
   let lastWake = init.lastWake, prevH = null;
+  const db = { ...init.db };
   if (asleep) o.events.push({ i: 0, type: 'sleep', carried: true });
   const dA = [0, 0, 0], d0 = [0, 0, 0];
   for (let i = 0; i < N; i++) {
@@ -454,14 +508,14 @@ function simulate(cfg) {
       else if (cfg.mode === 'A' && env >= WAKE_LUX) why = 'light';
       else if (cfg.mode === 'C' && !bed) why = 'sched';
       if (why) {
-        asleep = false; gate = false; lastWake = t;
+        asleep = false; gate = false; lastWake = t; debtWake(db, t);
         o.events.push({ i, type: 'wake', why, would: why === 'self' ? null : projectWake(i, S, h) });
       }
     } else {
       if (S >= H) { if (!gate) { gate = true; o.events.push({ i, type: 'gate' }); } } else gate = false;
       const can = cfg.mode === 'A' ? env < WAKE_LUX : cfg.mode === 'B' ? true : bed;
       const dark = cfg.mode === 'C' ? bed : env < WAKE_LUX;
-      if (can && S >= H - (dark ? TP.dDark : 0)) { asleep = true; o.events.push({ i, type: 'sleep' }); }
+      if (can && S >= H - (dark ? TP.dDark : 0)) { asleep = true; debtSleep(db, t); o.events.push({ i, type: 'sleep' }); }
     }
 
     const I = asleep || bed ? env * cfg.eyelid : env;
@@ -490,6 +544,12 @@ function simulate(cfg) {
     o.cort[i] = 70 + 330 * fCort(h) + car;
     o.v[i] = (dthL + melRate) * 24 / TWO_PI;
     o.sens[i] = 1 - s[2];
+    if (asleep) { o.iq[i] = NaN; o.pS[i] = o.pZ[i] = o.pC[i] = o.pI[i] = 0; }
+    else {
+      const cg = cognition(S, h, db, t - lastWake);
+      o.iq[i] = cg.iq; o.pS[i] = cg.pS; o.pZ[i] = cg.pZ; o.pC[i] = cg.pC; o.pI[i] = cg.pI;
+    }
+    o.Z[i] = db.Dws / COG.scaleVD + (asleep ? 0 : Math.max(0, db.W - COG.normalWake));
 
     rk4(s, I, cfg.tau, DT);
     if (melRate !== 0) {
@@ -497,6 +557,7 @@ function simulate(cfg) {
       s[0] = r * Math.cos(a); s[1] = -r * Math.sin(a);
     }
     S = asleep ? S * EXP_S : 1 - (1 - S) * EXP_W;
+    debtStep(db, asleep);
     melE = melE * EXP_K + MEL_PMAX * melGate(h) * (1 - melSupp(I)) / KEL * (1 - EXP_K);
     melX += (KA * gut * KCONC - KEL * melX) * DT;
     gut -= KA * gut * DT;
@@ -556,6 +617,7 @@ const SCENARIOS = {
   mel: { name: 'Свет исходного режима + мелатонин в 18:30', light: 'base', pills: [{ time: 18.5, day: 0 }] },
 };
 const LAYERS = [
+  { key: 'iq', name: 'Интеллект', color: '#ff2d2d', on: true },
   { key: 'melE', name: 'Мелатонин собственный', color: '#b48cff', on: true },
   { key: 'melX', name: 'Мелатонин из таблетки', color: '#ff7ad9', on: true },
   { key: 'cbt', name: 'Температура ядра тела', color: '#ff8a5c', on: true },
@@ -680,7 +742,7 @@ function applyScenario(key, doCommit = true) {
 
 // ----- geometry -----
 function geom(ch) {
-  const l = 62, r = 12, top = 48, bot = ch.h - 74;
+  const l = 62, r = 40, top = 48, bot = ch.h - 74;
   return { l, r, top, bot, pw: ch.w - l - r, ph: bot - top, itY: 4, itH: 14, lblY: 30,
     vY: bot + 4, vH: 26, slY: bot + 36, slH: 12, axY: bot + 62 };
 }
@@ -770,12 +832,16 @@ function episodesOf(d) {
 function dayInfo(d) {
   const lo = d * SPD, hi = (d + 1) * SPD;
   const inDay = e => e.i >= lo && e.i < hi;
-  let asleep = 0, bedAwake = 0;
-  for (let i = lo; i < hi; i++) { if (sim.sleep[i] === 1) asleep++; else if (sim.sleep[i] === 2) bedAwake++; }
+  let asleep = 0, bedAwake = 0, iqSum = 0, iqN = 0, iqMin = 101;
+  for (let i = lo; i < hi; i++) {
+    if (sim.sleep[i] === 1) asleep++; else if (sim.sleep[i] === 2) bedAwake++;
+    const v = sim.iq[i];
+    if (!isNaN(v)) { iqSum += v; iqN++; if (v < iqMin) iqMin = v; }
+  }
   const tmin = sim.events.find(e => e.type === 'tmin' && inDay(e));
   const dlmo = sim.events.find(e => e.type === 'dlmo' && inDay(e));
   const shift = tmin && sim.baseTmin !== null ? wrap12(tmin.i * DT - (d * 24 + mod(sim.baseTmin - AXIS0, 24))) : null;
-  return { eps: episodesOf(d), asleep: asleep / 60, bedAwake: bedAwake / 60, tmin, dlmo, shift };
+  return { eps: episodesOf(d), asleep: asleep / 60, bedAwake: bedAwake / 60, tmin, dlmo, shift, iqAvg: iqN ? iqSum / iqN : null, iqMin: iqN ? iqMin : null };
 }
 function epText(e, rich) {
   const on = e.carried ? '…' : fmtHM(clock(e.on));
@@ -798,6 +864,7 @@ function renderSummary() {
     rows.push(`<tr><td class="nw">${d + 1}</td>
       <td>${s.eps.length ? s.eps.map(e => epText(e, true)).join('') : '<span class="g" style="color:var(--muted)">—</span>'}</td>
       <td class="nw">${fmtDur(s.asleep)}${s.bedAwake > 0.01 ? `<div style="color:var(--muted);white-space:normal">+${fmtDur(s.bedAwake)} в постели без сна</div>` : ''}</td>
+      <td class="nw" style="color:#ff8080">${s.iqAvg === null ? '—' : `ср. ${s.iqAvg.toFixed(0)} %<div style="color:var(--muted)">мин. ${s.iqMin.toFixed(0)} %</div>`}</td>
       <td class="nw">${s.tmin ? fmtHM(clock(s.tmin.i)) : '—'}</td>
       <td class="nw">${s.dlmo ? fmtHM(clock(s.dlmo.i)) : '—'}</td>
       <td class="nw ${cls}">${s.shift === null ? '—' : fmtShift(s.shift)}</td></tr>`);
@@ -805,6 +872,7 @@ function renderSummary() {
     if (ch) {
       const parts = s.eps.length ? s.eps.map(e => epText(e, false)) : ['сна в этом окне нет'];
       parts.push(`всего сна <b>${fmtDur(s.asleep)}</b>`);
+      if (s.iqAvg !== null) parts.push(`интеллект <b style="color:#ff6b6b">ср. ${s.iqAvg.toFixed(0)} %</b>, мин. ${s.iqMin.toFixed(0)} %`);
       if (s.tmin) parts.push(`Tmin <b>${fmtHM(clock(s.tmin.i))}</b>`);
       if (s.dlmo) parts.push(`DLMO <b>${fmtHM(clock(s.dlmo.i))}</b>`);
       if (s.shift !== null) parts.push(`часы ${fmtShift(s.shift)}`);
@@ -814,7 +882,7 @@ function renderSummary() {
   $('#summary tbody').innerHTML = rows.join('');
   $('#summaryHint').textContent = 'Tmin — минимум температуры ядра тела, главный маркер фазы часов. DLMO — начало выработки мелатонина в темноте, по фазе часов (≈7 ч до Tmin). '
     + 'Сдвиг — смещение Tmin относительно исходного режима' + (sim.baseTmin !== null ? ` (исходный Tmin: ${fmtHM(sim.baseTmin)})` : '') + '. '
-    + 'Время после «→» — начало сна; время до «→» — когда начало клонить в сон, если раньше.';
+    + 'Время после «→» — начало сна; время до «→» — когда начало клонить в сон, если раньше. Интеллект — среднее и минимум за время бодрствования в окне.';
 }
 
 // ----- drawing -----
@@ -906,7 +974,20 @@ function drawChart(ch) {
     line(sim.L, v => v, 'rgba(233,237,242,0.35)', 1, [2, 4]);
     line(sim.S, v => v, '#e9edf2', 1.8);
   }
+  if (L.iq) {
+    ctx.strokeStyle = 'rgba(255,45,45,0.18)'; ctx.lineWidth = 7; drawIq(ctx, g, lo, xi, yF);
+    ctx.strokeStyle = '#ff2d2d'; ctx.lineWidth = 2.4; drawIq(ctx, g, lo, xi, yF);
+  }
   ctx.restore();
+  if (L.iq) {
+    ctx.font = font; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    for (const v of [0, 25, 50, 75, 100]) {
+      const y = yF(v / 100);
+      ctx.fillStyle = v === 100 ? '#ff5c5c' : 'rgba(255,92,92,0.75)';
+      ctx.fillText(v + (v === 100 ? ' %' : ''), g.l + g.pw + 5, y);
+      ctx.fillStyle = 'rgba(255,92,92,0.6)'; ctx.fillRect(g.l + g.pw, Math.round(y), 3, 1);
+    }
+  }
 
   // метки
   const labels = [];
@@ -1008,6 +1089,18 @@ function drawChart(ch) {
     ctx.beginPath(); ctx.moveTo(x, g.itY); ctx.lineTo(x, g.slY + g.slH); ctx.stroke();
   }
 }
+function drawIq(ctx, g, lo, xi, yF) {
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  let pen = false;
+  for (let k = 0; k < SPD; k++) {
+    const v = sim.iq[lo + k];
+    if (isNaN(v)) { pen = false; continue; }
+    const x = xi(k), y = yF(v / 100);
+    if (!pen) { ctx.moveTo(x, y); pen = true; } else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
 function forRuns(lo, pred, cb) {
   let start = -1;
   for (let k = 0; k <= SPD; k++) {
@@ -1029,6 +1122,8 @@ function showTip(ch, k, cx, cy) {
   tip.innerHTML = `
     <div class="t">День ${ch.d + 1} · ${fmtHM(clock(i))} <span class="k">(внутреннее ${fmtHM(REF_TMIN + sim.h[i])})</span></div>
     <div><span class="k">Состояние:</span> ${st}</div>
+    <div>${sw('#ff2d2d')}<span class="k">Интеллект:</span> ${isNaN(sim.iq[i]) ? '— (сон)' : `<b style="color:#ff6b6b">${sim.iq[i].toFixed(0)} %</b> <span class="k">(инерция −${(sim.pI[i] * 100).toFixed(0)} %, острый недосып −${(sim.pS[i] * 100).toFixed(0)} %, долг −${(sim.pZ[i] * 100).toFixed(0)} %, фаза −${(sim.pC[i] * 100).toFixed(0)} %)</span>`}</div>
+    <div><span class="k">Долг бодрствования:</span> ${sim.Z[i].toFixed(1)} ч</div>
     <div>${sw('#ffcc4d')}<span class="k">Свет:</span> ${env.toLocaleString('ru-RU')} лк${sim.sleep[i] && env > 0 ? ` (сквозь веки ${eff.toFixed(eff < 10 ? 1 : 0)} лк)` : ''}</div>
     <div>${sw(v >= 0 ? '#59d98e' : '#ff8a5c')}<span class="k">Сдвиг фазы:</span> ${v >= 0 ? '+' : '−'}${Math.abs(v * 60).toFixed(1)} мин/ч ${Math.abs(v) < 0.002 ? '' : v > 0 ? '(раньше)' : '(позже)'}</div>
     <div>${sw('#b48cff')}<span class="k">Мелатонин собственный:</span> ${sim.melE[i].toFixed(0)} пг/мл</div>
