@@ -112,6 +112,9 @@
         <div class="block-head">
           <h2>Исходный режим сна (до дня 1)</h2>
           <div class="row">
+            <select id="basePreset" title="Готовые режимы сна">
+              <option value="">Режим…</option>
+            </select>
             <button id="addPiece" class="blue">+ кусок сна</button>
           </div>
         </div>
@@ -129,14 +132,14 @@
           <span id="baseInfo" class="hint" style="margin:0"></span>
         </div>
         <div id="baseWarn" class="warn" style="display:none"></div>
-        <p class="hint">Куски могут лежать в любое время суток, в том числе днём. В исходном режиме сон проходит в темноте, бодрствование — при указанном свете.</p>
+        <p class="hint">Куски могут лежать в любое время суток, в том числе днём. В исходном режиме сон проходит в темноте, бодрствование — при указанном свете. Пока свет дней 1–6 не менялся вручную, он следует за исходным режимом.</p>
       </div>
       <div class="block">
         <div class="block-head">
           <h2>Интервалы света (дни 1–6)</h2>
           <div class="row">
             <select id="scenario" title="Готовые сценарии">
-              <option value="">Сценарий…</option>
+              <option value="">Сценарий света…</option>
             </select>
             <button id="addInt" class="primary">+ интервал</button>
           </div>
@@ -531,22 +534,26 @@ function baseLightIntervals(base) {
   return out;
 }
 const B = (pieces, day = 600, eve = 100) => ({ pieces, day, eve });
+const BASE_PRESETS = {
+  std: { name: 'Обычный: 23:00–07:00', base: B([{ start: 23, dur: 8 }]) },
+  owl: { name: 'Сова: 04:30–12:30, вечер при экранах', base: B([{ start: 4.5, dur: 8 }], 600, 120) },
+  split: { name: 'Дробный: 01:00–05:00 + 13:00–17:00', base: B([{ start: 1, dur: 4 }, { start: 13, dur: 4 }]) },
+  nap: { name: 'Ночь 00:00–05:00 + дневной сон 14:00–15:30', base: B([{ start: 0, dur: 5 }, { start: 14, dur: 1.5 }]) },
+  shift: { name: 'Ночная смена: сон 09:00–17:00', base: B([{ start: 9, dur: 8 }], 600, 300) },
+};
+// Сценарии света не меняют исходный режим и режим сна
 const SCENARIOS = {
-  base: { name: 'Обычный режим 23:00–07:00', base: B([{ start: 23, dur: 8 }]), light: 'base', mode: 'A' },
-  night: { name: 'Вечная ночь (света нет)', base: B([{ start: 23, dur: 8 }]), intervals: [], mode: 'A' },
-  now: { name: 'Из 23–07: экраны до 4:30, подъём 12:30', base: B([{ start: 23, dur: 8 }]), mode: 'A', intervals: [
+  base: { name: 'Свет как в исходном режиме', light: 'base' },
+  night: { name: 'Вечная ночь (света нет)', intervals: [] },
+  now: { name: 'Экраны до 04:30, подъём 12:30', intervals: [
     { start: 12.5, dur: 5.5, lux: 300 }, { start: 18, dur: 10.5, lux: 120 }] },
-  owl: { name: 'Сова: сон 04:30–12:30, вечер при экранах', base: B([{ start: 4.5, dur: 8 }], 600, 120), light: 'base', mode: 'A' },
-  goal: { name: 'Из совы: подъём 10:30 + прогулка, тусклый вечер', base: B([{ start: 4.5, dur: 8 }], 600, 120), mode: 'A', intervals: [
+  goal: { name: 'Подъём 10:30 + прогулка, тусклый вечер до 01:00', intervals: [
     { start: 10.5, dur: 1, lux: 250 }, { start: 11.5, dur: 0.5, lux: 5000 },
     { start: 12, dur: 6, lux: 400 }, { start: 18, dur: 7, lux: 60 }] },
-  lamp: { name: 'Из совы: то же + лампа 10 000 лк за завтраком', base: B([{ start: 4.5, dur: 8 }], 600, 120), mode: 'A', intervals: [
+  lamp: { name: 'То же + лампа 10 000 лк за завтраком', intervals: [
     { start: 10.5, dur: 0.5, lux: 10000 }, { start: 11, dur: 0.5, lux: 250 }, { start: 11.5, dur: 0.5, lux: 5000 },
     { start: 12, dur: 6, lux: 400 }, { start: 18, dur: 7, lux: 60 }] },
-  split: { name: 'Дробный сон 01:00–05:00 + 13:00–17:00', base: B([{ start: 1, dur: 4 }, { start: 13, dur: 4 }]), light: 'base', mode: 'C' },
-  siesta: { name: 'Ночь 00:00–05:00 + дневной сон 14:00–15:30', base: B([{ start: 0, dur: 5 }, { start: 14, dur: 1.5 }]), light: 'base', mode: 'C' },
-  shift: { name: 'Ночная смена: сон днём 09:00–17:00', base: B([{ start: 9, dur: 8 }], 600, 300), light: 'base', mode: 'C' },
-  mel: { name: 'Обычный режим + мелатонин в 18:30', base: B([{ start: 23, dur: 8 }]), light: 'base', mode: 'A', pills: [{ time: 18.5, day: 0 }] },
+  mel: { name: 'Свет исходного режима + мелатонин в 18:30', light: 'base', pills: [{ time: 18.5, day: 0 }] },
 };
 const LAYERS = [
   { key: 'melE', name: 'Мелатонин собственный', color: '#b48cff', on: true },
@@ -615,7 +622,11 @@ function save() {
 function load() {
   let d = null;
   try { d = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { d = null; }
-  if (!d) { applyScenario('base', false); return; }
+  if (!d) {
+    state.base = { pieces: DEFAULT_BASE.pieces.map(p => ({ id: uid(), ...p })), day: DEFAULT_BASE.day, eve: DEFAULT_BASE.eve };
+    applyScenario('base', false);
+    return;
+  }
   const num = (v, a, b, def) => (typeof v === 'number' && isFinite(v) ? Math.min(b, Math.max(a, v)) : def);
   state.intervals = (Array.isArray(d.intervals) ? d.intervals : []).map(o => ({
     id: uid(), start: mod(num(o.start, -48, 48, 0), 24), dur: num(o.dur, MIN_DUR, 24, 1), lux: num(o.lux, 1, 100000, 100),
@@ -635,16 +646,35 @@ function load() {
   state.eyelid = [0.01, 0.03, 0.1].includes(d.eyelid) ? d.eyelid : 0.03;
   if (d.layers) for (const l of LAYERS) if (typeof d.layers[l.key] === 'boolean') state.layers[l.key] = d.layers[l.key];
 }
+function lightFollowsBase() {
+  const ref = baseLightIntervals(state.base);
+  const cur = state.intervals;
+  if (ref.length !== cur.length) return false;
+  const key = o => Math.round(mod(o.start, 24) * 60) + '/' + Math.round(o.dur * 60) + '/' + o.lux;
+  const A = ref.map(key).sort(), Bk = cur.map(key).sort();
+  return A.every((v, k) => v === Bk[k]);
+}
+function changeBase(fn) {
+  const follow = lightFollowsBase();
+  fn();
+  if (follow) { state.intervals = baseLightIntervals(state.base).map(o => ({ id: uid(), ...o })); state.selected = null; }
+  syncControls();
+  commit();
+}
+function applyBasePreset(key) {
+  const pr = BASE_PRESETS[key];
+  if (!pr) return;
+  changeBase(() => {
+    state.base = { pieces: pr.base.pieces.map(p => ({ id: uid(), ...p })), day: pr.base.day, eve: pr.base.eve };
+  });
+}
 function applyScenario(key, doCommit = true) {
   const sc = SCENARIOS[key];
   if (!sc) return;
-  state.base = { pieces: sc.base.pieces.map(p => ({ id: uid(), ...p })), day: sc.base.day, eve: sc.base.eve };
-  const iv = sc.light === 'base' ? baseLightIntervals(sc.base) : (sc.intervals || []);
+  const iv = sc.light === 'base' ? baseLightIntervals(state.base) : (sc.intervals || []);
   state.intervals = iv.map(o => ({ id: uid(), ...o }));
   state.pills = (sc.pills || []).map(o => ({ id: uid(), ...o }));
-  if (sc.mode) state.mode = sc.mode;
   state.selected = null;
-  syncControls();
   if (doCommit) commit();
 }
 
@@ -1204,6 +1234,15 @@ function timeRowHandler(list, prefix) {
     const tr = e.target.closest('tr'); if (!tr) return;
     const it = list().find(o => o.id === +tr.dataset.id); if (!it) return;
     const t = e.target, c = t.classList;
+    if (prefix === 'b') {
+      t.blur();
+      changeBase(() => {
+        if (c.contains('b-start')) { const v = parseHM(t.value); if (v !== null) it.start = v; }
+        else if (c.contains('b-end')) { const v = parseHM(t.value); if (v !== null) { let dd = mod(v - it.start, 24); if (dd < MIN_DUR) dd = 24; it.dur = dd; } }
+        else if (c.contains('b-dur')) { const v = parseHM(t.value); if (v !== null) it.dur = Math.max(MIN_DUR, v); }
+      });
+      return;
+    }
     if (c.contains(prefix + '-start')) { const v = parseHM(t.value); if (v !== null) it.start = v; }
     else if (c.contains(prefix + '-end')) { const v = parseHM(t.value); if (v !== null) { let dd = mod(v - it.start, 24); if (dd < MIN_DUR) dd = 24; it.dur = dd; } }
     else if (c.contains(prefix + '-dur')) { const v = parseHM(t.value); if (v !== null) it.dur = Math.max(MIN_DUR, v); }
@@ -1236,21 +1275,20 @@ function bindControls() {
     }
   });
 
-  $('#addPiece').onclick = () => {
-    state.base.pieces.push({ id: uid(), start: 14, dur: 1 });
-    commit();
-  };
+  $('#addPiece').onclick = () => changeBase(() => { state.base.pieces.push({ id: uid(), start: 14, dur: 1 }); });
+  const bp = $('#basePreset');
+  for (const [k, v] of Object.entries(BASE_PRESETS)) bp.insertAdjacentHTML('beforeend', `<option value="${k}">${v.name}</option>`);
+  bp.onchange = () => { if (bp.value) applyBasePreset(bp.value); bp.value = ''; };
   const kb = $('#pieceTable tbody');
   kb.addEventListener('change', timeRowHandler(() => state.base.pieces, 'b'));
   kb.addEventListener('click', e => {
     if (!e.target.closest('.b-del')) return;
     const id = +e.target.closest('tr').dataset.id;
-    state.base.pieces = state.base.pieces.filter(o => o.id !== id);
-    commit();
+    changeBase(() => { state.base.pieces = state.base.pieces.filter(o => o.id !== id); });
   });
   const bd = $('#baseDay'), be = $('#baseEve');
-  bd.onchange = () => { const v = +bd.value; if (isFinite(v) && v > 0) state.base.day = clampLux(v); bd.value = state.base.day; commit(); };
-  be.onchange = () => { const v = +be.value; if (isFinite(v) && v > 0) state.base.eve = clampLux(v); be.value = state.base.eve; commit(); };
+  bd.onchange = () => { const v = +bd.value; changeBase(() => { if (isFinite(v) && v > 0) state.base.day = clampLux(v); }); };
+  be.onchange = () => { const v = +be.value; changeBase(() => { if (isFinite(v) && v > 0) state.base.eve = clampLux(v); }); };
   $('#copyBase').onclick = () => {
     state.intervals = baseLightIntervals(state.base).map(o => ({ id: uid(), ...o }));
     state.selected = null;
