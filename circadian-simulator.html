@@ -66,6 +66,12 @@
   .ep .g { color: var(--muted); }
   .tag { font-size: 11px; padding: 0 5px; border-radius: 4px; background: #2a2412; color: var(--accent); margin-left: 4px; }
   .tag.sched { background: #161c38; color: #aab6ff; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 6px; }
+  .tool.on { border-color: var(--accent); color: var(--accent); background: #2a2412; }
+  .tool[data-tool="may"].on { border-color: #59d98e; color: #59d98e; background: #12291c; }
+  .tool[data-tool="must"].on { border-color: #a594ff; color: #a594ff; background: #1d1838; }
+  .tool[data-tool="no"].on { border-color: #ff6b6b; color: #ff6b6b; background: #2e1414; }
+  .ovr { font-size: 12.5px; color: var(--muted); display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
   .legend { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
   .chip {
     display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
@@ -128,7 +134,7 @@
           <label class="row" style="gap:4px">остальное время <input type="number" id="baseEve" min="1" max="100000"> лк</label>
         </div>
         <div class="row" style="margin-top:8px">
-          <button id="copyBase">Свет исходного режима → дни 1–6</button>
+          <button id="copyBase" title="Заменяет все наборы света одним — светом исходного режима">Свет исходного режима → дни 1–6</button>
           <span id="baseInfo" class="hint" style="margin:0"></span>
         </div>
         <div id="baseWarn" class="warn" style="display:none"></div>
@@ -136,8 +142,9 @@
       </div>
       <div class="block">
         <div class="block-head">
-          <h2>Интервалы света (дни 1–6)</h2>
+          <h2>Интервалы света</h2>
           <div class="row">
+            <select id="setSel" title="Какой набор света редактируется"></select>
             <select id="scenario" title="Готовые сценарии">
               <option value="">Сценарий света…</option>
             </select>
@@ -148,7 +155,7 @@
           <thead><tr><th>Начало</th><th>Конец</th><th>Длительность</th><th>Яркость, лк</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
-        <p class="hint">Прямоугольник на графике «День 1» рисуется протягиванием мыши: ширина — время, высота — яркость (шкала логарифмическая). Края меняют длительность, верхняя кромка — яркость, середина сдвигает интервал. Двойной клик или правая кнопка мыши удаляют интервал. Без интервалов — вечная ночь.</p>
+        <p class="hint">Набор света дня 1 действует на все дни. Галочка «свой свет» в заголовке любого другого дня копирует текущий свет в отдельный набор, который действует с этого дня и далее, до следующего дня с собственным набором. Прямоугольник рисуется на редактируемом графике протягиванием мыши (инструмент «Свет»): ширина — время, высота — яркость (шкала логарифмическая). Края меняют длительность, верхняя кромка — яркость, середина сдвигает интервал. Двойной клик или правая кнопка мыши удаляют. Без интервалов — вечная ночь.</p>
       </div>
       <div class="block">
         <div class="block-head">
@@ -168,11 +175,11 @@
     <div class="col">
       <div class="block">
         <h2 style="margin-bottom:6px">Параметры</h2>
-        <label class="ctl"><span>Сон в днях 1–6</span>
+        <label class="ctl"><span>Сон в днях 1–6 (вне зон)</span>
           <select id="mode">
-            <option value="A">Свет ≥ 10 лк не даёт спать; в темноте — сон, когда клонит</option>
+            <option value="A">Свет ≥ 10 лк = бодрствование; в темноте — сон, когда клонит; при сильной сонливости — сон и при свете</option>
             <option value="B">Сон, когда клонит; свет проходит сквозь веки</option>
-            <option value="C">Постель по исходному режиму: сон только в эти часы и только когда клонит</option>
+            <option value="C">Постель по исходному режиму: в эти часы — сон, когда клонит; вне их — только сон против воли</option>
           </select>
         </label>
         <label class="ctl"><span>Собственный период часов τ</span>
@@ -188,6 +195,17 @@
         </label>
       </div>
       <div class="block">
+        <div class="block-head">
+          <h2>Зоны сна (все дни)</h2>
+          <div class="row"><button id="addZone" class="blue">+ зона</button></div>
+        </div>
+        <table id="zoneTable">
+          <thead><tr><th>Тип</th><th>Начало</th><th>Конец</th><th>Длительность</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="hint"><span style="color:#59d98e">Можно спать</span> — сон, если сильно клонит (сонливость ≥ ~65 %), даже при свете: человек ложится. <span style="color:#a594ff">Нужно спать</span> — постель с выключенным светом: сон, как только получается заснуть; конец зоны — подъём. <span style="color:#ff6b6b">Нельзя спать</span> — работа: будит и не даёт уснуть; уснуть можно только против воли при очень сильной сонливости. Зоны рисуются на любом графике инструментами над графиками; перекрытия решает приоритет «нельзя» → «нужно» → «можно». Вне зон действует выбранный режим сна.</p>
+      </div>
+      <div class="block">
         <h2 style="margin-bottom:6px">Итоги по дням</h2>
         <div class="tscroll"><table id="summary">
           <thead><tr><th>День</th><th>Эпизоды сна <span style="font-weight:400">(клонит → сон)</span></th><th>Всего</th><th style="color:#ff6b6b">Интеллект</th><th>Tmin</th><th>DLMO</th><th>Сдвиг часов</th></tr></thead>
@@ -198,6 +216,13 @@
     </div>
   </section>
 
+  <div class="toolbar" id="toolbar">
+    <span style="color:var(--muted)">Рисование на графиках:</span>
+    <button data-tool="light" class="tool">☀ Свет</button>
+    <button data-tool="may" class="tool">Можно спать</button>
+    <button data-tool="must" class="tool">Нужно спать</button>
+    <button data-tool="no" class="tool">Нельзя спать</button>
+  </div>
   <div class="legend" id="legend"></div>
   <section id="days"></section>
 
@@ -207,10 +232,12 @@
       <ul>
         <li><b>Красная линия «Интеллект»</b> — оценка выраженности сложных когнитивных функций в процентах от потенциала (правая шкала). Во сне не рисуется. Подробности — в разделе ниже.</li>
         <li><b>Жёлтые прямоугольники</b> — свет, левая шкала в люксах (1 → 100 000, логарифмическая).</li>
-        <li><b>Синяя заливка и полоса «сон»</b> — сон по модели. Бледно-синяя штриховка — время в постели без сна (режим «постель по исходному режиму»). Пунктирные рамки в полосе — куски исходного режима.</li>
+        <li><b>Голубая линия «Сонливость»</b> — насколько хочется спать прямо сейчас (правая шкала): 50 % — начинает клонить в сон, 100 % — сон наступает против воли даже при свете. Во сне не рисуется.</li>
+        <li><b>Полоса «зоны»</b> внизу — зоны сна: зелёная — можно спать, фиолетовая — нужно спать, красная штриховка — нельзя спать. Края зоны тянутся мышью, середина сдвигает, двойной клик удаляет.</li>
+        <li><b>Синяя заливка и полоса «сон»</b> — сон по модели. Розовым — сон против воли (при свете). Бледно-синяя штриховка — время в постели без сна (режим «постель по исходному режиму»). Пунктирные рамки в полосе — куски исходного режима.</li>
         <li><b>Верхняя полоса «вн. время»</b> — биологическое время: который час по часам организма в шкале типичного человека со сном 23:00–07:00 (у него минимум температуры приходится на 04:30). Если цифры полосы отстают от оси, часы сдвинуты позже.</li>
         <li><b>Полоса «фаза»</b> под графиком — мгновенная скорость сдвига часов от света и мелатонина: зелёное вверх — сдвиг раньше, оранжевое вниз — позже. Шкала сжатая, точное значение — в подсказке.</li>
-        <li><b>Давление сна S</b> (белая линия) растёт во время бодрствования и падает во сне. Верхний пунктир — порог засыпания, нижний — порог пробуждения; оба колеблются вместе с часами. Пересечение S с верхним порогом — «клонит в сон», с нижним — самостоятельное пробуждение.</li>
+        <li><b>Давление сна S</b> (белая линия) — физиологическая потребность во сне (гомеостатический процесс), а не ощущение. Она растёт во время бодрствования, насыщаясь к 1, и падает во сне. Ощущаемая сонливость — это S относительно порогов, которые качаются вместе с часами. Верхний пунктир — порог засыпания, нижний — порог пробуждения; оба колеблются вместе с часами. Пересечение S с верхним порогом — «клонит в сон», с нижним — самостоятельное пробуждение.</li>
         <li><b>Мелатонин</b> — корневая шкала до 300 пг/мл, чтобы и собственный (~70), и таблеточный (~250) уровни были видны.</li>
         <li>Подсказка при наведении курсора показывает все значения в этот момент.</li>
       </ul>
@@ -219,11 +246,19 @@
       <summary>Один цикл или несколько: дробный сон и дневной сон</summary>
       <p><b>Часы — один цикл.</b> Центральные часы человека (супрахиазматическое ядро, SCN) дают один цикл длиной около суток, поэтому маркеры фазы (Tmin, DLMO) встречаются по одному разу за цикл. Дробный сон второго цикла не создаёт. Часы подстраиваются под общий световой режим суток, а куски сна различаются тем, на какую фазу цикла они попадают.</p>
       <p><b>Сон дробится через давление сна.</b> Давление сна S падает в каждом куске, поэтому два куска по 4 ч частично заменяют один 8-часовой. Насколько хорошо — зависит от фазы: кусок внутри биологической ночи (окно мелатонина, около минимума температуры) проходит легко, а кусок в «запретной зоне» перед привычным засыпанием — с трудом. Ночная смена со сном днём — тот же случай: днём модель часто показывает раннее пробуждение и время в постели без сна.</p>
-      <p><b>Почему днём бывает сонливость.</b> Склонность ко сну в течение суток неоднородна: максимум — около минимума температуры, минимум («запретная зона») — за пару часов до привычного засыпания, а после полудня рост бодрости делает паузу (послеобеденный спад). В модели эта форма задана второй, 12-часовой гармоникой порогов сна <span class="est">оценка амплитуды и положения</span>. Это не вторые часы, а форма кривой одного цикла.</p>
+      <p><b>Почему днём бывает сонливость.</b> Склонность ко сну в течение суток неоднородна: максимум — около минимума температуры, минимум («запретная зона») — за пару часов до привычного засыпания, а после полудня есть второй, меньший пик сонливости. В модели эта форма задана гармониками порогов сна <span class="est">оценка амплитуды и положения</span>. Это не вторые часы, а форма кривой одного цикла.</p>
       <p><b>Темнота и постель облегчают засыпание.</b> Лёжа в темноте, человек засыпает при меньшем давлении сна, чем нужно для спонтанной сонливости. В модели порог засыпания в темноте (или в постели в режиме «постель по исходному режиму») снижен на 0,08 <span class="est">оценка</span>. Поэтому сон может начаться раньше метки «клонит в сон». Этот же механизм в вечной ночи даёт дробление сна на два куска в части суток — качественно как у Wehr (1992), где снижение порога в темноте предлагалось как одно из объяснений.</p>
       <p><b>Бывает ли настоящее расщепление.</b> У хомяков при постоянном свете активность разделяется на две части с интервалом около 12 ч, и левое и правое SCN колеблются в противофазе — de la Iglesia et al. (Де ла Иглесиа и соавт.), 2000. <a href="https://doi.org/10.1126/science.290.5492.799" target="_blank" rel="noopener">DOI</a> У людей такого не показано.</p>
       <p><b>Длинная ночь делит сон сама.</b> Wehr (Вер), 1992: при 14 ч темноты в сутки сон людей распадался на два куска по несколько часов с бодрствованием 1–3 ч между ними, а окно мелатонина расширялось. Цикл при этом один, только «ночь» у него длиннее. <a href="https://doi.org/10.1111/j.1365-2869.1992.tb00019.x" target="_blank" rel="noopener">DOI</a></p>
       <p><b>Ночной сон + дневной кусок в экспериментах.</b> Lo et al. (Ло и соавт.): у подростков 5 ч ночью + 1,5 ч днём против 6,5 ч подряд дали меньше провалов внимания, но хуже переносимость глюкозы (2019). <a href="https://doi.org/10.1093/sleep/zsz037" target="_blank" rel="noopener">DOI</a> При сумме 8 ч дробный и непрерывный режимы оказались сопоставимы по основным когнитивным показателям (2020). <a href="https://doi.org/10.1093/sleep/zsaa129" target="_blank" rel="noopener">DOI</a></p>
+    </details>
+    <details>
+      <summary>Сонливость волнами и сон против воли</summary>
+      <p><b>Почему после бессонной ночи спать хочется волнами.</b> Потребность во сне (давление S) после суток без сна почти не растёт дальше: она насыщается. Меняется другое — циркадный сигнал бодрости, который весь день ей противостоит. Dijk &amp; Czeisler (Дейк и Цейслер), 1994: часы и давление сна вносят примерно равный вклад, и их фазы подобраны так, чтобы днём удерживать бодрствование, а ночью — сон. <a href="https://doi.org/10.1016/0304-3940(94)90841-9" target="_blank" rel="noopener">DOI</a></p>
+      <p>Lavie (Лави), 1986: после бессонной ночи сонливость в течение суток двугорбая — главный гребень ночью и второй пик в середине дня, а между ними «запретная зона» примерно в 20:00–22:00, где уснуть трудно даже при недосыпе. Вход в ночной сон («ворота сна») происходит резко, по принципу «всё или ничего». <a href="https://doi.org/10.1016/0013-4694(86)90123-9" target="_blank" rel="noopener">DOI</a> Strogatz, Kronauer, Czeisler (Строгац, Кронауэр, Цейслер), 1987: засыпания при свободном ходе часов собираются у минимума температуры и через 9–10 ч после него, а за 1–3 ч до привычного отбоя есть зона, где люди почти не засыпают. <a href="https://doi.org/10.1152/ajpregu.1987.253.1.R172" target="_blank" rel="noopener">DOI</a></p>
+      <p>«Перетерпел час — и спать расхотелось» вечером — это вход в зону поддержания бодрствования: если сонливость пришла раньше неё (например, днём после недосыпа или вечером у человека со сдвинутыми часами), циркадный сигнал бодрости догоняет давление сна. В модели это видно как падение голубой линии без всякого сна. Кратковременные колебания на масштабе минут (ультрадианные волны, отвлечение, движение) в модели не учтены: их доказательная база слабее.</p>
+      <p><b>Сон против воли.</b> Если сонливость превышает порог засыпания на большой запас, сон наступает при любом свете — в модели запас равен 0,30 и растёт на 0,03 с каждой декадой люксов (при 100 лк — 0,36, при 10 000 лк — 0,42) <span class="est">оценка</span>. Такой сон не прерывается светом и подъёмом по расписанию, пока давление сна не опустится ниже порога засыпания. Поэтому неделя «без сна» в модели превращается в рваный сон по 2–3 часа около минимума температуры, а не в бесконечное падение. В реальности задолго до этого появляются микросны длиной в секунды: Doran et al. (Доран и соавт.), 2001 — при полном недосыпе работа становится нестабильной, перемежаясь нормальными реакциями и провалами, «ни бодрствование, ни сон». <a href="https://pubmed.ncbi.nlm.nih.gov/11330205/" target="_blank" rel="noopener">PubMed</a> Микросны в модели не изображаются, их влияние входит в провал интеллекта.</p>
+      <p><b>Почему дневной сон может «украсть» ночь.</b> Длинный сон рано вечером сбрасывает давление сна, а ночью часы уже не помогают засыпанию — в модели это видно как высокий порог и низкое S после такого сна.</p>
     </details>
     <details>
       <summary>Интеллект: что показывает красная линия и насколько ей можно верить</summary>
@@ -253,7 +288,7 @@
       <h4>2. Собственный период τ</h4>
       <p>По умолчанию 24,2 ч — среднее у людей по Czeisler et al. (Цейслер и соавт.), 1999. Длинный τ соответствует «совам», короткий — «жаворонкам». <a href="https://doi.org/10.1126/science.284.5423.2177" target="_blank" rel="noopener">DOI</a></p>
       <h4>3. Сон: двухпроцессная модель — Daan, Beersma, Borbély (Даан, Бирсма, Борбели), 1984</h4>
-      <p>Давление сна растёт с постоянной времени 18,2 ч и падает во сне с постоянной 4,2 ч. Пороги засыпания и пробуждения колеблются вместе с фазой часов: максимум (зона, где уснуть трудно) приходится за 7,5 ч до Tmin, минимум — около Tmin; форма с второй гармоникой даёт послеобеденное плато <span class="est">оценка формы</span>. В темноте порог засыпания ниже на 0,08 <span class="est">оценка</span>. Средние уровни порогов откалиброваны на эталонном человеке: при режиме 23:00–07:00 он засыпает в 23:00 и просыпается в 07:00. <a href="https://doi.org/10.1152/ajpregu.1984.246.2.R161" target="_blank" rel="noopener">DOI</a></p>
+      <p>Давление сна растёт с постоянной времени 18,2 ч и падает во сне с постоянной 4,2 ч. Пороги засыпания и пробуждения колеблются вместе с фазой часов: максимум («запретная зона», где уснуть трудно) приходится за 7,5 ч до Tmin, главный минимум — около Tmin, второй, меньший минимум — через ~9–10 ч после Tmin (послеобеденная сонливость), как у Lavie (1986) и Strogatz et al. (1987). Форма задана тремя гармониками <span class="est">оценка амплитуд</span>. В темноте порог засыпания ниже на 0,08 <span class="est">оценка</span>; при сильной сонливости сон наступает и при свете (см. раздел о сне против воли). Средние уровни порогов откалиброваны на эталонном человеке: при режиме 23:00–07:00 он засыпает в 23:00 и просыпается в 07:00. <a href="https://doi.org/10.1152/ajpregu.1984.246.2.R161" target="_blank" rel="noopener">DOI</a></p>
       <h4>4. Исходный режим</h4>
       <p>Часы 60 суток живут в заданном режиме: куски сна в темноте, бодрствование при свете 08–18 и в остальное время. Фаза, к которой они приходят, — результат модели, а не заданное значение. Отсчёт фазы привязан к эталону: режим 23:00–07:00 при 600/100 лк и τ = 24,2 ч даёт Tmin в 04:30.</p>
       <h4>5. Собственный мелатонин</h4>
@@ -344,20 +379,35 @@ const THETA_TMIN = (function () {
 function hOf(x, xc) { return wrap12((thetaOf(x, xc) - THETA_TMIN) * 24 / TWO_PI); }
 
 // --- Двухпроцессная модель (Daan, Beersma, Borbély 1984) ---
-const TP = { tw: 18.2, ts: 4.2, A: 0.10, hPeak: -7.5, a2: 0.5, psi: 4.32, dDark: 0.08 };
-// Форма циркадного процесса: основная гармоника + вторая (послеобеденное плато бодрости).
-// Сдвиг подобран так, чтобы максимум («запретная зона для сна») был за 7,5 ч до Tmin.
+const TP = {
+  tw: 18.2, ts: 4.2, A: 0.10, hPeak: -7.5, dDark: 0.08,
+  harm: [[1, 0], [0.65, 5.28], [0.06, 0.20]],      // форма: ночной гребень, утренний подъём, послеобеденный пик, вечерняя запретная зона
+  invBase: 0.30, invDec: 0.03, mayExtra: 0.10, noExtra: 0.10,                      // непроизвольный сон: запас над порогом засыпания и его рост на декаду люксов
+};
+function circRawX(x) { let v = 0; TP.harm.forEach(([a, p], k) => { v += a * Math.cos((k + 1) * x + p); }); return v; }
 const C_SHAPE = (function () {
-  let mx = -9, am = 0;
-  for (let x = 0; x < TWO_PI; x += 0.0005) {
-    const v = Math.cos(x) + TP.a2 * Math.cos(2 * x + TP.psi);
-    if (v > mx) { mx = v; am = x; }
-  }
-  return { am, mx };
+  let mx = -9, mn = 9, am = 0;
+  for (let x = 0; x < TWO_PI; x += 0.0005) { const v = circRawX(x); if (v > mx) { mx = v; am = x; } if (v < mn) mn = v; }
+  return { am, mx, mn };
 })();
+// −1 … +1: +1 — «запретная зона» за 7,5 ч до Tmin, −1 — около Tmin
 function circC(h) {
-  const x = C_SHAPE.am + TWO_PI * (h - TP.hPeak) / 24;
-  return (Math.cos(x) + TP.a2 * Math.cos(2 * x + TP.psi)) / C_SHAPE.mx;
+  const v = circRawX(C_SHAPE.am + TWO_PI * (h - TP.hPeak) / 24);
+  return 2 * (v - C_SHAPE.mn) / (C_SHAPE.mx - C_SHAPE.mn) - 1;
+}
+// запас сонливости, при котором человек засыпает против воли при данном свете
+// зоны: 'no' — нельзя спать, 'must' — нужно спать (постель), 'may' — можно спать, если сильно клонит
+const ZONE_PRI = { no: 3, must: 2, may: 1 };
+function zoneAt(zones, clk) {
+  let best = null;
+  for (const z of zones) if (z.dur > 0 && mod(clk - z.start, 24) < z.dur - 1e-9 && (!best || ZONE_PRI[z.type] > ZONE_PRI[best])) best = z.type;
+  return best;
+}
+function invMargin(I) { return TP.invBase + TP.invDec * Math.log10(1 + Math.max(0, I)); }
+const INV_REF = invMargin(100);
+function feltSleepiness(S, H, L) {
+  if (S < H) return Math.max(0, 50 * (S - L) / Math.max(1e-6, H - L));
+  return Math.min(100, 50 + 50 * (S - H) / INV_REF);
 }
 (function calibrateThresholds() {
   const Dw = Math.exp(-16 / TP.tw), Ds = Math.exp(-8 / TP.ts);
@@ -477,7 +527,7 @@ function simulate(cfg) {
   const F = () => new Float32Array(N);
   const o = {
     N, env: F(), eff: F(), sleep: new Uint8Array(N), h: F(), S: F(), H: F(), L: F(), C: F(),
-    melE: F(), melX: F(), cbt: F(), cort: F(), v: F(), sens: F(), iq: F(), pS: F(), pZ: F(), pC: F(), pI: F(), Z: F(), events: [], baseTmin: init.tminClock,
+    melE: F(), melX: F(), cbt: F(), cort: F(), v: F(), sens: F(), iq: F(), felt: F(), pS: F(), pZ: F(), pC: F(), pI: F(), Z: F(), events: [], baseTmin: init.tminClock,
   };
   const pills = new Map();
   for (let d = 0; d < DAYS; d++) for (const p of cfg.pills) {
@@ -488,12 +538,17 @@ function simulate(cfg) {
   let asleep = init.asleep, gate = false, S = init.S, melE = init.melE, melX = 0, gut = 0, mask = init.mask;
   let lastWake = init.lastWake, prevH = null;
   const db = { ...init.db };
+  let invol = false;
   if (asleep) o.events.push({ i: 0, type: 'sleep', carried: true });
   const dA = [0, 0, 0], d0 = [0, 0, 0];
+  const dayLists = cfg.dayLight || Array.from({ length: DAYS }, () => cfg.intervals || []);
+  const zones = cfg.zones || [];
+  let prevBed = false;
   for (let i = 0; i < N; i++) {
     const t = i * DT, clk = mod(AXIS0 + t, 24);
-    const env = luxAt(cfg.intervals, clk);
-    const bed = cfg.mode === 'C' && covers(cfg.base.pieces, clk);
+    const env = luxAt(dayLists[Math.floor(i / SPD)], clk);
+    const zone = zoneAt(zones, clk);
+    const bed = zone === 'must' || (zone === null && cfg.mode === 'C' && covers(cfg.base.pieces, clk));
     if (pills.has(i)) { gut += DOSE * pills.get(i); o.events.push({ i, type: 'pill' }); }
     const x = s[0], xc = s[1], r2 = x * x + xc * xc;
     const h = hOf(x, xc);
@@ -502,22 +557,35 @@ function simulate(cfg) {
     const H = TP.H0 + TP.A * Cv - MEL_SLEEP * Math.min(1, mx);
     const L = TP.L0 + TP.A * Cv;
 
+    const Hinv = H + invMargin(env) + (zone === 'no' ? TP.noExtra : 0);
     if (asleep) {
       let why = null;
+      const overwhelmed = S >= H;     // пока давление сна выше порога засыпания, свет и подъём по режиму не будят
       if (S <= L) why = 'self';
-      else if (cfg.mode === 'A' && env >= WAKE_LUX) why = 'light';
-      else if (cfg.mode === 'C' && !bed) why = 'sched';
+      else if (zone === 'no') { if (S < Hinv) why = 'zone'; }
+      else if (zone === 'must' || zone === 'may') why = null;
+      else if (prevBed && !bed && !overwhelmed) why = 'sched';
+      else if (cfg.mode === 'A' && env >= WAKE_LUX && !overwhelmed) why = 'light';
+      else if (cfg.mode === 'C' && !bed && !overwhelmed) why = 'sched';
       if (why) {
         asleep = false; gate = false; lastWake = t; debtWake(db, t);
         o.events.push({ i, type: 'wake', why, would: why === 'self' ? null : projectWake(i, S, h) });
       }
     } else {
       if (S >= H) { if (!gate) { gate = true; o.events.push({ i, type: 'gate' }); } } else gate = false;
-      const can = cfg.mode === 'A' ? env < WAKE_LUX : cfg.mode === 'B' ? true : bed;
-      const dark = cfg.mode === 'C' ? bed : env < WAKE_LUX;
-      if (can && S >= H - (dark ? TP.dDark : 0)) { asleep = true; debtSleep(db, t); o.events.push({ i, type: 'sleep' }); }
+      let can, thr;
+      if (zone === 'no') { can = false; thr = 9; }
+      else if (zone === 'must') { can = true; thr = H - TP.dDark; }
+      else if (zone === 'may') { can = true; thr = H + TP.mayExtra; }
+      else {
+        can = cfg.mode === 'A' ? env < WAKE_LUX : cfg.mode === 'B' ? true : bed;
+        thr = H - ((cfg.mode === 'C' ? bed : env < WAKE_LUX) ? TP.dDark : 0);
+      }
+      if (can && S >= thr) { asleep = true; invol = false; debtSleep(db, t); o.events.push({ i, type: 'sleep' }); }
+      else if (S >= Hinv) { asleep = true; invol = true; debtSleep(db, t); o.events.push({ i, type: 'sleep', invol: true }); }
     }
 
+    prevBed = bed;
     const I = asleep || bed ? env * cfg.eyelid : env;
     deriv(x, xc, s[2], I, cfg.tau, dA);
     deriv(x, xc, s[2], 0, cfg.tau, d0);
@@ -537,13 +605,14 @@ function simulate(cfg) {
     const tw = t - lastWake;
     const car = tw >= 0 && tw < 3 ? 160 * (tw / 0.6) * Math.exp(1 - tw / 0.6) : 0;
 
-    o.env[i] = env; o.eff[i] = I; o.sleep[i] = asleep ? 1 : bed ? 2 : 0; o.h[i] = h;
+    o.env[i] = env; o.eff[i] = I; o.sleep[i] = asleep ? (invol ? 3 : 1) : bed ? 2 : 0; o.h[i] = h;
     o.S[i] = S; o.H[i] = H; o.L[i] = L; o.C[i] = Cv;
     o.melE[i] = melE; o.melX[i] = melX;
     o.cbt[i] = 36.6 + 0.6 * fCBT(h) + mask - 0.1 * Math.min(1, mx);
     o.cort[i] = 70 + 330 * fCort(h) + car;
     o.v[i] = (dthL + melRate) * 24 / TWO_PI;
     o.sens[i] = 1 - s[2];
+    o.felt[i] = asleep ? NaN : feltSleepiness(S, H, L);
     if (asleep) { o.iq[i] = NaN; o.pS[i] = o.pZ[i] = o.pC[i] = o.pI[i] = 0; }
     else {
       const cg = cognition(S, h, db, t - lastWake);
@@ -567,7 +636,7 @@ function simulate(cfg) {
   let cur = null, lastGate = null;
   for (const e of o.events) {
     if (e.type === 'gate') lastGate = e.i;
-    else if (e.type === 'sleep') { cur = { on: e.i, gate: lastGate, carried: !!e.carried }; lastGate = null; }
+    else if (e.type === 'sleep') { cur = { on: e.i, gate: lastGate, carried: !!e.carried, invol: !!e.invol }; lastGate = null; }
     else if (e.type === 'wake' && cur) { cur.off = e.i; cur.why = e.why; cur.would = e.would; eps.push(cur); cur = null; }
   }
   if (cur) { cur.off = null; eps.push(cur); }
@@ -618,6 +687,7 @@ const SCENARIOS = {
 };
 const LAYERS = [
   { key: 'iq', name: 'Интеллект', color: '#ff2d2d', on: true },
+  { key: 'felt', name: 'Сонливость (ощущаемая)', color: '#3fd0ff', on: true },
   { key: 'melE', name: 'Мелатонин собственный', color: '#b48cff', on: true },
   { key: 'melX', name: 'Мелатонин из таблетки', color: '#ff7ad9', on: true },
   { key: 'cbt', name: 'Температура ядра тела', color: '#ff8a5c', on: true },
@@ -633,11 +703,34 @@ const LAYERS = [
 let uidN = 1;
 const uid = () => uidN++;
 const state = {
-  intervals: [], pills: [], mode: 'A', tau: 24.2, eyelid: 0.03,
+  lightSets: { 1: [] }, activeSet: 1, zones: [], tool: 'light',
+  pills: [], mode: 'A', tau: 24.2, eyelid: 0.03,
   base: { pieces: [], day: 600, eve: 100 },
   layers: Object.fromEntries(LAYERS.map(l => [l.key, l.on])),
   pillMode: false, pillRepeat: true, selected: null,
 };
+// state.intervals — редактируемый сейчас набор света
+Object.defineProperty(state, 'intervals', {
+  get() { if (!state.lightSets[state.activeSet]) state.activeSet = 1; return state.lightSets[state.activeSet]; },
+  set(v) { state.lightSets[state.activeSet] = v; },
+});
+const setKeys = () => Object.keys(state.lightSets).map(Number).sort((a, b) => a - b);
+function setKeyFor(d) { let k = 1; for (const key of setKeys()) if (key <= d + 1) k = key; return k; }
+const effectiveSet = d => state.lightSets[setKeyFor(d)];
+const isEditable = d => d === 0 || state.lightSets[d + 1] !== undefined;
+function setRange(key) { const ks = setKeys(), nx = ks.find(k => k > key); const last = nx ? nx - 1 : DAYS; return last === key ? `день ${key}` : `дни ${key}–${last}`; }
+function toggleOverride(d, on) {
+  const key = d + 1;
+  if (on && !state.lightSets[key]) {
+    state.lightSets[key] = effectiveSet(d).map(({ start, dur, lux }) => ({ id: uid(), start, dur, lux }));
+    state.activeSet = key;
+  } else if (!on && key > 1) {
+    delete state.lightSets[key];
+    if (state.activeSet === key) state.activeSet = setKeyFor(d);
+  }
+  state.selected = null;
+  commit();
+}
 let sim = null, dpr = 1, drag = null, hover = null, rafPending = false;
 const charts = [];
 
@@ -670,11 +763,12 @@ function roundLux(v) {
 const clampLux = v => Math.min(100000, Math.max(1, v));
 
 // ----- persistence -----
-const LS = 'circadian-sim-v2';
+const LS = 'circadian-sim-v3', LS_OLD = 'circadian-sim-v2';
 function save() {
   try {
     localStorage.setItem(LS, JSON.stringify({
-      intervals: state.intervals.map(({ start, dur, lux }) => ({ start, dur, lux })),
+      lightSets: Object.fromEntries(setKeys().map(k => [k, state.lightSets[k].map(({ start, dur, lux }) => ({ start, dur, lux }))])),
+      zones: state.zones.map(({ type, start, dur }) => ({ type, start, dur })),
       pills: state.pills.map(({ time, day }) => ({ time, day })),
       base: { pieces: state.base.pieces.map(({ start, dur }) => ({ start, dur })), day: state.base.day, eve: state.base.eve },
       mode: state.mode, tau: state.tau, eyelid: state.eyelid, layers: state.layers,
@@ -683,15 +777,24 @@ function save() {
 }
 function load() {
   let d = null;
-  try { d = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { d = null; }
+  try { d = JSON.parse(localStorage.getItem(LS) || localStorage.getItem(LS_OLD) || 'null'); } catch (e) { d = null; }
   if (!d) {
     state.base = { pieces: DEFAULT_BASE.pieces.map(p => ({ id: uid(), ...p })), day: DEFAULT_BASE.day, eve: DEFAULT_BASE.eve };
     applyScenario('base', false);
     return;
   }
   const num = (v, a, b, def) => (typeof v === 'number' && isFinite(v) ? Math.min(b, Math.max(a, v)) : def);
-  state.intervals = (Array.isArray(d.intervals) ? d.intervals : []).map(o => ({
-    id: uid(), start: mod(num(o.start, -48, 48, 0), 24), dur: num(o.dur, MIN_DUR, 24, 1), lux: num(o.lux, 1, 100000, 100),
+  const ivMap = o => ({ id: uid(), start: mod(num(o.start, -48, 48, 0), 24), dur: num(o.dur, MIN_DUR, 24, 1), lux: num(o.lux, 1, 100000, 100) });
+  state.lightSets = { 1: [] };
+  if (d.lightSets && typeof d.lightSets === 'object') {
+    for (const [k, v] of Object.entries(d.lightSets)) {
+      const key = Math.round(+k);
+      if (key >= 1 && key <= DAYS && Array.isArray(v)) state.lightSets[key] = v.map(ivMap);
+    }
+  } else if (Array.isArray(d.intervals)) state.lightSets[1] = d.intervals.map(ivMap);
+  state.activeSet = 1;
+  state.zones = (Array.isArray(d.zones) ? d.zones : []).filter(z => ZONE_PRI[z.type]).map(z => ({
+    id: uid(), type: z.type, start: mod(num(z.start, -48, 48, 0), 24), dur: num(z.dur, MIN_DUR, 24, 1),
   }));
   state.pills = (Array.isArray(d.pills) ? d.pills : []).map(o => ({
     id: uid(), time: mod(num(o.time, -48, 48, 18), 24), day: Math.round(num(o.day, 0, DAYS, 0)),
@@ -710,7 +813,7 @@ function load() {
 }
 function lightFollowsBase() {
   const ref = baseLightIntervals(state.base);
-  const cur = state.intervals;
+  const cur = state.lightSets[1];
   if (ref.length !== cur.length) return false;
   const key = o => Math.round(mod(o.start, 24) * 60) + '/' + Math.round(o.dur * 60) + '/' + o.lux;
   const A = ref.map(key).sort(), Bk = cur.map(key).sort();
@@ -719,7 +822,7 @@ function lightFollowsBase() {
 function changeBase(fn) {
   const follow = lightFollowsBase();
   fn();
-  if (follow) { state.intervals = baseLightIntervals(state.base).map(o => ({ id: uid(), ...o })); state.selected = null; }
+  if (follow) { state.lightSets[1] = baseLightIntervals(state.base).map(o => ({ id: uid(), ...o })); state.selected = null; }
   syncControls();
   commit();
 }
@@ -734,7 +837,8 @@ function applyScenario(key, doCommit = true) {
   const sc = SCENARIOS[key];
   if (!sc) return;
   const iv = sc.light === 'base' ? baseLightIntervals(state.base) : (sc.intervals || []);
-  state.intervals = iv.map(o => ({ id: uid(), ...o }));
+  state.lightSets = { 1: iv.map(o => ({ id: uid(), ...o })) };
+  state.activeSet = 1;
   state.pills = (sc.pills || []).map(o => ({ id: uid(), ...o }));
   state.selected = null;
   if (doCommit) commit();
@@ -742,9 +846,9 @@ function applyScenario(key, doCommit = true) {
 
 // ----- geometry -----
 function geom(ch) {
-  const l = 62, r = 40, top = 48, bot = ch.h - 74;
+  const l = 62, r = 40, top = 48, bot = ch.h - 88;
   return { l, r, top, bot, pw: ch.w - l - r, ph: bot - top, itY: 4, itH: 14, lblY: 30,
-    vY: bot + 4, vH: 26, slY: bot + 36, slH: 12, axY: bot + 62 };
+    vY: bot + 4, vH: 26, slY: bot + 36, slH: 12, znY: bot + 54, znH: 11, axY: bot + 76 };
 }
 const X = (g, a) => g.l + a / 24 * g.pw;
 const axisFromX = (g, x) => (x - g.l) / g.pw * 24;
@@ -758,9 +862,10 @@ function pieces(it) {
 
 // ----- simulation & render -----
 function commit(live = false) {
-  sim = simulate({ intervals: state.intervals, pills: state.pills, mode: state.mode, tau: state.tau, eyelid: state.eyelid, base: state.base });
+  sim = simulate({ dayLight: Array.from({ length: DAYS }, (_, d) => effectiveSet(d)), zones: state.zones, pills: state.pills, mode: state.mode, tau: state.tau, eyelid: state.eyelid, base: state.base });
   renderTables();
   renderSummary();
+  renderDayHeads();
   scheduleDraw();
   if (!live) save();
 }
@@ -786,6 +891,21 @@ function renderTables() {
         <select class="f-pre" style="width:34px" title="Типичные уровни">${presetOpts}</select></td>
       <td><button class="icon f-del" title="Удалить">✕</button></td>
     </tr>`).join('') : '<tr><td colspan="5" class="empty">Света нет — вечная ночь, часы идут в свободном ходе.</td></tr>';
+
+  const ss = $('#setSel');
+  ss.innerHTML = setKeys().map(k => `<option value="${k}"${k === state.activeSet ? ' selected' : ''}>Набор дня ${k} (${setRange(k)})</option>`).join('');
+
+  const zb = $('#zoneTable tbody');
+  const zl = state.zones.slice().sort((p, q) => mod(p.start - AXIS0, 24) - mod(q.start - AXIS0, 24));
+  const zOpts = t => [['may', 'Можно спать'], ['must', 'Нужно спать'], ['no', 'Нельзя спать']].map(([v, n]) => `<option value="${v}"${v === t ? ' selected' : ''}>${n}</option>`).join('');
+  zb.innerHTML = zl.length ? zl.map(z => `
+    <tr data-id="${z.id}">
+      <td><select class="z-type" style="color:${ZONE_COLOR[z.type]}">${zOpts(z.type)}</select></td>
+      <td><input type="time" class="z-start" step="300" value="${fmtHM(z.start)}"></td>
+      <td><input type="time" class="z-end" step="300" value="${fmtHM(z.start + z.dur)}"></td>
+      <td><input type="time" class="z-dur" step="300" value="${fmtHM(Math.min(z.dur, 24 - 1 / 60))}" title="ч:мм"></td>
+      <td><button class="icon z-del" title="Удалить">✕</button></td>
+    </tr>`).join('') : '<tr><td colspan="5" class="empty">Зон нет — везде действует выбранный режим сна.</td></tr>';
 
   const kb = $('#pieceTable tbody');
   const pl = state.base.pieces.slice().sort((p, q) => mod(p.start - AXIS0, 24) - mod(q.start - AXIS0, 24));
@@ -825,6 +945,16 @@ function renderTables() {
   warn.textContent = msgs.join(' ');
 }
 
+const ZONE_COLOR = { may: '#59d98e', must: '#a594ff', no: '#ff6b6b' };
+const ZONE_NAME = { may: 'можно', must: 'нужно', no: 'нельзя' };
+function renderDayHeads() {
+  for (const ch of charts) {
+    const d = ch.d, own = d > 0 && state.lightSets[d + 1] !== undefined;
+    ch.sub.textContent = d === 0 ? 'редактируемый' : own ? 'свой свет, редактируемый' : `свет как в дне ${setKeyFor(d)}`;
+    if (ch.ovr) ch.ovr.checked = own;
+    ch.el.classList.toggle('editable', isEditable(d));
+  }
+}
 function episodesOf(d) {
   const lo = d * SPD, hi = (d + 1) * SPD;
   return sim.episodes.filter(e => e.on >= lo && e.on < hi);
@@ -834,7 +964,7 @@ function dayInfo(d) {
   const inDay = e => e.i >= lo && e.i < hi;
   let asleep = 0, bedAwake = 0, iqSum = 0, iqN = 0, iqMin = 101;
   for (let i = lo; i < hi; i++) {
-    if (sim.sleep[i] === 1) asleep++; else if (sim.sleep[i] === 2) bedAwake++;
+    if (sim.sleep[i] === 1 || sim.sleep[i] === 3) asleep++; else if (sim.sleep[i] === 2) bedAwake++;
     const v = sim.iq[i];
     if (!isNaN(v)) { iqSum += v; iqN++; if (v < iqMin) iqMin = v; }
   }
@@ -846,11 +976,13 @@ function dayInfo(d) {
 function epText(e, rich) {
   const on = e.carried ? '…' : fmtHM(clock(e.on));
   const off = e.off === null ? '…' : fmtHM(clock(e.off));
-  const g = e.gate !== null && e.gate !== e.on ? fmtHM(clock(e.gate)) : null;
+  const g = e.gate !== null && e.gate !== e.on && e.on - e.gate <= 8 * 60 ? fmtHM(clock(e.gate)) : null;   // давнее «клонит» не показываем
   const len = e.off === null ? '' : fmtDur((e.off - e.on) * DT);
   let tag = '';
-  if (e.why === 'light') tag = rich ? '<span class="tag" title="Разбудил свет">свет</span>' : ', разбудил свет';
-  if (e.why === 'sched') tag = rich ? '<span class="tag sched" title="Кончилось время в постели">подъём</span>' : ', подъём по режиму';
+  if (e.invol) tag += rich ? '<span class="tag" style="background:#3a1424;color:#ff8fb0" title="Засыпание против воли при свете">против воли</span>' : ', против воли';
+  if (e.why === 'light') tag += rich ? '<span class="tag" title="Разбудил свет">свет</span>' : ', разбудил свет';
+  if (e.why === 'zone') tag += rich ? '<span class="tag" style="background:#2e1414;color:#ff8f8f" title="Началась зона «нельзя спать»">нельзя спать</span>' : ', разбудила зона «нельзя спать»';
+  if (e.why === 'sched') tag += rich ? '<span class="tag sched" title="Кончилось время в постели">подъём</span>' : ', подъём по режиму';
   const would = e.would && e.why !== 'self' ? (rich ? ` <span class="g">сам ≈${fmtHM(clock(e.would))}</span>` : `, сам ≈${fmtHM(clock(e.would))}`) : '';
   if (rich) return `<div class="ep">${g ? `<span class="g">${g} →</span> ` : ''}${on}–${off}${len ? ` <span class="g">(${len})</span>` : ''}${tag}${would}</div>`;
   return `${g ? `клонит <b>${g}</b>, ` : ''}сон <b>${on}–${off}</b>${len ? ` (${len}${tag}${would})` : ''}`;
@@ -902,6 +1034,8 @@ function drawChart(ch) {
   // сон и постель без сна
   ctx.fillStyle = 'rgba(90,110,255,0.13)';
   forRuns(lo, k => sim.sleep[lo + k] === 1, (a, b) => ctx.fillRect(xi(a), g.top, xi(b) - xi(a), g.ph));
+  ctx.fillStyle = 'rgba(255,90,140,0.12)';
+  forRuns(lo, k => sim.sleep[lo + k] === 3, (a, b) => ctx.fillRect(xi(a), g.top, xi(b) - xi(a), g.ph));
   ctx.fillStyle = 'rgba(90,110,255,0.05)';
   forRuns(lo, k => sim.sleep[lo + k] === 2, (a, b) => ctx.fillRect(xi(a), g.top, xi(b) - xi(a), g.ph));
 
@@ -925,13 +1059,14 @@ function drawChart(ch) {
   ctx.textAlign = 'center'; ctx.fillStyle = '#6f7d8f'; ctx.fillText('свет, лк', 0, 0); ctx.restore();
 
   // свет
-  for (const it of state.intervals) {
-    const sel = it.id === state.selected && d === 0;
+  const editable = isEditable(d), lightList = effectiveSet(d);
+  for (const it of lightList) {
+    const sel = it.id === state.selected && editable;
     for (const pc of pieces(it)) {
       const x1 = X(g, pc.a), x2 = X(g, pc.b), yt = yLux(g, it.lux);
-      ctx.fillStyle = d === 0 ? 'rgba(255,204,77,0.24)' : 'rgba(255,204,77,0.15)';
+      ctx.fillStyle = editable ? 'rgba(255,204,77,0.24)' : 'rgba(255,204,77,0.15)';
       ctx.fillRect(x1, yt, x2 - x1, g.bot - yt);
-      ctx.strokeStyle = sel ? '#fff3c4' : d === 0 ? 'rgba(255,204,77,0.9)' : 'rgba(255,204,77,0.5)';
+      ctx.strokeStyle = sel ? '#fff3c4' : editable ? 'rgba(255,204,77,0.9)' : 'rgba(255,204,77,0.5)';
       ctx.lineWidth = sel ? 2 : 1;
       ctx.strokeRect(x1 + 0.5, yt + 0.5, x2 - x1 - 1, g.bot - yt - 1);
       if (x2 - x1 > 46) {
@@ -940,7 +1075,7 @@ function drawChart(ch) {
       }
     }
   }
-  if (!state.intervals.length && d === 0) {
+  if (!lightList.length && editable) {
     ctx.fillStyle = '#6f7d8f'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.font = '13px Segoe UI, system-ui, sans-serif';
     ctx.fillText('Света нет — вечная ночь. Прямоугольник света рисуется протягиванием мыши.', g.l + g.pw / 2, g.top + 18);
@@ -974,12 +1109,15 @@ function drawChart(ch) {
     line(sim.L, v => v, 'rgba(233,237,242,0.35)', 1, [2, 4]);
     line(sim.S, v => v, '#e9edf2', 1.8);
   }
+  if (L.felt) {
+    ctx.strokeStyle = '#3fd0ff'; ctx.lineWidth = 1.6; ctx.setLineDash([]); drawIq(ctx, g, lo, xi, yF, sim.felt);
+  }
   if (L.iq) {
     ctx.strokeStyle = 'rgba(255,45,45,0.18)'; ctx.lineWidth = 7; drawIq(ctx, g, lo, xi, yF);
     ctx.strokeStyle = '#ff2d2d'; ctx.lineWidth = 2.4; drawIq(ctx, g, lo, xi, yF);
   }
   ctx.restore();
-  if (L.iq) {
+  if (L.iq || L.felt) {
     ctx.font = font; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     for (const v of [0, 25, 50, 75, 100]) {
       const y = yF(v / 100);
@@ -1070,6 +1208,8 @@ function drawChart(ch) {
   forRuns(lo, k => sim.sleep[lo + k] === 2, (a, b) => ctx.fillRect(xi(a), g.slY + g.slH / 2 - 1, xi(b) - xi(a), 3));
   ctx.fillStyle = '#5a6eff';
   forRuns(lo, k => sim.sleep[lo + k] === 1, (a, b) => ctx.fillRect(xi(a), g.slY, xi(b) - xi(a), g.slH));
+  ctx.fillStyle = '#ff5a8c';
+  forRuns(lo, k => sim.sleep[lo + k] === 3, (a, b) => ctx.fillRect(xi(a), g.slY, xi(b) - xi(a), g.slH));
   ctx.strokeStyle = 'rgba(200,210,255,0.6)'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
   for (const p of state.base.pieces) for (const pc of pieces(p)) {
     ctx.strokeRect(X(g, pc.a) + 0.5, g.slY - 1.5, X(g, pc.b) - X(g, pc.a), g.slH + 3);
@@ -1077,6 +1217,29 @@ function drawChart(ch) {
   ctx.setLineDash([]);
   ctx.fillStyle = '#6f7d8f'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
   ctx.fillText('сон', g.l - 6, g.slY + g.slH / 2);
+
+  // зоны сна
+  ctx.fillStyle = '#10151c'; ctx.fillRect(g.l, g.znY, g.pw, g.znH);
+  for (const z of state.zones.slice().sort((p1, p2) => ZONE_PRI[p1.type] - ZONE_PRI[p2.type])) for (const pc of pieces(z)) {
+    const x1 = X(g, pc.a), x2 = X(g, pc.b);
+    ctx.fillStyle = ZONE_COLOR[z.type];
+    ctx.globalAlpha = 0.85;
+    if (z.type === 'no') {
+      ctx.save(); ctx.beginPath(); ctx.rect(x1, g.znY, x2 - x1, g.znH); ctx.clip();
+      ctx.globalAlpha = 0.35; ctx.fillRect(x1, g.znY, x2 - x1, g.znH); ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = ZONE_COLOR.no; ctx.lineWidth = 2;
+      for (let xx = x1 - g.znH; xx < x2; xx += 7) { ctx.beginPath(); ctx.moveTo(xx, g.znY + g.znH); ctx.lineTo(xx + g.znH, g.znY); ctx.stroke(); }
+      ctx.restore();
+    } else ctx.fillRect(x1, g.znY, x2 - x1, g.znH);
+    ctx.globalAlpha = 1;
+    if (x2 - x1 > 44) {
+      ctx.font = '10px Segoe UI, system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#0c1016'; ctx.fillText(ZONE_NAME[z.type], x1 + 4, g.znY + g.znH / 2 + 0.5);
+      ctx.font = font;
+    }
+  }
+  ctx.fillStyle = '#6f7d8f'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.fillText('зоны', g.l - 6, g.znY + g.znH / 2);
 
   // ось времени
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#8a97a8';
@@ -1086,15 +1249,15 @@ function drawChart(ch) {
   if (hover && hover.ch === ch) {
     const x = Math.round(xi(hover.k)) + 0.5;
     ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x, g.itY); ctx.lineTo(x, g.slY + g.slH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, g.itY); ctx.lineTo(x, g.znY + g.znH); ctx.stroke();
   }
 }
-function drawIq(ctx, g, lo, xi, yF) {
+function drawIq(ctx, g, lo, xi, yF, arr = sim.iq) {
   ctx.setLineDash([]);
   ctx.beginPath();
   let pen = false;
   for (let k = 0; k < SPD; k++) {
-    const v = sim.iq[lo + k];
+    const v = arr[lo + k];
     if (isNaN(v)) { pen = false; continue; }
     const x = xi(k), y = yF(v / 100);
     if (!pen) { ctx.moveTo(x, y); pen = true; } else ctx.lineTo(x, y);
@@ -1118,11 +1281,12 @@ function showTip(ch, k, cx, cy) {
   const v = sim.v[i];
   const sw = c => `<i style="background:${c}"></i>`;
   const env = sim.env[i], eff = sim.eff[i];
-  const st = sim.sleep[i] === 1 ? 'сон' : sim.sleep[i] === 2 ? 'в постели без сна' : 'бодрствование';
+  const st = sim.sleep[i] === 1 ? 'сон' : sim.sleep[i] === 3 ? 'сон против воли' : sim.sleep[i] === 2 ? 'в постели без сна' : 'бодрствование';
   tip.innerHTML = `
     <div class="t">День ${ch.d + 1} · ${fmtHM(clock(i))} <span class="k">(внутреннее ${fmtHM(REF_TMIN + sim.h[i])})</span></div>
     <div><span class="k">Состояние:</span> ${st}</div>
     <div>${sw('#ff2d2d')}<span class="k">Интеллект:</span> ${isNaN(sim.iq[i]) ? '— (сон)' : `<b style="color:#ff6b6b">${sim.iq[i].toFixed(0)} %</b> <span class="k">(инерция −${(sim.pI[i] * 100).toFixed(0)} %, острый недосып −${(sim.pS[i] * 100).toFixed(0)} %, долг −${(sim.pZ[i] * 100).toFixed(0)} %, фаза −${(sim.pC[i] * 100).toFixed(0)} %)</span>`}</div>
+    <div>${sw('#3fd0ff')}<span class="k">Сонливость:</span> ${isNaN(sim.felt[i]) ? '—' : sim.felt[i].toFixed(0) + ' %'} <span class="k">(50 % — клонит в сон, 100 % — засыпание против воли)</span></div>
     <div><span class="k">Долг бодрствования:</span> ${sim.Z[i].toFixed(1)} ч</div>
     <div>${sw('#ffcc4d')}<span class="k">Свет:</span> ${env.toLocaleString('ru-RU')} лк${sim.sleep[i] && env > 0 ? ` (сквозь веки ${eff.toFixed(eff < 10 ? 1 : 0)} лк)` : ''}</div>
     <div>${sw(v >= 0 ? '#59d98e' : '#ff8a5c')}<span class="k">Сдвиг фазы:</span> ${v >= 0 ? '+' : '−'}${Math.abs(v * 60).toFixed(1)} мин/ч ${Math.abs(v) < 0.002 ? '' : v > 0 ? '(раньше)' : '(позже)'}</div>
@@ -1145,9 +1309,10 @@ function hideTip() { $('#tip').style.display = 'none'; }
 // ----- pointer -----
 function pos(ch, e) { const r = ch.canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
 function hitTest(ch, p) {
-  const g = geom(ch);
-  for (let k = state.intervals.length - 1; k >= 0; k--) {
-    const it = state.intervals[k];
+  if (!isEditable(ch.d)) return null;
+  const g = geom(ch), list = effectiveSet(ch.d);
+  for (let k = list.length - 1; k >= 0; k--) {
+    const it = list[k];
     for (const pc of pieces(it)) {
       const x1 = X(g, pc.a), x2 = X(g, pc.b), yt = yLux(g, it.lux);
       if (p.x < x1 - 6 || p.x > x2 + 6 || p.y < yt - 6 || p.y > g.bot + 2) continue;
@@ -1159,7 +1324,23 @@ function hitTest(ch, p) {
   }
   return null;
 }
+function hitZone(ch, p) {
+  const g = geom(ch);
+  if (p.y < g.znY - 4 || p.y > g.znY + g.znH + 4) return null;
+  const order = state.zones.slice().sort((a, b) => ZONE_PRI[b.type] - ZONE_PRI[a.type]);
+  for (const z of order) for (const pc of pieces(z)) {
+    const x1 = X(g, pc.a), x2 = X(g, pc.b);
+    if (p.x < x1 - 6 || p.x > x2 + 6) continue;
+    if (pc.L && Math.abs(p.x - x1) <= 6) return { it: z, kind: 'resizeL' };
+    if (pc.R && Math.abs(p.x - x2) <= 6) return { it: z, kind: 'resizeR', second: pc.second };
+    if (p.x >= x1 && p.x <= x2) return { it: z, kind: 'move' };
+  }
+  return null;
+}
 const clampA = a => Math.min(24, Math.max(0, a));
+function findTarget(drag) {
+  return drag.zone ? state.zones.find(o => o.id === drag.id) : state.intervals.find(o => o.id === drag.id);
+}
 function onDown(ch, e) {
   if (e.button !== 0) return;
   const p = pos(ch, e), g = geom(ch), a = axisFromX(g, p.x);
@@ -1170,17 +1351,30 @@ function onDown(ch, e) {
     commit();
     return;
   }
-  if (ch.d !== 0 || p.y < g.top || p.y > g.bot || a < 0 || a > 24) return;
-  const hit = hitTest(ch, p);
-  if (hit) {
-    state.selected = hit.it.id;
-    drag = { ch, kind: hit.kind, id: hit.it.id, orig: { ...hit.it }, a0: a, second: !!hit.second };
-  } else {
+  if (a < 0 || a > 24) return;
+  const zh = hitZone(ch, p);
+  if (zh) {
+    drag = { ch, zone: true, kind: zh.kind, id: zh.it.id, orig: { ...zh.it }, a0: a, second: !!zh.second };
+  } else if (state.tool !== 'light') {
+    if (p.y < g.top || p.y > g.znY + g.znH) return;
     const a0 = snap(clampA(a));
-    const it = { id: uid(), start: mod(AXIS0 + a0, 24), dur: 0, lux: roundLux(luxFromY(g, p.y)) };
-    state.intervals.push(it);
-    state.selected = it.id;
-    drag = { ch, kind: 'new', id: it.id, a0 };
+    const z = { id: uid(), type: state.tool, start: mod(AXIS0 + a0, 24), dur: 0 };
+    state.zones.push(z);
+    drag = { ch, zone: true, kind: 'new', id: z.id, a0 };
+  } else {
+    if (!isEditable(ch.d) || p.y < g.top || p.y > g.bot) return;
+    state.activeSet = ch.d === 0 ? 1 : ch.d + 1;
+    const hit = hitTest(ch, p);
+    if (hit) {
+      state.selected = hit.it.id;
+      drag = { ch, kind: hit.kind, id: hit.it.id, orig: { ...hit.it }, a0: a, second: !!hit.second };
+    } else {
+      const a0 = snap(clampA(a));
+      const it = { id: uid(), start: mod(AXIS0 + a0, 24), dur: 0, lux: roundLux(luxFromY(g, p.y)) };
+      state.intervals.push(it);
+      state.selected = it.id;
+      drag = { ch, kind: 'new', id: it.id, a0 };
+    }
   }
   ch.canvas.setPointerCapture(e.pointerId);
   e.preventDefault();
@@ -1190,14 +1384,15 @@ function onDown(ch, e) {
 function onMove(ch, e) {
   const p = pos(ch, e), g = geom(ch);
   if (drag && drag.ch === ch) {
-    const it = state.intervals.find(o => o.id === drag.id);
+    const it = findTarget(drag);
     if (!it) return;
     const a = clampA(axisFromX(g, p.x));
     const s0 = drag.orig ? mod(drag.orig.start - AXIS0, 24) : 0;
     switch (drag.kind) {
       case 'new': {
         const a1 = snap(a), lo = Math.min(drag.a0, a1), hi = Math.max(drag.a0, a1);
-        it.start = mod(AXIS0 + lo, 24); it.dur = hi - lo; it.lux = roundLux(luxFromY(g, p.y));
+        it.start = mod(AXIS0 + lo, 24); it.dur = hi - lo;
+        if (!drag.zone) it.lux = roundLux(luxFromY(g, p.y));
         break;
       }
       case 'move': it.start = mod(drag.orig.start + snap(a - drag.a0), 24); break;
@@ -1225,8 +1420,11 @@ function onMove(ch, e) {
     showTip(ch, hover.k, e.clientX, e.clientY);
   } else { hover = null; hideTip(); }
   let cur = 'default';
+  const zh = hitZone(ch, p);
   if (state.pillMode) cur = 'copy';
-  else if (ch.d === 0 && p.y >= g.top - 6 && p.y <= g.bot) {
+  else if (zh) cur = zh.kind === 'move' ? 'grab' : 'ew-resize';
+  else if (state.tool !== 'light') cur = p.y >= g.top && p.y <= g.znY + g.znH ? 'crosshair' : 'default';
+  else if (isEditable(ch.d) && p.y >= g.top - 6 && p.y <= g.bot) {
     const hit = hitTest(ch, p);
     cur = !hit ? (p.y >= g.top ? 'crosshair' : 'default')
       : hit.kind === 'move' ? 'grab' : hit.kind === 'level' ? 'ns-resize' : 'ew-resize';
@@ -1236,19 +1434,27 @@ function onMove(ch, e) {
 }
 function onUp(ch, e) {
   if (!drag) return;
-  const it = state.intervals.find(o => o.id === drag.id);
+  const it = findTarget(drag);
   if (drag.kind === 'new' && it && it.dur < MIN_DUR - 1e-9) {
-    state.intervals = state.intervals.filter(o => o !== it);
-    state.selected = null;
+    if (drag.zone) state.zones = state.zones.filter(o => o !== it);
+    else { state.intervals = state.intervals.filter(o => o !== it); state.selected = null; }
   }
   drag = null;
   try { ch.canvas.releasePointerCapture(e.pointerId); } catch (_) { /* захват уже снят */ }
   commit();
 }
 function removeInterval(id) {
-  state.intervals = state.intervals.filter(o => o.id !== id);
+  for (const k of setKeys()) state.lightSets[k] = state.lightSets[k].filter(o => o.id !== id);
   if (state.selected === id) state.selected = null;
   commit();
+}
+function removeZone(id) {
+  state.zones = state.zones.filter(o => o.id !== id);
+  commit();
+}
+function setTool(t) {
+  state.tool = t;
+  document.querySelectorAll('#toolbar .tool').forEach(b => b.classList.toggle('on', b.dataset.tool === t));
 }
 function setPillMode(on) {
   state.pillMode = on;
@@ -1263,26 +1469,26 @@ function buildCharts() {
   for (let d = 0; d < DAYS; d++) {
     const el = document.createElement('div');
     el.className = 'day' + (d === 0 ? ' editable' : '');
-    el.innerHTML = `<div class="day-head"><h3>День ${d + 1}<small>${d === 0 ? 'редактируемый' : 'тот же свет'}</small></h3><div class="day-chips"></div></div><div class="cv-wrap"><canvas></canvas></div>`;
+    el.innerHTML = `<div class="day-head"><h3>День ${d + 1}<small class="sub"></small></h3>${d > 0 ? '<label class="ovr"><input type="checkbox"> свой свет с этого дня</label>' : ''}<div class="day-chips"></div></div><div class="cv-wrap"><canvas></canvas></div>`;
     wrap.appendChild(el);
     const canvas = el.querySelector('canvas');
-    const ch = { d, el, canvas, ctx: canvas.getContext('2d'), chips: el.querySelector('.day-chips'), w: 0, h: d === 0 ? 340 : 290 };
+    const ch = { d, el, canvas, ctx: canvas.getContext('2d'), chips: el.querySelector('.day-chips'), sub: el.querySelector('.sub'), ovr: el.querySelector('.ovr input'), w: 0, h: d === 0 ? 354 : 304 };
     charts.push(ch);
+    if (ch.ovr) ch.ovr.addEventListener('change', () => toggleOverride(d, ch.ovr.checked));
     canvas.addEventListener('pointerdown', e => onDown(ch, e));
     canvas.addEventListener('pointermove', e => onMove(ch, e));
     canvas.addEventListener('pointerup', e => onUp(ch, e));
     canvas.addEventListener('pointercancel', e => onUp(ch, e));
     canvas.addEventListener('pointerleave', () => { if (!drag) { hover = null; hideTip(); scheduleDraw(); } });
-    canvas.addEventListener('dblclick', e => {
-      if (ch.d !== 0) return;
-      const hit = hitTest(ch, pos(ch, e));
-      if (hit) removeInterval(hit.it.id);
-    });
-    canvas.addEventListener('contextmenu', e => {
-      if (ch.d !== 0) return;
-      const hit = hitTest(ch, pos(ch, e));
+    const del = e => {
+      const p = pos(ch, e);
+      const zh = hitZone(ch, p);
+      if (zh) { e.preventDefault(); removeZone(zh.it.id); return; }
+      const hit = hitTest(ch, p);
       if (hit) { e.preventDefault(); removeInterval(hit.it.id); }
-    });
+    };
+    canvas.addEventListener('dblclick', del);
+    canvas.addEventListener('contextmenu', del);
   }
   const resize = () => {
     dpr = window.devicePixelRatio || 1;
@@ -1370,6 +1576,21 @@ function bindControls() {
     }
   });
 
+  $('#setSel').onchange = e => { state.activeSet = +e.target.value; state.selected = null; commit(); };
+  $('#addZone').onclick = () => { state.zones.push({ id: uid(), type: state.tool === 'light' ? 'no' : state.tool, start: 9, dur: 9 }); commit(); };
+  const zb = $('#zoneTable tbody');
+  zb.addEventListener('change', e => {
+    const tr = e.target.closest('tr'); if (!tr) return;
+    const z = state.zones.find(o => o.id === +tr.dataset.id); if (!z) return;
+    if (e.target.classList.contains('z-type')) { z.type = e.target.value; e.target.blur(); commit(); return; }
+    timeRowHandler(() => state.zones, 'z')(e);
+  });
+  zb.addEventListener('click', e => {
+    if (!e.target.closest('.z-del')) return;
+    removeZone(+e.target.closest('tr').dataset.id);
+  });
+  document.querySelectorAll('#toolbar .tool').forEach(b => { b.onclick = () => setTool(b.dataset.tool); });
+  setTool(state.tool);
   $('#addPiece').onclick = () => changeBase(() => { state.base.pieces.push({ id: uid(), start: 14, dur: 1 }); });
   const bp = $('#basePreset');
   for (const [k, v] of Object.entries(BASE_PRESETS)) bp.insertAdjacentHTML('beforeend', `<option value="${k}">${v.name}</option>`);
@@ -1385,7 +1606,8 @@ function bindControls() {
   bd.onchange = () => { const v = +bd.value; changeBase(() => { if (isFinite(v) && v > 0) state.base.day = clampLux(v); }); };
   be.onchange = () => { const v = +be.value; changeBase(() => { if (isFinite(v) && v > 0) state.base.eve = clampLux(v); }); };
   $('#copyBase').onclick = () => {
-    state.intervals = baseLightIntervals(state.base).map(o => ({ id: uid(), ...o }));
+    state.lightSets = { 1: baseLightIntervals(state.base).map(o => ({ id: uid(), ...o })) };
+    state.activeSet = 1;
     state.selected = null;
     commit();
   };
